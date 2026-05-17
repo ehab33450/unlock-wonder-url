@@ -1,6 +1,7 @@
 @import "tailwindcss" source(none);
 @source "../src";
 @import "tw-animate-css";
+@import url("https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700&display=swap");
 
 @custom-variant dark (&:is(.dark *));
 
@@ -95,6 +96,12 @@
   --sidebar-accent-foreground: oklch(0.208 0.042 265.755);
   --sidebar-border: oklch(0.929 0.013 255.508);
   --sidebar-ring: oklch(0.704 0.04 256.788);
+  --eyenak-dark: #0f2e3d;
+  --eyenak-teal: #14b8a6;
+  --eyenak-green: #22c55e;
+  --eyenak-green-light: #dcfce7;
+  --eyenak-pink: #ec4899;
+  --eyenak-orange: #f59e0b;
 }
 
 .dark {
@@ -140,5 +147,6 @@
   body {
     background-color: var(--color-background);
     color: var(--color-foreground);
+    font-family: "Cairo", system-ui, sans-serif;
   }
 }
