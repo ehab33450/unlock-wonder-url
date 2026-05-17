@@ -65,11 +65,23 @@ const topTabs = [
 
 type Project = { name: string; children: string[] };
 const projects: Project[] = [
-  { name: "المدير التنفيذي", children: ["تطوير عام"] },
-  { name: "عملاء أ.أروى الجعدي", children: ["خ‍ عنان الفضاء - 2026"] },
-  { name: "المبيعات", children: ["مشاريع المبيعات"] },
-  { name: "ايهاب تطوير", children: ["شركة hc"] },
+  { name: "المدير التنفيذي", children: ["أ. أروى الجعدي - المدير المسؤول"] },
+  {
+    name: "عملاء أ.أروى الجعدي",
+    children: ["ايهاب فاتح", "محمد علي", "سارة أحمد"],
+  },
+  {
+    name: "المبيعات",
+    children: ["صفقات جديدة", "صفقات قيد التفاوض", "صفقات مغلقة"],
+  },
+  { name: "ايهاب تطوير", children: ["شركة hc", "مشروع عنان الفضاء"] },
 ];
+
+const employeeTasks: Record<string, string[]> = {
+  "ايهاب فاتح": ["تطوير الواجهة", "مراجعة الكود", "اجتماع العميل"],
+  "محمد علي": ["تصميم الشعار", "تجهيز العرض"],
+  "سارة أحمد": ["كتابة المحتوى", "تحليل البيانات"],
+};
 
 function Index() {
   const [openProjects, setOpenProjects] = useState<Record<string, boolean>>({
@@ -78,8 +90,11 @@ function Index() {
     "المبيعات": true,
     "ايهاب تطوير": true,
   });
+  const [openEmployees, setOpenEmployees] = useState<Record<string, boolean>>({});
   const toggle = (name: string) =>
     setOpenProjects((s) => ({ ...s, [name]: !s[name] }));
+  const toggleEmp = (name: string) =>
+    setOpenEmployees((s) => ({ ...s, [name]: !s[name] }));
 
   const completed = 7266;
   const inProgress = 95;
@@ -348,16 +363,36 @@ function Index() {
                   </button>
                   {open &&
                     p.children.map((c) => (
-                      <button
-                        key={c}
-                        className="w-full flex items-center justify-between pr-8 pl-4 py-2.5 hover:bg-white/5 text-sm text-white/85"
-                      >
-                        <ChevronLeft className="w-3.5 h-3.5 text-white/40" />
-                        <div className="flex items-center gap-2">
-                          <span>{c}</span>
-                          <FileIcon className="w-4 h-4 text-white/60" />
-                        </div>
-                      </button>
+                      <div key={c}>
+                        <button
+                          onClick={() => employeeTasks[c] && toggleEmp(c)}
+                          className="w-full flex items-center justify-between pr-8 pl-4 py-2.5 hover:bg-white/5 text-sm text-white/85"
+                        >
+                          {employeeTasks[c] ? (
+                            openEmployees[c] ? (
+                              <ChevronDown className="w-3.5 h-3.5 text-white/40" />
+                            ) : (
+                              <ChevronLeft className="w-3.5 h-3.5 text-white/40" />
+                            )
+                          ) : (
+                            <span className="w-3.5" />
+                          )}
+                          <div className="flex items-center gap-2">
+                            <span>{c}</span>
+                            <FileIcon className="w-4 h-4 text-white/60" />
+                          </div>
+                        </button>
+                        {openEmployees[c] &&
+                          employeeTasks[c]?.map((t) => (
+                            <div
+                              key={t}
+                              className="flex items-center justify-end gap-2 pr-12 pl-4 py-2 text-xs text-white/70 hover:bg-white/5"
+                            >
+                              <span>{t}</span>
+                              <span className="w-1.5 h-1.5 rounded-full bg-[color:var(--eyenak-teal)]" />
+                            </div>
+                          ))}
+                      </div>
                     ))}
                 </div>
               );
