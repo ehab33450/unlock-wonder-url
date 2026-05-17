@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useState } from "react";
 import {
   Calendar,
   FileText,
@@ -28,6 +29,9 @@ import {
   Activity,
   MapPin,
   FileCheck,
+  Folder,
+  FileText as FileIcon,
+  ChevronLeft,
 } from "lucide-react";
 
 export const Route = createFileRoute("/")({
@@ -59,14 +63,24 @@ const topTabs = [
   { icon: MapPin, label: "تقرير التتبع" },
 ];
 
-const projects = [
-  "المدير التنفيذي",
-  "عملاء أ.أروى الجعدي",
-  "المبيعات",
-  "ايهاب تطوير",
+type Project = { name: string; children: string[] };
+const projects: Project[] = [
+  { name: "المدير التنفيذي", children: ["تطوير عام"] },
+  { name: "عملاء أ.أروى الجعدي", children: ["خ‍ عنان الفضاء - 2026"] },
+  { name: "المبيعات", children: ["مشاريع المبيعات"] },
+  { name: "ايهاب تطوير", children: ["شركة hc"] },
 ];
 
 function Index() {
+  const [openProjects, setOpenProjects] = useState<Record<string, boolean>>({
+    "المدير التنفيذي": true,
+    "عملاء أ.أروى الجعدي": true,
+    "المبيعات": true,
+    "ايهاب تطوير": true,
+  });
+  const toggle = (name: string) =>
+    setOpenProjects((s) => ({ ...s, [name]: !s[name] }));
+
   const completed = 7266;
   const inProgress = 95;
   const pending = 82;
@@ -313,16 +327,41 @@ function Index() {
           </div>
 
           {/* Projects list */}
-          <div className="flex-1 overflow-auto">
-            {projects.map((p) => (
-              <button
-                key={p}
-                className="w-full flex items-center justify-between px-4 py-3 hover:bg-slate-50 border-b border-slate-100 text-sm text-slate-700"
-              >
-                <ChevronDown className="w-4 h-4 text-slate-400" />
-                <span>{p}</span>
-              </button>
-            ))}
+          <div className="flex-1 overflow-auto bg-[color:var(--eyenak-dark)] text-white">
+            {projects.map((p) => {
+              const open = openProjects[p.name];
+              return (
+                <div key={p.name} className="border-b border-white/5">
+                  <button
+                    onClick={() => toggle(p.name)}
+                    className="w-full flex items-center justify-between px-4 py-3 hover:bg-white/5 text-sm"
+                  >
+                    {open ? (
+                      <ChevronDown className="w-4 h-4 text-white/60" />
+                    ) : (
+                      <ChevronLeft className="w-4 h-4 text-white/60" />
+                    )}
+                    <div className="flex items-center gap-2">
+                      <span className="font-semibold">{p.name}</span>
+                      <Folder className="w-4 h-4 text-white/70" />
+                    </div>
+                  </button>
+                  {open &&
+                    p.children.map((c) => (
+                      <button
+                        key={c}
+                        className="w-full flex items-center justify-between pr-8 pl-4 py-2.5 hover:bg-white/5 text-sm text-white/85"
+                      >
+                        <ChevronLeft className="w-3.5 h-3.5 text-white/40" />
+                        <div className="flex items-center gap-2">
+                          <span>{c}</span>
+                          <FileIcon className="w-4 h-4 text-white/60" />
+                        </div>
+                      </button>
+                    ))}
+                </div>
+              );
+            })}
           </div>
 
           {/* Footer */}
