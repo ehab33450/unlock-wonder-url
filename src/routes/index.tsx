@@ -36,6 +36,7 @@ import {
   FolderPlus,
   FilePlus2,
   LayoutTemplate,
+  X,
 } from "lucide-react";
 
 export const Route = createFileRoute("/")({
@@ -96,6 +97,9 @@ function Index() {
   });
   const [openEmployees, setOpenEmployees] = useState<Record<string, boolean>>({});
   const [createOpen, setCreateOpen] = useState(false);
+  const [newProjectOpen, setNewProjectOpen] = useState(false);
+  const [npFolder, setNpFolder] = useState("");
+  const [npName, setNpName] = useState("");
   const toggle = (name: string) =>
     setOpenProjects((s) => ({ ...s, [name]: !s[name] }));
   const toggleEmp = (name: string) =>
@@ -352,7 +356,10 @@ function Index() {
                   return (
                     <button
                       key={o.label}
-                      onClick={() => setCreateOpen(false)}
+                      onClick={() => {
+                        setCreateOpen(false);
+                        if (o.label === "مشروع جديد") setNewProjectOpen(true);
+                      }}
                       className="w-full flex items-center justify-between gap-2 px-4 py-2.5 text-sm hover:bg-white/10"
                     >
                       <Icon className="w-4 h-4 text-white/80" />
@@ -437,6 +444,48 @@ function Index() {
           </div>
         </aside>
       </div>
+
+      {newProjectOpen && (
+        <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/40 pt-24 px-4">
+          <div className="bg-white rounded-md shadow-xl w-full max-w-xl p-6">
+            <div className="flex items-center justify-between mb-6">
+              <button
+                onClick={() => setNewProjectOpen(false)}
+                className="text-slate-500 hover:text-slate-700"
+                aria-label="إغلاق"
+              >
+                <X className="w-5 h-5" />
+              </button>
+              <h3 className="text-base font-bold text-slate-800">إنشاء مشروع</h3>
+            </div>
+
+            <div className="mb-4">
+              <label className="block text-sm text-slate-600 mb-2 text-right">حدد المجلد</label>
+              <div className="relative">
+                <input
+                  value={npFolder}
+                  onChange={(e) => setNpFolder(e.target.value)}
+                  className="w-full h-11 border border-slate-300 rounded px-3 pl-10 text-right focus:outline-none focus:border-[color:var(--eyenak-teal)]"
+                />
+                <Folder className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+              </div>
+            </div>
+
+            <div className="mb-6">
+              <label className="block text-sm text-slate-600 mb-2 text-right">الإسم</label>
+              <input
+                value={npName}
+                onChange={(e) => setNpName(e.target.value)}
+                className="w-full h-11 border border-slate-300 rounded px-3 text-right focus:outline-none focus:border-[color:var(--eyenak-teal)]"
+              />
+            </div>
+
+            <button className="w-full h-11 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded text-sm font-semibold">
+              التالي
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
