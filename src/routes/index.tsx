@@ -356,7 +356,10 @@ function Index() {
                   return (
                     <button
                       key={o.label}
-                      onClick={() => setCreateOpen(false)}
+                      onClick={() => {
+                        setCreateOpen(false);
+                        if (o.label === "مشروع جديد") setNewProjectOpen(true);
+                      }}
                       className="w-full flex items-center justify-between gap-2 px-4 py-2.5 text-sm hover:bg-white/10"
                     >
                       <Icon className="w-4 h-4 text-white/80" />
