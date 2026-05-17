@@ -36,6 +36,7 @@ import {
   FolderPlus,
   FilePlus2,
   LayoutTemplate,
+  X,
 } from "lucide-react";
 
 export const Route = createFileRoute("/")({
@@ -96,6 +97,9 @@ function Index() {
   });
   const [openEmployees, setOpenEmployees] = useState<Record<string, boolean>>({});
   const [createOpen, setCreateOpen] = useState(false);
+  const [newProjectOpen, setNewProjectOpen] = useState(false);
+  const [npFolder, setNpFolder] = useState("");
+  const [npName, setNpName] = useState("");
   const toggle = (name: string) =>
     setOpenProjects((s) => ({ ...s, [name]: !s[name] }));
   const toggleEmp = (name: string) =>
