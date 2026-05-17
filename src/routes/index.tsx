@@ -32,6 +32,10 @@ import {
   Folder,
   FileText as FileIcon,
   ChevronLeft,
+  List,
+  FolderPlus,
+  FilePlus2,
+  LayoutTemplate,
 } from "lucide-react";
 
 export const Route = createFileRoute("/")({
@@ -91,6 +95,7 @@ function Index() {
     "ايهاب تطوير": true,
   });
   const [openEmployees, setOpenEmployees] = useState<Record<string, boolean>>({});
+  const [createOpen, setCreateOpen] = useState(false);
   const toggle = (name: string) =>
     setOpenProjects((s) => ({ ...s, [name]: !s[name] }));
   const toggleEmp = (name: string) =>
@@ -327,10 +332,37 @@ function Index() {
           </div>
 
           {/* Create button */}
-          <button className="m-3 flex items-center justify-between px-3 py-2.5 border border-dashed border-slate-300 rounded-md text-sm text-slate-600 hover:bg-slate-50">
-            <Plus className="w-4 h-4" />
-            <span>إنشاء مشروع / مهمة</span>
-          </button>
+          <div className="relative m-3">
+            <button
+              onClick={() => setCreateOpen((v) => !v)}
+              className="w-full flex items-center justify-between px-3 py-2.5 border border-dashed border-slate-300 rounded-md text-sm text-slate-600 hover:bg-slate-50"
+            >
+              <Plus className="w-4 h-4" />
+              <span>إنشاء مشروع / مهمة</span>
+            </button>
+            {createOpen && (
+              <div className="absolute z-20 mt-1 right-0 left-0 bg-[color:var(--eyenak-dark)] text-white rounded-md shadow-lg overflow-hidden border border-white/10">
+                {[
+                  { icon: List, label: "مشروع جديد" },
+                  { icon: Folder, label: "مجلد جديد" },
+                  { icon: FilePlus2, label: "إنشاء مهمة" },
+                  { icon: LayoutTemplate, label: "اختيار قالب" },
+                ].map((o) => {
+                  const Icon = o.icon;
+                  return (
+                    <button
+                      key={o.label}
+                      onClick={() => setCreateOpen(false)}
+                      className="w-full flex items-center justify-between gap-2 px-4 py-2.5 text-sm hover:bg-white/10"
+                    >
+                      <Icon className="w-4 h-4 text-white/80" />
+                      <span>{o.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
 
           {/* Tabs */}
           <div className="flex items-center gap-4 px-4 text-sm border-b border-slate-200">
