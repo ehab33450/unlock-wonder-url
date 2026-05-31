@@ -37,6 +37,10 @@ import {
   FilePlus2,
   LayoutTemplate,
   X,
+  Users as UsersIcon,
+  CalendarDays,
+  AlignRight,
+  ChevronRight,
 } from "lucide-react";
 
 export const Route = createFileRoute("/")({
