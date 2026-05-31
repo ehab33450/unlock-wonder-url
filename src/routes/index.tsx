@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import {
   Calendar,
   FileText,
@@ -40,6 +40,9 @@ import {
   CalendarDays,
   AlignRight,
   ChevronRight,
+  Upload,
+  Megaphone,
+  Trash2,
 } from "lucide-react";
 
 export const Route = createFileRoute("/")({
