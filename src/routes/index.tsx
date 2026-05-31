@@ -37,6 +37,9 @@ import {
   FilePlus2,
   LayoutTemplate,
   X,
+  CalendarDays,
+  AlignRight,
+  ChevronRight,
 } from "lucide-react";
 
 export const Route = createFileRoute("/")({
@@ -100,6 +103,23 @@ function Index() {
   const [newProjectOpen, setNewProjectOpen] = useState(false);
   const [npFolder, setNpFolder] = useState("");
   const [npName, setNpName] = useState("");
+  const [npStep, setNpStep] = useState<1 | 2>(1);
+  const [npDesc, setNpDesc] = useState("");
+  const [npStart, setNpStart] = useState("");
+  const [npEnd, setNpEnd] = useState("");
+  const [npMembers, setNpMembers] = useState<string[]>([]);
+  const [npMemberInput, setNpMemberInput] = useState("");
+  const closeNewProject = () => {
+    setNewProjectOpen(false);
+    setNpStep(1);
+    setNpFolder("");
+    setNpName("");
+    setNpDesc("");
+    setNpStart("");
+    setNpEnd("");
+    setNpMembers([]);
+    setNpMemberInput("");
+  };
   const toggle = (name: string) =>
     setOpenProjects((s) => ({ ...s, [name]: !s[name] }));
   const toggleEmp = (name: string) =>
@@ -450,39 +470,155 @@ function Index() {
           <div className="bg-white rounded-md shadow-xl w-full max-w-xl p-6">
             <div className="flex items-center justify-between mb-6">
               <button
-                onClick={() => setNewProjectOpen(false)}
+                onClick={closeNewProject}
                 className="text-slate-500 hover:text-slate-700"
                 aria-label="إغلاق"
               >
                 <X className="w-5 h-5" />
               </button>
-              <h3 className="text-base font-bold text-slate-800">إنشاء مشروع</h3>
+              <h3 className="text-base font-bold text-slate-800">
+                إنشاء مشروع {npStep === 2 && <span className="text-slate-400 font-normal">- التفاصيل</span>}
+              </h3>
             </div>
 
-            <div className="mb-4">
-              <label className="block text-sm text-slate-600 mb-2 text-right">حدد المجلد</label>
-              <div className="relative">
-                <input
-                  value={npFolder}
-                  onChange={(e) => setNpFolder(e.target.value)}
-                  className="w-full h-11 border border-slate-300 rounded px-3 pl-10 text-right focus:outline-none focus:border-[color:var(--eyenak-teal)]"
-                />
-                <Folder className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-              </div>
+            {/* Stepper */}
+            <div className="flex items-center justify-center gap-2 mb-6">
+              <div className={`h-1.5 w-16 rounded-full ${npStep >= 1 ? "bg-[color:var(--eyenak-teal)]" : "bg-slate-200"}`} />
+              <div className={`h-1.5 w-16 rounded-full ${npStep >= 2 ? "bg-[color:var(--eyenak-teal)]" : "bg-slate-200"}`} />
             </div>
 
-            <div className="mb-6">
-              <label className="block text-sm text-slate-600 mb-2 text-right">الإسم</label>
-              <input
-                value={npName}
-                onChange={(e) => setNpName(e.target.value)}
-                className="w-full h-11 border border-slate-300 rounded px-3 text-right focus:outline-none focus:border-[color:var(--eyenak-teal)]"
-              />
-            </div>
+            {npStep === 1 && (
+              <>
+                <div className="mb-4">
+                  <label className="block text-sm text-slate-600 mb-2 text-right">حدد المجلد</label>
+                  <div className="relative">
+                    <input
+                      value={npFolder}
+                      onChange={(e) => setNpFolder(e.target.value)}
+                      className="w-full h-11 border border-slate-300 rounded px-3 pl-10 text-right focus:outline-none focus:border-[color:var(--eyenak-teal)]"
+                    />
+                    <Folder className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                  </div>
+                </div>
 
-            <button className="w-full h-11 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded text-sm font-semibold">
-              التالي
-            </button>
+                <div className="mb-6">
+                  <label className="block text-sm text-slate-600 mb-2 text-right">الإسم</label>
+                  <input
+                    value={npName}
+                    onChange={(e) => setNpName(e.target.value)}
+                    className="w-full h-11 border border-slate-300 rounded px-3 text-right focus:outline-none focus:border-[color:var(--eyenak-teal)]"
+                  />
+                </div>
+
+                <button
+                  disabled={!npName.trim()}
+                  onClick={() => setNpStep(2)}
+                  className="w-full h-11 bg-[color:var(--eyenak-teal)] disabled:bg-slate-200 disabled:text-slate-500 hover:opacity-90 text-white rounded text-sm font-semibold flex items-center justify-center gap-2"
+                >
+                  <span>التالي</span>
+                  <ChevronLeft className="w-4 h-4" />
+                </button>
+              </>
+            )}
+
+            {npStep === 2 && (
+              <>
+                <div className="mb-4">
+                  <label className="block text-sm text-slate-600 mb-2 text-right">الوصف</label>
+                  <div className="relative">
+                    <textarea
+                      value={npDesc}
+                      onChange={(e) => setNpDesc(e.target.value)}
+                      rows={3}
+                      className="w-full border border-slate-300 rounded px-3 py-2 pl-10 text-right focus:outline-none focus:border-[color:var(--eyenak-teal)] resize-none"
+                    />
+                    <AlignRight className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3 mb-4">
+                  <div>
+                    <label className="block text-sm text-slate-600 mb-2 text-right">تاريخ النهاية</label>
+                    <div className="relative">
+                      <input
+                        type="date"
+                        value={npEnd}
+                        onChange={(e) => setNpEnd(e.target.value)}
+                        className="w-full h-11 border border-slate-300 rounded px-3 pl-10 text-right focus:outline-none focus:border-[color:var(--eyenak-teal)]"
+                      />
+                      <CalendarDays className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-sm text-slate-600 mb-2 text-right">تاريخ البداية</label>
+                    <div className="relative">
+                      <input
+                        type="date"
+                        value={npStart}
+                        onChange={(e) => setNpStart(e.target.value)}
+                        className="w-full h-11 border border-slate-300 rounded px-3 pl-10 text-right focus:outline-none focus:border-[color:var(--eyenak-teal)]"
+                      />
+                      <CalendarDays className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mb-6">
+                  <label className="block text-sm text-slate-600 mb-2 text-right">الأعضاء</label>
+                  <div className="relative mb-2">
+                    <input
+                      value={npMemberInput}
+                      onChange={(e) => setNpMemberInput(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" && npMemberInput.trim()) {
+                          e.preventDefault();
+                          setNpMembers((m) => [...m, npMemberInput.trim()]);
+                          setNpMemberInput("");
+                        }
+                      }}
+                      placeholder="اكتب اسم العضو واضغط Enter"
+                      className="w-full h-11 border border-slate-300 rounded px-3 pl-10 text-right focus:outline-none focus:border-[color:var(--eyenak-teal)]"
+                    />
+                    <Users className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                  </div>
+                  {npMembers.length > 0 && (
+                    <div className="flex flex-wrap gap-2 justify-end">
+                      {npMembers.map((m, i) => (
+                        <span
+                          key={`${m}-${i}`}
+                          className="inline-flex items-center gap-1 bg-slate-100 text-slate-700 text-xs rounded-full px-3 py-1"
+                        >
+                          <button
+                            onClick={() => setNpMembers((arr) => arr.filter((_, idx) => idx !== i))}
+                            className="text-slate-400 hover:text-slate-700"
+                            aria-label="حذف"
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                          <span>{m}</span>
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={() => setNpStep(1)}
+                    className="flex-1 h-11 border border-slate-300 hover:bg-slate-50 text-slate-700 rounded text-sm font-semibold flex items-center justify-center gap-2"
+                  >
+                    <ChevronRight className="w-4 h-4" />
+                    <span>رجوع</span>
+                  </button>
+                  <button
+                    onClick={closeNewProject}
+                    className="flex-1 h-11 bg-[color:var(--eyenak-teal)] hover:opacity-90 text-white rounded text-sm font-semibold"
+                  >
+                    إنشاء المشروع
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         </div>
       )}
