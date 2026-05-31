@@ -109,6 +109,9 @@ function Index() {
   const [npEnd, setNpEnd] = useState("");
   const [npMembers, setNpMembers] = useState<string[]>([]);
   const [npMemberInput, setNpMemberInput] = useState("");
+  const [membersOpen, setMembersOpen] = useState(false);
+  const [membersTab, setMembersTab] = useState<"all" | "teams" | "clients">("all");
+  const [memberSearch, setMemberSearch] = useState("");
   const closeNewProject = () => {
     setNewProjectOpen(false);
     setNpStep(1);
@@ -340,7 +343,10 @@ function Index() {
               <MoreVertical className="w-4 h-4" />
             </button>
             <div className="flex items-center gap-1">
-              <button className="p-1.5 rounded hover:bg-slate-100 text-slate-500">
+              <button
+                onClick={() => setMembersOpen(true)}
+                className="p-1.5 rounded hover:bg-slate-100 text-slate-500"
+              >
                 <Users className="w-4 h-4" />
               </button>
               <button className="p-1.5 rounded hover:bg-slate-100 text-slate-500">
