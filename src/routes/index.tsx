@@ -103,6 +103,23 @@ function Index() {
   const [newProjectOpen, setNewProjectOpen] = useState(false);
   const [npFolder, setNpFolder] = useState("");
   const [npName, setNpName] = useState("");
+  const [npStep, setNpStep] = useState<1 | 2>(1);
+  const [npDesc, setNpDesc] = useState("");
+  const [npStart, setNpStart] = useState("");
+  const [npEnd, setNpEnd] = useState("");
+  const [npMembers, setNpMembers] = useState<string[]>([]);
+  const [npMemberInput, setNpMemberInput] = useState("");
+  const closeNewProject = () => {
+    setNewProjectOpen(false);
+    setNpStep(1);
+    setNpFolder("");
+    setNpName("");
+    setNpDesc("");
+    setNpStart("");
+    setNpEnd("");
+    setNpMembers([]);
+    setNpMemberInput("");
+  };
   const toggle = (name: string) =>
     setOpenProjects((s) => ({ ...s, [name]: !s[name] }));
   const toggleEmp = (name: string) =>
