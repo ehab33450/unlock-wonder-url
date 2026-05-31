@@ -109,6 +109,9 @@ function Index() {
   const [npEnd, setNpEnd] = useState("");
   const [npMembers, setNpMembers] = useState<string[]>([]);
   const [npMemberInput, setNpMemberInput] = useState("");
+  const [membersOpen, setMembersOpen] = useState(false);
+  const [membersTab, setMembersTab] = useState<"all" | "teams" | "clients">("all");
+  const [memberSearch, setMemberSearch] = useState("");
   const closeNewProject = () => {
     setNewProjectOpen(false);
     setNpStep(1);
@@ -340,7 +343,10 @@ function Index() {
               <MoreVertical className="w-4 h-4" />
             </button>
             <div className="flex items-center gap-1">
-              <button className="p-1.5 rounded hover:bg-slate-100 text-slate-500">
+              <button
+                onClick={() => setMembersOpen(true)}
+                className="p-1.5 rounded hover:bg-slate-100 text-slate-500"
+              >
                 <Users className="w-4 h-4" />
               </button>
               <button className="p-1.5 rounded hover:bg-slate-100 text-slate-500">
@@ -619,6 +625,157 @@ function Index() {
                 </div>
               </>
             )}
+          </div>
+        </div>
+      )}
+
+      {membersOpen && (
+        <div
+          className="fixed inset-0 z-50 bg-black/40 flex items-start justify-center p-6 overflow-y-auto"
+          onClick={() => setMembersOpen(false)}
+        >
+          <div
+            className="bg-white rounded-md shadow-xl w-full max-w-5xl mt-10"
+            onClick={(e) => e.stopPropagation()}
+            dir="rtl"
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200">
+              <button
+                onClick={() => setMembersOpen(false)}
+                className="text-slate-400 hover:text-slate-600"
+              >
+                <X className="w-5 h-5" />
+              </button>
+              <div className="flex items-center gap-2">
+                <h2 className="text-lg font-bold text-slate-800">أعضاء</h2>
+                <User className="w-5 h-5 text-slate-600" />
+              </div>
+            </div>
+
+            {/* Search */}
+            <div className="px-6 py-3 flex justify-start">
+              <div className="relative w-72">
+                <Search className="w-4 h-4 absolute right-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                <input
+                  value={memberSearch}
+                  onChange={(e) => setMemberSearch(e.target.value)}
+                  placeholder="البحث بالإسم"
+                  className="w-full h-10 pr-9 pl-3 border border-slate-200 rounded text-sm focus:outline-none focus:border-[color:var(--eyenak-teal)] text-right"
+                />
+              </div>
+            </div>
+
+            {/* Tabs */}
+            <div className="flex items-center justify-end gap-8 px-6 border-b border-slate-200">
+              {[
+                { id: "all" as const, label: "الجميع يسير التميز للخدمات التجارية", count: 10, icon: User },
+                { id: "teams" as const, label: "الفرق", count: 1, icon: Users },
+                { id: "clients" as const, label: "العملاء", count: 2, icon: User },
+              ].map((t) => {
+                const Icon = t.icon;
+                const active = membersTab === t.id;
+                return (
+                  <button
+                    key={t.id}
+                    onClick={() => setMembersTab(t.id)}
+                    className={`flex items-center gap-2 py-3 -mb-px border-b-2 text-sm transition ${
+                      active
+                        ? "border-[color:var(--eyenak-teal)] text-[color:var(--eyenak-teal)]"
+                        : "border-transparent text-slate-500 hover:text-slate-700"
+                    }`}
+                  >
+                    <span className="text-xs">/ {t.count}</span>
+                    <span>{t.label}</span>
+                    <Icon className="w-4 h-4" />
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Content */}
+            <div className="p-6 min-h-[300px]">
+              {membersTab === "all" && (
+                <div className="grid grid-cols-3 gap-4">
+                  {[
+                    { name: "أحمد الأحمدي", role: "مدير تنفيذي", email: "aahmadi@yaseersa.com", phone: "+966-557723348", last: "24 May, 2026  7:49 pm" },
+                    { name: "أروى أحمد", role: "مديرة حساب العملاء", email: "arwa48545@gmail.com", phone: "+966-533999707", last: "25 May, 2026  8:59 pm" },
+                    { name: "بدر عبدالله العامري", role: "مدير حساب عمي", email: "badr@yaseersa.com", phone: "+966-500000001", last: "25 May, 2026  8:24 pm" },
+                    { name: "ايهاب فاتح", role: "مطور", email: "ehab@yaseersa.com", phone: "+966-500000002", last: "31 May, 2026  11:10 am" },
+                    { name: "أروى الجعدي", role: "مديرة حسابات العملاء", email: "arwa.j@yaseersa.com", phone: "+966-500000003", last: "25 May, 2026  9:54 pm" },
+                  ]
+                    .filter((m) => m.name.includes(memberSearch.trim()) || memberSearch.trim() === "")
+                    .map((m) => (
+                      <div key={m.name} className="border border-slate-200 rounded-lg p-4 text-center">
+                        <div className="w-20 h-20 mx-auto rounded-full bg-slate-200 ring-2 ring-[color:var(--eyenak-green)] flex items-center justify-center text-slate-500 mb-2">
+                          <User className="w-10 h-10" />
+                        </div>
+                        <div className="font-bold text-slate-800">{m.name}</div>
+                        <div className="text-xs text-[color:var(--eyenak-dark)] mb-3">{m.role}</div>
+                        <div className="text-xs space-y-2 text-right">
+                          <div className="flex justify-between"><span className="text-slate-500">{m.last}</span><span className="text-slate-600">آخر تسجيل دخول</span></div>
+                          <div className="flex justify-between"><span className="text-slate-500">{m.email}</span><span className="text-slate-600">البريد الإلكتروني</span></div>
+                          <div className="flex justify-between"><span className="text-slate-500">{m.phone}</span><span className="text-slate-600">رقم الجوال</span></div>
+                        </div>
+                        <button className="mt-3 w-full border border-slate-200 rounded py-1.5 text-xs text-slate-400">Teams</button>
+                      </div>
+                    ))}
+                  <button className="border border-slate-200 rounded-lg p-4 bg-slate-100 flex flex-col items-center justify-center text-slate-500 hover:bg-slate-200">
+                    <div className="w-12 h-12 rounded-full border border-slate-300 flex items-center justify-center mb-2">
+                      <Plus className="w-5 h-5" />
+                    </div>
+                    <span className="text-sm">إضافة مستخدم جديد</span>
+                  </button>
+                </div>
+              )}
+
+              {membersTab === "teams" && (
+                <div className="grid grid-cols-3 gap-4">
+                  <div className="border border-slate-200 rounded-lg p-4 text-center">
+                    <div className="w-20 h-20 mx-auto rounded-full bg-slate-200 ring-2 ring-[color:var(--eyenak-green)] flex items-center justify-center text-[color:var(--eyenak-dark)] mb-2">
+                      <Users className="w-10 h-10" />
+                    </div>
+                    <div className="font-bold text-slate-800">العمليات التشغيلية</div>
+                    <div className="text-xs text-[color:var(--eyenak-dark)]">المالك: أحمد الأحمدي</div>
+                    <div className="text-xs text-slate-500 mt-1">2 أعضاء</div>
+                    <button className="mt-3 w-full border border-slate-300 rounded py-1.5 text-xs text-slate-500">اضافة المزيد</button>
+                  </div>
+                  <button className="border border-slate-200 rounded-lg p-4 bg-slate-100 flex flex-col items-center justify-center text-slate-500 hover:bg-slate-200">
+                    <div className="w-12 h-12 rounded-full border border-slate-300 flex items-center justify-center mb-2">
+                      <Plus className="w-5 h-5" />
+                    </div>
+                    <span className="text-sm">إنشاء مجموعة جديدة</span>
+                  </button>
+                </div>
+              )}
+
+              {membersTab === "clients" && (
+                <div className="grid grid-cols-3 gap-4">
+                  {[
+                    { name: "شيخه", by: "شيخه محسن", email: "shiakha24@gmail.com" },
+                    { name: "أحمد A", by: "أحمد الأحمدي", email: "a.s.l_7@hotmail.com" },
+                  ].map((c) => (
+                    <div key={c.name} className="border border-slate-200 rounded-lg p-4 text-center">
+                      <div className="w-20 h-20 mx-auto rounded-full bg-slate-200 ring-2 ring-[color:var(--eyenak-green)] flex items-center justify-center text-slate-500 mb-2">
+                        <User className="w-10 h-10" />
+                      </div>
+                      <div className="font-bold text-slate-800 mb-3">{c.name}</div>
+                      <div className="text-xs space-y-2 text-right border-t border-slate-100 pt-2">
+                        <div className="flex justify-between"><span className="text-slate-500">نشط</span><span className="text-slate-600">الحالة</span></div>
+                        <div className="flex justify-between"><span className="text-slate-500">{c.by}</span><span className="text-slate-600">الإضافة بواسطة</span></div>
+                        <div className="flex justify-between"><span className="text-slate-500">{c.email}</span><span className="text-slate-600">البريد الإلكتروني</span></div>
+                      </div>
+                    </div>
+                  ))}
+                  <button className="border border-slate-200 rounded-lg p-4 bg-slate-100 flex flex-col items-center justify-center text-slate-500 hover:bg-slate-200">
+                    <div className="w-12 h-12 rounded-full border border-slate-300 flex items-center justify-center mb-2">
+                      <Plus className="w-5 h-5" />
+                    </div>
+                    <span className="text-sm">إضافة عميل جديد</span>
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}
