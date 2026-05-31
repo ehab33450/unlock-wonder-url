@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import {
   Calendar,
   FileText,
@@ -40,6 +40,9 @@ import {
   CalendarDays,
   AlignRight,
   ChevronRight,
+  Upload,
+  Megaphone,
+  Trash2,
 } from "lucide-react";
 
 export const Route = createFileRoute("/")({
@@ -112,6 +115,97 @@ function Index() {
   const [membersOpen, setMembersOpen] = useState(false);
   const [membersTab, setMembersTab] = useState<"all" | "teams" | "clients">("all");
   const [memberSearch, setMemberSearch] = useState("");
+
+  // Project folders/files store
+  type SubFolder = { name: string; createdAt: string; files: string[] };
+  type ProjectData = { folders: SubFolder[]; files: string[] };
+  const [projectData, setProjectData] = useState<Record<string, ProjectData>>({});
+  const [folderViewProject, setFolderViewProject] = useState<string | null>(null);
+  const [currentSubfolder, setCurrentSubfolder] = useState<string | null>(null);
+  const [newSubfolderOpen, setNewSubfolderOpen] = useState(false);
+  const [newSubfolderName, setNewSubfolderName] = useState("");
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  const todayLabel = new Date().toLocaleDateString("en-GB", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+
+  const handleCreateProject = () => {
+    const name = npName.trim();
+    if (!name) return;
+    setProjectData((d) => ({
+      ...d,
+      [name]: d[name] ?? { folders: [], files: [] },
+    }));
+    closeNewProject();
+    setFolderViewProject(name);
+    setCurrentSubfolder(null);
+  };
+
+  const addSubfolder = () => {
+    const name = newSubfolderName.trim();
+    if (!name || !folderViewProject) return;
+    setProjectData((d) => {
+      const cur = d[folderViewProject] ?? { folders: [], files: [] };
+      if (cur.folders.some((f) => f.name === name)) return d;
+      return {
+        ...d,
+        [folderViewProject]: {
+          ...cur,
+          folders: [...cur.folders, { name, createdAt: todayLabel, files: [] }],
+        },
+      };
+    });
+    setNewSubfolderName("");
+    setNewSubfolderOpen(false);
+  };
+
+  const handleUploadFiles = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files ?? []).map((f) => f.name);
+    if (!folderViewProject || files.length === 0) return;
+    setProjectData((d) => {
+      const cur = d[folderViewProject] ?? { folders: [], files: [] };
+      if (currentSubfolder) {
+        return {
+          ...d,
+          [folderViewProject]: {
+            ...cur,
+            folders: cur.folders.map((f) =>
+              f.name === currentSubfolder
+                ? { ...f, files: [...f.files, ...files] }
+                : f,
+            ),
+          },
+        };
+      }
+      return {
+        ...d,
+        [folderViewProject]: { ...cur, files: [...cur.files, ...files] },
+      };
+    });
+    e.target.value = "";
+  };
+
+  const removeSubfolder = (name: string) => {
+    if (!folderViewProject) return;
+    setProjectData((d) => ({
+      ...d,
+      [folderViewProject]: {
+        ...d[folderViewProject],
+        folders: d[folderViewProject].folders.filter((f) => f.name !== name),
+      },
+    }));
+  };
+
+  const currentProject = folderViewProject ? projectData[folderViewProject] : null;
+  const currentFiles = currentProject
+    ? currentSubfolder
+      ? currentProject.folders.find((f) => f.name === currentSubfolder)?.files ?? []
+      : currentProject.files
+    : [];
+
   const closeNewProject = () => {
     setNewProjectOpen(false);
     setNpStep(1);
@@ -617,7 +711,7 @@ function Index() {
                     <span>رجوع</span>
                   </button>
                   <button
-                    onClick={closeNewProject}
+                    onClick={handleCreateProject}
                     className="flex-1 h-11 bg-[color:var(--eyenak-teal)] hover:opacity-90 text-white rounded text-sm font-semibold"
                   >
                     إنشاء المشروع
@@ -776,6 +870,194 @@ function Index() {
                 </div>
               )}
             </div>
+          </div>
+        </div>
+      )}
+
+      {folderViewProject && currentProject && (
+        <div
+          className="fixed inset-0 z-50 bg-black/40 flex items-start justify-center p-4 overflow-y-auto"
+          onClick={() => {
+            setFolderViewProject(null);
+            setCurrentSubfolder(null);
+          }}
+        >
+          <input
+            ref={fileInputRef}
+            type="file"
+            multiple
+            className="hidden"
+            onChange={handleUploadFiles}
+          />
+          <div
+            className="bg-slate-50 rounded-md shadow-xl w-full max-w-6xl mt-6 min-h-[600px]"
+            onClick={(e) => e.stopPropagation()}
+            dir="rtl"
+          >
+            {/* Header bar */}
+            <div className="flex items-center justify-between px-6 py-3 bg-white border-b border-slate-200 rounded-t-md">
+              <div className="flex items-center gap-2 text-sm">
+                <button
+                  onClick={() => {
+                    setFolderViewProject(null);
+                    setCurrentSubfolder(null);
+                  }}
+                  className="text-slate-400 hover:text-slate-700"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+                {currentSubfolder && (
+                  <button
+                    onClick={() => setCurrentSubfolder(null)}
+                    className="text-[color:var(--eyenak-teal)] hover:underline text-xs"
+                  >
+                    رجوع للمجلد
+                  </button>
+                )}
+              </div>
+              <div className="flex items-center gap-2 text-sm">
+                <span className="text-slate-500">المشروع:</span>
+                <span className="font-bold text-slate-800">{folderViewProject}</span>
+                {currentSubfolder && (
+                  <>
+                    <ChevronLeft className="w-3 h-3 text-slate-400" />
+                    <span className="font-bold text-slate-800">{currentSubfolder}</span>
+                  </>
+                )}
+              </div>
+            </div>
+
+            {/* Folders section */}
+            <div className="px-8 py-6">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => fileInputRef.current?.click()}
+                    className="h-9 px-4 bg-slate-100 border border-slate-300 rounded text-sm text-slate-700 hover:bg-slate-200 flex items-center gap-2"
+                  >
+                    <Upload className="w-4 h-4" />
+                    <span>رفع الملفات</span>
+                  </button>
+                  {!currentSubfolder && (
+                    <button
+                      onClick={() => setNewSubfolderOpen(true)}
+                      className="h-9 px-4 border border-slate-300 rounded text-sm text-slate-500 hover:bg-slate-50 flex items-center gap-2"
+                    >
+                      <FolderPlus className="w-4 h-4" />
+                      <span>مجلد جديد</span>
+                    </button>
+                  )}
+                </div>
+                <h3 className="text-sm font-bold text-slate-700">المجلد</h3>
+              </div>
+
+              {!currentSubfolder && (
+                <div className="grid grid-cols-2 gap-3 mb-8">
+                  {currentProject.folders.length === 0 ? (
+                    <div className="col-span-2 text-center py-10 text-slate-400 text-sm">
+                      لا توجد مجلدات بعد
+                    </div>
+                  ) : (
+                    currentProject.folders.map((f) => (
+                      <div
+                        key={f.name}
+                        className="bg-white rounded-lg shadow-sm border border-slate-100 flex items-center justify-between px-4 py-3"
+                      >
+                        <button className="text-slate-400 hover:text-slate-600">
+                          <MoreVertical className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => setCurrentSubfolder(f.name)}
+                          className="flex items-center gap-3 flex-1 justify-end text-right"
+                        >
+                          <div>
+                            <div className="font-bold text-slate-800 text-sm">{f.name}</div>
+                            <div className="text-xs text-slate-400 mt-0.5">
+                              تاريخ الإنشاء: {f.createdAt}
+                            </div>
+                          </div>
+                          <div className="w-10 h-10 rounded bg-amber-100 flex items-center justify-center text-amber-500">
+                            <Folder className="w-6 h-6" />
+                          </div>
+                        </button>
+                        <button
+                          onClick={() => removeSubfolder(f.name)}
+                          className="text-slate-300 hover:text-red-500 ml-2"
+                          aria-label="حذف"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    ))
+                  )}
+                </div>
+              )}
+
+              {/* Files section */}
+              <div className="mt-4">
+                <h3 className="text-sm font-bold text-slate-700 text-right mb-2">الملفات</h3>
+                <div className="border-t border-slate-200" />
+                {currentFiles.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-16 text-slate-400">
+                    <Megaphone className="w-16 h-16 mb-3 text-slate-300" />
+                    <div className="text-sm">لا يوجد نتائج.</div>
+                  </div>
+                ) : (
+                  <ul className="divide-y divide-slate-100 bg-white rounded mt-3">
+                    {currentFiles.map((f, i) => (
+                      <li
+                        key={`${f}-${i}`}
+                        className="flex items-center justify-between px-4 py-3"
+                      >
+                        <span className="text-xs text-slate-400">{todayLabel}</span>
+                        <div className="flex items-center gap-2 text-sm text-slate-700">
+                          <span>{f}</span>
+                          <FileIcon className="w-4 h-4 text-slate-400" />
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {newSubfolderOpen && (
+        <div
+          className="fixed inset-0 z-[60] bg-black/40 flex items-center justify-center p-4"
+          onClick={() => setNewSubfolderOpen(false)}
+        >
+          <div
+            className="bg-white rounded-md shadow-xl w-full max-w-md p-6"
+            onClick={(e) => e.stopPropagation()}
+            dir="rtl"
+          >
+            <div className="flex items-center justify-between mb-4">
+              <button
+                onClick={() => setNewSubfolderOpen(false)}
+                className="text-slate-400 hover:text-slate-700"
+              >
+                <X className="w-5 h-5" />
+              </button>
+              <h3 className="text-base font-bold text-slate-800">مجلد جديد</h3>
+            </div>
+            <label className="block text-sm text-slate-600 mb-2 text-right">اسم المجلد</label>
+            <input
+              value={newSubfolderName}
+              onChange={(e) => setNewSubfolderName(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && addSubfolder()}
+              autoFocus
+              className="w-full h-11 border border-slate-300 rounded px-3 text-right focus:outline-none focus:border-[color:var(--eyenak-teal)] mb-4"
+            />
+            <button
+              onClick={addSubfolder}
+              disabled={!newSubfolderName.trim()}
+              className="w-full h-11 bg-[color:var(--eyenak-teal)] disabled:bg-slate-200 disabled:text-slate-500 hover:opacity-90 text-white rounded text-sm font-semibold"
+            >
+              إنشاء
+            </button>
           </div>
         </div>
       )}
