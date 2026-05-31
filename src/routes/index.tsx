@@ -711,7 +711,7 @@ function Index() {
                     <span>رجوع</span>
                   </button>
                   <button
-                    onClick={closeNewProject}
+                    onClick={handleCreateProject}
                     className="flex-1 h-11 bg-[color:var(--eyenak-teal)] hover:opacity-90 text-white rounded text-sm font-semibold"
                   >
                     إنشاء المشروع
