@@ -115,6 +115,97 @@ function Index() {
   const [membersOpen, setMembersOpen] = useState(false);
   const [membersTab, setMembersTab] = useState<"all" | "teams" | "clients">("all");
   const [memberSearch, setMemberSearch] = useState("");
+
+  // Project folders/files store
+  type SubFolder = { name: string; createdAt: string; files: string[] };
+  type ProjectData = { folders: SubFolder[]; files: string[] };
+  const [projectData, setProjectData] = useState<Record<string, ProjectData>>({});
+  const [folderViewProject, setFolderViewProject] = useState<string | null>(null);
+  const [currentSubfolder, setCurrentSubfolder] = useState<string | null>(null);
+  const [newSubfolderOpen, setNewSubfolderOpen] = useState(false);
+  const [newSubfolderName, setNewSubfolderName] = useState("");
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  const todayLabel = new Date().toLocaleDateString("en-GB", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+
+  const handleCreateProject = () => {
+    const name = npName.trim();
+    if (!name) return;
+    setProjectData((d) => ({
+      ...d,
+      [name]: d[name] ?? { folders: [], files: [] },
+    }));
+    closeNewProject();
+    setFolderViewProject(name);
+    setCurrentSubfolder(null);
+  };
+
+  const addSubfolder = () => {
+    const name = newSubfolderName.trim();
+    if (!name || !folderViewProject) return;
+    setProjectData((d) => {
+      const cur = d[folderViewProject] ?? { folders: [], files: [] };
+      if (cur.folders.some((f) => f.name === name)) return d;
+      return {
+        ...d,
+        [folderViewProject]: {
+          ...cur,
+          folders: [...cur.folders, { name, createdAt: todayLabel, files: [] }],
+        },
+      };
+    });
+    setNewSubfolderName("");
+    setNewSubfolderOpen(false);
+  };
+
+  const handleUploadFiles = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files ?? []).map((f) => f.name);
+    if (!folderViewProject || files.length === 0) return;
+    setProjectData((d) => {
+      const cur = d[folderViewProject] ?? { folders: [], files: [] };
+      if (currentSubfolder) {
+        return {
+          ...d,
+          [folderViewProject]: {
+            ...cur,
+            folders: cur.folders.map((f) =>
+              f.name === currentSubfolder
+                ? { ...f, files: [...f.files, ...files] }
+                : f,
+            ),
+          },
+        };
+      }
+      return {
+        ...d,
+        [folderViewProject]: { ...cur, files: [...cur.files, ...files] },
+      };
+    });
+    e.target.value = "";
+  };
+
+  const removeSubfolder = (name: string) => {
+    if (!folderViewProject) return;
+    setProjectData((d) => ({
+      ...d,
+      [folderViewProject]: {
+        ...d[folderViewProject],
+        folders: d[folderViewProject].folders.filter((f) => f.name !== name),
+      },
+    }));
+  };
+
+  const currentProject = folderViewProject ? projectData[folderViewProject] : null;
+  const currentFiles = currentProject
+    ? currentSubfolder
+      ? currentProject.folders.find((f) => f.name === currentSubfolder)?.files ?? []
+      : currentProject.files
+    : [];
+
   const closeNewProject = () => {
     setNewProjectOpen(false);
     setNpStep(1);
