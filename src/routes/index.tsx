@@ -388,6 +388,7 @@ function Index() {
                 key={item.label}
                 onClick={() => {
                   if (item.label === "التقويم") setCalendarOpen(true);
+                  if (item.label === "الحجز") setBookingOpen(true);
                 }}
                 className="w-16 py-3 flex flex-col items-center gap-1 rounded-lg hover:bg-slate-100 text-slate-600 transition"
               >
