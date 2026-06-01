@@ -126,6 +126,103 @@ function Index() {
   const [newSubfolderName, setNewSubfolderName] = useState("");
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
+  // Calendar
+  type CalEvent = {
+    id: string;
+    title: string;
+    start: string;
+    end: string;
+    allDay: boolean;
+    color: string;
+    location?: string;
+    members?: string;
+    clients?: string;
+    description?: string;
+    allowInvite?: boolean;
+  };
+  const [calendarOpen, setCalendarOpen] = useState(false);
+  const [calView, setCalView] = useState<"month" | "week" | "day" | "list">("month");
+  const [calCursor, setCalCursor] = useState(() => new Date());
+  const [calSelected, setCalSelected] = useState<Date>(() => new Date());
+  const [events, setEvents] = useState<Record<string, CalEvent[]>>({});
+  const [eventFormOpen, setEventFormOpen] = useState(false);
+  const toIsoDate = (d: Date) => {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    return `${y}-${m}-${day}`;
+  };
+  const [evTitle, setEvTitle] = useState("");
+  const [evStart, setEvStart] = useState("");
+  const [evEnd, setEvEnd] = useState("");
+  const [evAllDay, setEvAllDay] = useState(true);
+  const [evLocation, setEvLocation] = useState("");
+  const [evMembers, setEvMembers] = useState("");
+  const [evClients, setEvClients] = useState("");
+  const [evColor, setEvColor] = useState("#0ea5e9");
+  const [evDesc, setEvDesc] = useState("");
+  const [evAllowInvite, setEvAllowInvite] = useState(false);
+  const eventColors = [
+    "#a855f7", "#818cf8", "#3b82f6", "#16a34a", "#22c55e",
+    "#eab308", "#f97316", "#f472b6", "#dc2626", "#0ea5e9",
+  ];
+  const openEventForm = (d: Date) => {
+    const iso = toIsoDate(d);
+    setCalSelected(d);
+    setEvTitle("");
+    setEvStart(iso);
+    setEvEnd(iso);
+    setEvAllDay(true);
+    setEvLocation("");
+    setEvMembers("");
+    setEvClients("");
+    setEvColor("#0ea5e9");
+    setEvDesc("");
+    setEvAllowInvite(false);
+    setEventFormOpen(true);
+  };
+  const saveEvent = () => {
+    if (!evTitle.trim()) return;
+    const ev: CalEvent = {
+      id: String(Date.now()),
+      title: evTitle.trim(),
+      start: evStart,
+      end: evEnd,
+      allDay: evAllDay,
+      color: evColor,
+      location: evLocation,
+      members: evMembers,
+      clients: evClients,
+      description: evDesc,
+      allowInvite: evAllowInvite,
+    };
+    setEvents((e) => ({ ...e, [evStart]: [...(e[evStart] ?? []), ev] }));
+    setEventFormOpen(false);
+  };
+  const monthLabel = calCursor.toLocaleDateString("en-US", { month: "long", year: "numeric" });
+  const dayLabel = calSelected.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
+  const buildMonthGrid = (cursor: Date) => {
+    const first = new Date(cursor.getFullYear(), cursor.getMonth(), 1);
+    const startDay = first.getDay(); // 0 Sun
+    const start = new Date(first);
+    start.setDate(1 - startDay);
+    return Array.from({ length: 42 }, (_, i) => {
+      const d = new Date(start);
+      d.setDate(start.getDate() + i);
+      return d;
+    });
+  };
+  const monthGrid = buildMonthGrid(calCursor);
+  const miniGrid = buildMonthGrid(calCursor);
+  const shiftMonth = (delta: number) =>
+    setCalCursor(new Date(calCursor.getFullYear(), calCursor.getMonth() + delta, 1));
+  const shiftDay = (delta: number) => {
+    const d = new Date(calSelected);
+    d.setDate(d.getDate() + delta);
+    setCalSelected(d);
+    setCalCursor(d);
+  };
+
   const todayLabel = new Date().toLocaleDateString("en-GB", {
     day: "numeric",
     month: "short",
@@ -287,6 +384,9 @@ function Index() {
             return (
               <button
                 key={item.label}
+                onClick={() => {
+                  if (item.label === "التقويم") setCalendarOpen(true);
+                }}
                 className="w-16 py-3 flex flex-col items-center gap-1 rounded-lg hover:bg-slate-100 text-slate-600 transition"
               >
                 <Icon className="w-5 h-5" />
@@ -1059,6 +1159,225 @@ function Index() {
               إنشاء
             </button>
           </div>
+        </div>
+      )}
+
+      {calendarOpen && (
+        <div
+          dir="rtl"
+          className="fixed inset-0 z-50 bg-black/40 flex items-stretch"
+          onClick={() => setCalendarOpen(false)}
+        >
+          <div
+            className="ml-auto w-full max-w-[1400px] bg-slate-50 h-full flex"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Main calendar */}
+            <div className="flex-1 flex flex-col">
+              <div className="flex items-center justify-between px-4 py-3 bg-white border-b border-slate-200">
+                <div className="flex items-center gap-2">
+                  <button className="h-9 px-3 rounded bg-yellow-400 text-slate-800 text-sm font-semibold">التقويم الخاص</button>
+                  <button className="h-9 px-3 rounded bg-slate-200 text-slate-700 text-sm">الدعوات المعلقة</button>
+                  <button
+                    onClick={() => { const t = new Date(); setCalCursor(t); setCalSelected(t); }}
+                    className="h-9 px-3 rounded bg-sky-100 text-sky-700 text-sm font-semibold"
+                  >اليوم</button>
+                  <button
+                    onClick={() => calView === "day" ? shiftDay(-1) : shiftMonth(-1)}
+                    className="h-9 w-9 rounded bg-sky-500 text-white flex items-center justify-center"
+                  ><ChevronLeft className="w-4 h-4" /></button>
+                  <button
+                    onClick={() => calView === "day" ? shiftDay(1) : shiftMonth(1)}
+                    className="h-9 w-9 rounded bg-sky-500 text-white flex items-center justify-center"
+                  ><ChevronRight className="w-4 h-4" /></button>
+                </div>
+                <div className="text-lg font-semibold text-slate-700">
+                  {calView === "day" ? dayLabel : monthLabel}
+                </div>
+                <div className="flex items-center gap-1">
+                  {([
+                    ["list", "القائمة"],
+                    ["day", "اليوم"],
+                    ["week", "الأسبوع"],
+                    ["month", "الشهر"],
+                  ] as const).map(([v, label]) => (
+                    <button
+                      key={v}
+                      onClick={() => setCalView(v)}
+                      className={`h-9 px-3 rounded text-sm font-medium ${calView === v ? "bg-sky-500 text-white" : "bg-white text-slate-600 border border-slate-200"}`}
+                    >{label}</button>
+                  ))}
+                  <button onClick={() => setCalendarOpen(false)} className="h-9 w-9 ml-2 rounded hover:bg-slate-100 flex items-center justify-center">
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+
+              <div className="flex-1 overflow-auto p-4" dir="ltr">
+                {calView === "month" && (
+                  <div className="bg-white border border-slate-200 rounded">
+                    <div className="grid grid-cols-7 border-b border-slate-200">
+                      {["Sun","Mon","Tue","Wed","Thu","Fri","Sat"].map((d) => (
+                        <div key={d} className="px-3 py-2 text-xs font-semibold text-slate-600 border-r last:border-r-0 border-slate-200">{d}</div>
+                      ))}
+                    </div>
+                    <div className="grid grid-cols-7">
+                      {monthGrid.map((d, i) => {
+                        const inMonth = d.getMonth() === calCursor.getMonth();
+                        const isToday = toIsoDate(d) === toIsoDate(new Date());
+                        const evs = events[toIsoDate(d)] ?? [];
+                        return (
+                          <button
+                            key={i}
+                            onClick={() => openEventForm(d)}
+                            className={`h-28 text-left p-2 border-r border-b last:border-r-0 border-slate-200 hover:bg-sky-50 transition ${inMonth ? "" : "text-slate-300"} ${isToday ? "bg-amber-50" : ""}`}
+                          >
+                            <div className="text-xs font-medium">{d.getDate()}</div>
+                            <div className="mt-1 space-y-1">
+                              {evs.slice(0,3).map((e) => (
+                                <div key={e.id} className="text-[10px] text-white px-1 py-0.5 rounded truncate" style={{ backgroundColor: e.color }}>{e.title}</div>
+                              ))}
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {calView === "day" && (
+                  <div className="bg-white border border-slate-200 rounded">
+                    <div className="px-4 py-2 text-center text-sm font-semibold text-slate-700 border-b border-slate-200">
+                      {calSelected.toLocaleDateString("en-US", { weekday: "long" })}
+                    </div>
+                    <div className="px-4 py-2 text-xs text-slate-500 border-b border-slate-200 bg-amber-50 cursor-pointer" onClick={() => openEventForm(calSelected)}>all-day</div>
+                    {Array.from({ length: 14 }, (_, i) => i + 6).map((h) => (
+                      <div key={h} onClick={() => openEventForm(calSelected)} className="flex border-b border-slate-100 hover:bg-sky-50 cursor-pointer">
+                        <div className="w-16 px-2 py-3 text-xs text-slate-500 text-right border-r border-slate-200">{h <= 12 ? h : h - 12}{h < 12 ? "am" : "pm"}</div>
+                        <div className="flex-1 min-h-[40px]" />
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {calView === "week" && (
+                  <div className="bg-white border border-slate-200 rounded p-8 text-center text-slate-500 text-sm">عرض الأسبوع</div>
+                )}
+                {calView === "list" && (
+                  <div className="bg-white border border-slate-200 rounded p-8 text-center text-slate-500 text-sm">لا توجد مناسبات</div>
+                )}
+              </div>
+            </div>
+
+            {/* Mini sidebar */}
+            <div className="w-72 bg-slate-800 text-white p-4 overflow-auto" dir="ltr">
+              <div className="flex items-center justify-between mb-3 text-sm">
+                <button onClick={() => shiftMonth(-1)} className="h-7 w-7 rounded hover:bg-slate-700 flex items-center justify-center"><ChevronLeft className="w-4 h-4" /></button>
+                <div className="flex items-center gap-2">
+                  <span className="font-semibold">{calCursor.toLocaleDateString("en-US", { month: "short" })}</span>
+                  <span className="font-semibold">{calCursor.getFullYear()}</span>
+                </div>
+                <button onClick={() => shiftMonth(1)} className="h-7 w-7 rounded hover:bg-slate-700 flex items-center justify-center"><ChevronRight className="w-4 h-4" /></button>
+              </div>
+              <div className="grid grid-cols-7 text-[10px] text-slate-400 mb-1">
+                {["Su","Mo","Tu","We","Th","Fr","Sa"].map((d) => <div key={d} className="text-center py-1">{d}</div>)}
+              </div>
+              <div className="grid grid-cols-7 gap-1 text-xs">
+                {miniGrid.map((d, i) => {
+                  const inMonth = d.getMonth() === calCursor.getMonth();
+                  const isSel = toIsoDate(d) === toIsoDate(calSelected);
+                  return (
+                    <button
+                      key={i}
+                      onClick={() => { setCalSelected(d); setCalView("day"); }}
+                      className={`h-7 rounded text-center ${isSel ? "bg-sky-500 text-white" : inMonth ? "hover:bg-slate-700" : "text-slate-500"}`}
+                    >{d.getDate()}</button>
+                  );
+                })}
+              </div>
+              <h3 className="mt-6 mb-3 text-sm font-semibold">الأحداث القادمة</h3>
+              <div className="text-center text-slate-400 text-sm py-6">
+                <div className="text-3xl mb-2">🗓️</div>
+                لا يوجد مناسبات!
+              </div>
+            </div>
+          </div>
+
+          {eventFormOpen && (
+            <div className="fixed inset-0 z-[60] bg-black/40 flex items-start justify-center pt-10" onClick={() => setEventFormOpen(false)}>
+              <div dir="rtl" className="bg-white w-full max-w-5xl rounded shadow-xl overflow-hidden" onClick={(e) => e.stopPropagation()}>
+                <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200">
+                  <h2 className="text-base font-semibold text-slate-800">إضافة مناسبة جديدة</h2>
+                  <div className="flex items-center gap-2">
+                    <button onClick={() => setEventFormOpen(false)} className="h-9 px-4 rounded bg-slate-100 text-slate-700 text-sm">إلغاء</button>
+                    <button onClick={saveEvent} className="h-9 px-4 rounded bg-yellow-400 text-slate-800 text-sm font-semibold">حفظ</button>
+                  </div>
+                </div>
+                <div className="p-5 space-y-4 max-h-[80vh] overflow-auto">
+                  <div>
+                    <label className="block text-xs text-slate-600 mb-1 text-right">العنوان</label>
+                    <input value={evTitle} onChange={(e) => setEvTitle(e.target.value)} className="w-full h-10 border border-slate-300 rounded px-3 text-right focus:outline-none focus:border-sky-500" />
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs text-slate-600 mb-1 text-right">تاريخ البدء</label>
+                      <input type="date" value={evStart} onChange={(e) => setEvStart(e.target.value)} className="w-full h-10 border border-slate-300 rounded px-3 text-right" />
+                    </div>
+                    <div>
+                      <label className="block text-xs text-slate-600 mb-1 text-right">تاريخ الانتهاء</label>
+                      <div className="flex items-center gap-3">
+                        <input type="date" value={evEnd} onChange={(e) => setEvEnd(e.target.value)} className="flex-1 h-10 border border-slate-300 rounded px-3 text-right" />
+                        <label className="flex items-center gap-2 text-xs text-slate-600 whitespace-nowrap">
+                          <input type="checkbox" checked={evAllDay} onChange={(e) => setEvAllDay(e.target.checked)} className="accent-yellow-500" />
+                          طوال اليوم
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs text-slate-600 mb-1 text-right">موقعك</label>
+                      <input value={evLocation} onChange={(e) => setEvLocation(e.target.value)} className="w-full h-10 border border-slate-300 rounded px-3 text-right" />
+                    </div>
+                    <div>
+                      <label className="block text-xs text-slate-600 mb-1 text-right">المنطقة الزمنية</label>
+                      <select className="w-full h-10 border border-slate-300 rounded px-3 text-right bg-white">
+                        <option>(GMT+03:00) Riyadh</option>
+                        <option>(GMT+07:00) Jakarta</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs text-slate-600 mb-1 text-right">أعضاء الفريق</label>
+                      <input value={evMembers} onChange={(e) => setEvMembers(e.target.value)} className="w-full h-10 border border-slate-300 rounded px-3 text-right" />
+                    </div>
+                    <div>
+                      <label className="block text-xs text-slate-600 mb-1 text-right">العملاء</label>
+                      <input value={evClients} onChange={(e) => setEvClients(e.target.value)} className="w-full h-10 border border-slate-300 rounded px-3 text-right" />
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      {eventColors.map((c) => (
+                        <button key={c} onClick={() => setEvColor(c)} className="w-7 h-7 rounded flex items-center justify-center" style={{ backgroundColor: c }}>
+                          {evColor === c && <span className="text-white text-xs">✓</span>}
+                        </button>
+                      ))}
+                    </div>
+                    <label className="flex items-center gap-2 text-xs text-slate-600">
+                      <input type="checkbox" checked={evAllowInvite} onChange={(e) => setEvAllowInvite(e.target.checked)} />
+                      السماح لأعضاء الفريق دعوة الآخرين
+                    </label>
+                  </div>
+                  <div>
+                    <label className="block text-xs text-slate-600 mb-1 text-right">إضافة وصف</label>
+                    <textarea value={evDesc} onChange={(e) => setEvDesc(e.target.value)} rows={4} className="w-full border border-slate-300 rounded px-3 py-2 text-right" />
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>
