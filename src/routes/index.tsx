@@ -141,6 +141,8 @@ function Index() {
     allowInvite?: boolean;
   };
   const [calendarOpen, setCalendarOpen] = useState(false);
+  const [bookingOpen, setBookingOpen] = useState(false);
+  const [bookingTab, setBookingTab] = useState<"services" | "all" | "today" | "pending" | "book">("all");
   const [calView, setCalView] = useState<"month" | "week" | "day" | "list">("month");
   const [calCursor, setCalCursor] = useState(() => new Date());
   const [calSelected, setCalSelected] = useState<Date>(() => new Date());
