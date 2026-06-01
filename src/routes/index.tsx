@@ -141,6 +141,8 @@ function Index() {
     allowInvite?: boolean;
   };
   const [calendarOpen, setCalendarOpen] = useState(false);
+  const [bookingOpen, setBookingOpen] = useState(false);
+  const [bookingTab, setBookingTab] = useState<"services" | "all" | "today" | "pending" | "book">("all");
   const [calView, setCalView] = useState<"month" | "week" | "day" | "list">("month");
   const [calCursor, setCalCursor] = useState(() => new Date());
   const [calSelected, setCalSelected] = useState<Date>(() => new Date());
@@ -386,6 +388,7 @@ function Index() {
                 key={item.label}
                 onClick={() => {
                   if (item.label === "التقويم") setCalendarOpen(true);
+                  if (item.label === "الحجز") setBookingOpen(true);
                 }}
                 className="w-16 py-3 flex flex-col items-center gap-1 rounded-lg hover:bg-slate-100 text-slate-600 transition"
               >
@@ -1378,6 +1381,104 @@ function Index() {
               </div>
             </div>
           )}
+        </div>
+      )}
+      {bookingOpen && (
+        <div
+          dir="rtl"
+          className="fixed inset-0 z-50 bg-slate-100 overflow-auto"
+        >
+          <div className="flex min-h-full">
+            {/* Right rail */}
+            <aside className="w-24 bg-[#0b1e3a] text-white flex flex-col items-center py-4 gap-1">
+              {[
+                { id: "services", label: "خدمات", Icon: LayoutTemplate },
+                { id: "all", label: "جميع الحجوزات", Icon: ClipboardList },
+                { id: "today", label: "حجز اليوم", Icon: CalendarDays },
+                { id: "pending", label: "الحجز في انتظار", Icon: Clock },
+                { id: "book", label: "خدمة الكتاب", Icon: FileText },
+              ].map((t) => {
+                const active = bookingTab === t.id;
+                return (
+                  <button
+                    key={t.id}
+                    onClick={() => setBookingTab(t.id as typeof bookingTab)}
+                    className={`w-20 py-3 rounded-lg flex flex-col items-center gap-1 text-[11px] transition ${
+                      active ? "bg-white/10 text-white" : "text-slate-300 hover:bg-white/5"
+                    }`}
+                  >
+                    <t.Icon className="w-5 h-5" />
+                    <span className="text-center leading-tight">{t.label}</span>
+                  </button>
+                );
+              })}
+            </aside>
+
+            {/* Content */}
+            <div className="flex-1 p-6">
+              <div className="flex items-center justify-between mb-4">
+                <button
+                  onClick={() => setBookingOpen(false)}
+                  className="h-9 w-9 rounded hover:bg-slate-200 flex items-center justify-center"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+                <h2 className="text-xl font-bold text-slate-800">
+                  {bookingTab === "services" && "خدمات"}
+                  {bookingTab === "all" && "جميع الحجوزات"}
+                  {bookingTab === "today" && "حجز اليوم"}
+                  {bookingTab === "pending" && "الحجز في انتظار"}
+                  {bookingTab === "book" && "خدمة الكتاب"}
+                </h2>
+              </div>
+
+              {/* Top summary row */}
+              <div className="grid grid-cols-2 gap-4 mb-4">
+                <div className="bg-white rounded-lg border border-slate-200 p-4 min-h-[260px] flex flex-col">
+                  <div className="text-sm font-semibold text-slate-700 mb-3">ملخص الحجوزات</div>
+                  <div className="flex-1 flex items-center justify-center">
+                    <div className="w-40 h-40 rounded-full border-[14px] border-slate-200" />
+                  </div>
+                </div>
+                <div className="bg-white rounded-lg border border-slate-200 p-4 min-h-[260px] flex flex-col">
+                  <div className="text-sm font-semibold text-slate-700 mb-3">آخر الحجوزات</div>
+                  <div className="flex-1 flex items-center justify-center text-slate-400 text-sm">
+                    لم يتم العثور على أي حجوزات
+                  </div>
+                  <button className="text-xs text-sky-600 hover:underline text-center">
+                    عرض الكل
+                  </button>
+                </div>
+              </div>
+
+              {/* Two tables */}
+              <div className="grid grid-cols-2 gap-4">
+                {[
+                  { title: "حجز اليوم", empty: "لا يوجد حجوزات اليوم", cols: ["اسم", "معرف الحجز", "خدمات", "تأكيد في", "حالة", "الإجراءات"] },
+                  { title: "الحجز في انتظار", empty: "لا توجد حجوزات معلقة", cols: ["اسم", "معرف الحجز", "خدمات", "حالة", "الإجراءات"] },
+                ].map((tbl) => (
+                  <div key={tbl.title} className="bg-white rounded-lg border border-slate-200">
+                    <div className="flex items-center justify-between p-3 border-b border-slate-200">
+                      <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-indigo-50 text-indigo-600 text-xs">0</span>
+                      <h3 className="text-sm font-semibold text-slate-700">{tbl.title}</h3>
+                    </div>
+                    <div className="grid bg-slate-100 text-xs text-slate-600 font-medium" style={{ gridTemplateColumns: `repeat(${tbl.cols.length}, minmax(0, 1fr))` }}>
+                      {tbl.cols.map((c) => (
+                        <div key={c} className="px-3 py-2 text-right">{c}</div>
+                      ))}
+                    </div>
+                    <div className="py-12 flex flex-col items-center justify-center text-slate-400">
+                      <CalendarDays className="w-12 h-12 mb-3 text-slate-300" />
+                      <div className="text-sm">{tbl.empty}</div>
+                    </div>
+                    <div className="p-3 border-t border-slate-200 text-center">
+                      <button className="text-xs text-sky-600 hover:underline">عرض الكل</button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </div>
