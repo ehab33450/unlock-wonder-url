@@ -384,6 +384,9 @@ function Index() {
             return (
               <button
                 key={item.label}
+                onClick={() => {
+                  if (item.label === "التقويم") setCalendarOpen(true);
+                }}
                 className="w-16 py-3 flex flex-col items-center gap-1 rounded-lg hover:bg-slate-100 text-slate-600 transition"
               >
                 <Icon className="w-5 h-5" />
