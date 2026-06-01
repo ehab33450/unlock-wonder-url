@@ -126,6 +126,103 @@ function Index() {
   const [newSubfolderName, setNewSubfolderName] = useState("");
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
+  // Calendar
+  type CalEvent = {
+    id: string;
+    title: string;
+    start: string;
+    end: string;
+    allDay: boolean;
+    color: string;
+    location?: string;
+    members?: string;
+    clients?: string;
+    description?: string;
+    allowInvite?: boolean;
+  };
+  const [calendarOpen, setCalendarOpen] = useState(false);
+  const [calView, setCalView] = useState<"month" | "week" | "day" | "list">("month");
+  const [calCursor, setCalCursor] = useState(() => new Date());
+  const [calSelected, setCalSelected] = useState<Date>(() => new Date());
+  const [events, setEvents] = useState<Record<string, CalEvent[]>>({});
+  const [eventFormOpen, setEventFormOpen] = useState(false);
+  const toIsoDate = (d: Date) => {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    return `${y}-${m}-${day}`;
+  };
+  const [evTitle, setEvTitle] = useState("");
+  const [evStart, setEvStart] = useState("");
+  const [evEnd, setEvEnd] = useState("");
+  const [evAllDay, setEvAllDay] = useState(true);
+  const [evLocation, setEvLocation] = useState("");
+  const [evMembers, setEvMembers] = useState("");
+  const [evClients, setEvClients] = useState("");
+  const [evColor, setEvColor] = useState("#0ea5e9");
+  const [evDesc, setEvDesc] = useState("");
+  const [evAllowInvite, setEvAllowInvite] = useState(false);
+  const eventColors = [
+    "#a855f7", "#818cf8", "#3b82f6", "#16a34a", "#22c55e",
+    "#eab308", "#f97316", "#f472b6", "#dc2626", "#0ea5e9",
+  ];
+  const openEventForm = (d: Date) => {
+    const iso = toIsoDate(d);
+    setCalSelected(d);
+    setEvTitle("");
+    setEvStart(iso);
+    setEvEnd(iso);
+    setEvAllDay(true);
+    setEvLocation("");
+    setEvMembers("");
+    setEvClients("");
+    setEvColor("#0ea5e9");
+    setEvDesc("");
+    setEvAllowInvite(false);
+    setEventFormOpen(true);
+  };
+  const saveEvent = () => {
+    if (!evTitle.trim()) return;
+    const ev: CalEvent = {
+      id: String(Date.now()),
+      title: evTitle.trim(),
+      start: evStart,
+      end: evEnd,
+      allDay: evAllDay,
+      color: evColor,
+      location: evLocation,
+      members: evMembers,
+      clients: evClients,
+      description: evDesc,
+      allowInvite: evAllowInvite,
+    };
+    setEvents((e) => ({ ...e, [evStart]: [...(e[evStart] ?? []), ev] }));
+    setEventFormOpen(false);
+  };
+  const monthLabel = calCursor.toLocaleDateString("en-US", { month: "long", year: "numeric" });
+  const dayLabel = calSelected.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
+  const buildMonthGrid = (cursor: Date) => {
+    const first = new Date(cursor.getFullYear(), cursor.getMonth(), 1);
+    const startDay = first.getDay(); // 0 Sun
+    const start = new Date(first);
+    start.setDate(1 - startDay);
+    return Array.from({ length: 42 }, (_, i) => {
+      const d = new Date(start);
+      d.setDate(start.getDate() + i);
+      return d;
+    });
+  };
+  const monthGrid = buildMonthGrid(calCursor);
+  const miniGrid = buildMonthGrid(calCursor);
+  const shiftMonth = (delta: number) =>
+    setCalCursor(new Date(calCursor.getFullYear(), calCursor.getMonth() + delta, 1));
+  const shiftDay = (delta: number) => {
+    const d = new Date(calSelected);
+    d.setDate(d.getDate() + delta);
+    setCalSelected(d);
+    setCalCursor(d);
+  };
+
   const todayLabel = new Date().toLocaleDateString("en-GB", {
     day: "numeric",
     month: "short",
