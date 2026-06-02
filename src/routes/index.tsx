@@ -1549,7 +1549,7 @@ function Index() {
                       <span>{isAdmin ? "مدير" : "موظف"}</span>
                     </button>
                     {permsOpen && (
-                      <div className="absolute z-20 mt-1 right-0 w-64 bg-white border border-slate-200 rounded shadow-lg p-3 text-right text-xs space-y-2">
+                      <div className="absolute z-20 mt-1 right-0 w-80 bg-white border border-slate-200 rounded shadow-lg p-3 text-right text-xs space-y-2 max-h-[70vh] overflow-y-auto">
                         <div className="font-bold text-slate-700">الصلاحيات</div>
                         <label className="flex items-center justify-end gap-2 cursor-pointer">
                           <span>تشغيل وضع المدير</span>
@@ -1567,6 +1567,98 @@ function Index() {
                           </label>
                         </div>
                         <div className="text-[10px] text-slate-400 pt-1">المجلدات الأساسية الخمسة لا يمكن حذفها إلا من قبل المدير.</div>
+                        <div className="border-t border-slate-200 pt-2">
+                          <div className="font-bold text-slate-700 mb-1">الموظفون</div>
+                          {isAdmin && (
+                            <div className="space-y-1 mb-2">
+                              <input
+                                value={newEmpName}
+                                onChange={(e) => setNewEmpName(e.target.value)}
+                                placeholder="اسم الموظف"
+                                className="w-full h-8 border border-slate-300 rounded px-2 text-right"
+                              />
+                              <input
+                                value={newEmpEmail}
+                                onChange={(e) => setNewEmpEmail(e.target.value)}
+                                placeholder="البريد الإلكتروني"
+                                type="email"
+                                className="w-full h-8 border border-slate-300 rounded px-2 text-right"
+                              />
+                              <button
+                                onClick={() => {
+                                  const name = newEmpName.trim();
+                                  const email = newEmpEmail.trim();
+                                  if (!name || !email) return;
+                                  if (employees.some((e) => e.email === email)) return;
+                                  setEmployees((arr) => [
+                                    ...arr,
+                                    { id: `u${Date.now()}`, name, email, canEdit: false },
+                                  ]);
+                                  setNewEmpName("");
+                                  setNewEmpEmail("");
+                                }}
+                                className="w-full h-8 bg-[color:var(--eyenak-teal)] text-white rounded text-xs"
+                              >
+                                إضافة موظف
+                              </button>
+                            </div>
+                          )}
+                          <div className="space-y-1">
+                            {employees.map((emp) => (
+                              <div key={emp.id} className="border border-slate-200 rounded p-2">
+                                <div className="flex items-center justify-between">
+                                  <div className="flex items-center gap-1">
+                                    {isAdmin && (
+                                      <button
+                                        onClick={() => setEmployees((arr) => arr.filter((x) => x.id !== emp.id))}
+                                        className="text-slate-300 hover:text-red-500"
+                                        aria-label="حذف"
+                                      >
+                                        <Trash2 className="w-3 h-3" />
+                                      </button>
+                                    )}
+                                    <button
+                                      onClick={() => {
+                                        setCurrentUser(emp.name);
+                                        setIsAdmin(false);
+                                        setPermsOpen(false);
+                                      }}
+                                      className="text-[10px] px-2 py-0.5 border border-slate-300 rounded hover:bg-slate-50"
+                                    >
+                                      دخول كهذا الموظف
+                                    </button>
+                                  </div>
+                                  <div className="text-right">
+                                    <div className="font-bold text-slate-700">{emp.name}</div>
+                                    <div className="text-[10px] text-slate-500">{emp.email}</div>
+                                  </div>
+                                </div>
+                                {isAdmin && (
+                                  <label className="flex items-center justify-end gap-2 cursor-pointer mt-1 text-[11px]">
+                                    <span>السماح بالتعديل على المهام</span>
+                                    <input
+                                      type="checkbox"
+                                      checked={emp.canEdit}
+                                      onChange={(e) =>
+                                        setEmployees((arr) =>
+                                          arr.map((x) => (x.id === emp.id ? { ...x, canEdit: e.target.checked } : x))
+                                        )
+                                      }
+                                    />
+                                  </label>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                          {!isAdmin && (
+                            <button
+                              onClick={() => { setIsAdmin(true); setPermsOpen(false); }}
+                              className="w-full h-8 mt-2 border border-slate-300 rounded text-xs hover:bg-slate-50"
+                            >
+                              العودة كمدير
+                            </button>
+                          )}
+                        </div>
                       </div>
                     )}
                   </div>
