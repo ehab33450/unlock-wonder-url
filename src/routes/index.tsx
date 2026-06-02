@@ -117,13 +117,16 @@ function Index() {
   const [memberSearch, setMemberSearch] = useState("");
 
   // Project folders/files store
-  type SubFolder = { name: string; createdAt: string; files: string[] };
-  type ProjectData = { folders: SubFolder[]; files: string[] };
+  type FileItem = { id: string; name: string; content: string; kind: "text" | "word" | "excel" };
+  type SubFolder = { name: string; createdAt: string; files: FileItem[] };
+  type ProjectData = { folders: SubFolder[]; files: FileItem[] };
   const [projectData, setProjectData] = useState<Record<string, ProjectData>>({});
   const [folderViewProject, setFolderViewProject] = useState<string | null>(null);
   const [currentSubfolder, setCurrentSubfolder] = useState<string | null>(null);
   const [newSubfolderOpen, setNewSubfolderOpen] = useState(false);
   const [newSubfolderName, setNewSubfolderName] = useState("");
+  const [editingFile, setEditingFile] = useState<{ id: string; name: string; content: string; kind: FileItem["kind"] } | null>(null);
+  const [newFileMenuOpen, setNewFileMenuOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   // Calendar
@@ -234,10 +237,16 @@ function Index() {
   const handleCreateProject = () => {
     const name = npName.trim();
     if (!name) return;
-    setProjectData((d) => ({
-      ...d,
-      [name]: d[name] ?? { folders: [], files: [] },
-    }));
+    setProjectData((d) => {
+      if (d[name]) return d;
+      const emptyFile: FileItem = {
+        id: `${Date.now()}`,
+        name: "ملف جديد.txt",
+        content: "",
+        kind: "text",
+      };
+      return { ...d, [name]: { folders: [], files: [emptyFile] } };
+    });
     closeNewProject();
     setFolderViewProject(name);
     setCurrentSubfolder(null);
@@ -262,8 +271,62 @@ function Index() {
   };
 
   const handleUploadFiles = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files ?? []).map((f) => f.name);
-    if (!folderViewProject || files.length === 0) return;
+    const fileList = Array.from(e.target.files ?? []);
+    if (!folderViewProject || fileList.length === 0) return;
+    Promise.all(
+      fileList.map(
+        (f) =>
+          new Promise<FileItem>((resolve) => {
+            const reader = new FileReader();
+            const ext = f.name.split(".").pop()?.toLowerCase() ?? "";
+            const kind: FileItem["kind"] =
+              ext === "doc" || ext === "docx" ? "word" :
+              ext === "xls" || ext === "xlsx" || ext === "csv" ? "excel" : "text";
+            reader.onload = () =>
+              resolve({
+                id: `${Date.now()}-${Math.random()}`,
+                name: f.name,
+                content: typeof reader.result === "string" ? reader.result : "",
+                kind,
+              });
+            reader.onerror = () =>
+              resolve({ id: `${Date.now()}-${Math.random()}`, name: f.name, content: "", kind });
+            reader.readAsText(f);
+          }),
+      ),
+    ).then((items) => {
+      setProjectData((d) => {
+        const cur = d[folderViewProject] ?? { folders: [], files: [] };
+        if (currentSubfolder) {
+          return {
+            ...d,
+            [folderViewProject]: {
+              ...cur,
+              folders: cur.folders.map((f) =>
+                f.name === currentSubfolder ? { ...f, files: [...f.files, ...items] } : f,
+              ),
+            },
+          };
+        }
+        return {
+          ...d,
+          [folderViewProject]: { ...cur, files: [...cur.files, ...items] },
+        };
+      });
+    });
+    e.target.value = "";
+  };
+
+  const addBlankFile = (kind: FileItem["kind"]) => {
+    if (!folderViewProject) return;
+    const ext = kind === "word" ? "docx" : kind === "excel" ? "xlsx" : "txt";
+    const label = kind === "word" ? "مستند Word" : kind === "excel" ? "جدول Excel" : "ملف نصي";
+    const item: FileItem = {
+      id: `${Date.now()}-${Math.random()}`,
+      name: `${label}.${ext}`,
+      content: "",
+      kind,
+    };
     setProjectData((d) => {
       const cur = d[folderViewProject] ?? { folders: [], files: [] };
       if (currentSubfolder) {
@@ -272,19 +335,66 @@ function Index() {
           [folderViewProject]: {
             ...cur,
             folders: cur.folders.map((f) =>
-              f.name === currentSubfolder
-                ? { ...f, files: [...f.files, ...files] }
-                : f,
+              f.name === currentSubfolder ? { ...f, files: [...f.files, item] } : f,
             ),
           },
         };
       }
       return {
         ...d,
-        [folderViewProject]: { ...cur, files: [...cur.files, ...files] },
+        [folderViewProject]: { ...cur, files: [...cur.files, item] },
       };
     });
-    e.target.value = "";
+    setNewFileMenuOpen(false);
+    setEditingFile(item);
+  };
+
+  const saveEditingFile = () => {
+    if (!editingFile || !folderViewProject) return;
+    setProjectData((d) => {
+      const cur = d[folderViewProject];
+      if (!cur) return d;
+      const mapFiles = (arr: FileItem[]) =>
+        arr.map((f) =>
+          f.id === editingFile.id
+            ? { ...f, name: editingFile.name, content: editingFile.content }
+            : f,
+        );
+      if (currentSubfolder) {
+        return {
+          ...d,
+          [folderViewProject]: {
+            ...cur,
+            folders: cur.folders.map((f) =>
+              f.name === currentSubfolder ? { ...f, files: mapFiles(f.files) } : f,
+            ),
+          },
+        };
+      }
+      return { ...d, [folderViewProject]: { ...cur, files: mapFiles(cur.files) } };
+    });
+    setEditingFile(null);
+  };
+
+  const removeFile = (id: string) => {
+    if (!folderViewProject) return;
+    setProjectData((d) => {
+      const cur = d[folderViewProject];
+      if (!cur) return d;
+      const filterFiles = (arr: FileItem[]) => arr.filter((f) => f.id !== id);
+      if (currentSubfolder) {
+        return {
+          ...d,
+          [folderViewProject]: {
+            ...cur,
+            folders: cur.folders.map((f) =>
+              f.name === currentSubfolder ? { ...f, files: filterFiles(f.files) } : f,
+            ),
+          },
+        };
+      }
+      return { ...d, [folderViewProject]: { ...cur, files: filterFiles(cur.files) } };
+    });
   };
 
   const removeSubfolder = (name: string) => {
@@ -1050,6 +1160,22 @@ function Index() {
                       <span>مجلد جديد</span>
                     </button>
                   )}
+                  <div className="relative">
+                    <button
+                      onClick={() => setNewFileMenuOpen((v) => !v)}
+                      className="h-9 px-4 border border-slate-300 rounded text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2"
+                    >
+                      <FilePlus2 className="w-4 h-4" />
+                      <span>ملف جديد</span>
+                    </button>
+                    {newFileMenuOpen && (
+                      <div className="absolute z-10 mt-1 right-0 w-44 bg-white border border-slate-200 rounded shadow-lg py-1 text-right">
+                        <button onClick={() => addBlankFile("text")} className="block w-full px-3 py-2 text-sm hover:bg-slate-50">ملف نصي</button>
+                        <button onClick={() => addBlankFile("word")} className="block w-full px-3 py-2 text-sm hover:bg-slate-50">مستند Word</button>
+                        <button onClick={() => addBlankFile("excel")} className="block w-full px-3 py-2 text-sm hover:bg-slate-50">جدول Excel</button>
+                      </div>
+                    )}
+                  </div>
                 </div>
                 <h3 className="text-sm font-bold text-slate-700">المجلد</h3>
               </div>
@@ -1107,16 +1233,36 @@ function Index() {
                   </div>
                 ) : (
                   <ul className="divide-y divide-slate-100 bg-white rounded mt-3">
-                    {currentFiles.map((f, i) => (
+                    {currentFiles.map((f) => (
                       <li
-                        key={`${f}-${i}`}
-                        className="flex items-center justify-between px-4 py-3"
+                        key={f.id}
+                        className="flex items-center justify-between px-4 py-3 hover:bg-slate-50"
                       >
-                        <span className="text-xs text-slate-400">{todayLabel}</span>
-                        <div className="flex items-center gap-2 text-sm text-slate-700">
-                          <span>{f}</span>
-                          <FileIcon className="w-4 h-4 text-slate-400" />
+                        <div className="flex items-center gap-3">
+                          <button
+                            onClick={() => removeFile(f.id)}
+                            className="text-slate-300 hover:text-red-500"
+                            aria-label="حذف"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                          <span className="text-xs text-slate-400">{todayLabel}</span>
                         </div>
+                        <button
+                          onClick={() => setEditingFile({ id: f.id, name: f.name, content: f.content, kind: f.kind })}
+                          className="flex items-center gap-2 text-sm text-slate-700 hover:text-[color:var(--eyenak-teal)]"
+                        >
+                          <span>{f.name}</span>
+                          <FileIcon
+                            className={`w-4 h-4 ${
+                              f.kind === "word"
+                                ? "text-blue-500"
+                                : f.kind === "excel"
+                                ? "text-green-600"
+                                : "text-slate-400"
+                            }`}
+                          />
+                        </button>
                       </li>
                     ))}
                   </ul>
@@ -1161,6 +1307,58 @@ function Index() {
             >
               إنشاء
             </button>
+          </div>
+        </div>
+      )}
+
+      {editingFile && (
+        <div
+          className="fixed inset-0 z-[70] bg-black/50 flex items-center justify-center p-4"
+          onClick={() => setEditingFile(null)}
+        >
+          <div
+            className="bg-white rounded-md shadow-2xl w-full max-w-4xl flex flex-col max-h-[90vh]"
+            onClick={(e) => e.stopPropagation()}
+            dir="rtl"
+          >
+            <div className="flex items-center justify-between px-5 py-3 border-b border-slate-200">
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setEditingFile(null)}
+                  className="text-slate-400 hover:text-slate-700"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+                <button
+                  onClick={saveEditingFile}
+                  className="h-9 px-4 bg-[color:var(--eyenak-teal)] text-white rounded text-sm font-semibold hover:opacity-90"
+                >
+                  حفظ
+                </button>
+              </div>
+              <input
+                value={editingFile.name}
+                onChange={(e) => setEditingFile({ ...editingFile, name: e.target.value })}
+                className="text-right text-base font-bold text-slate-800 border-b border-transparent focus:border-slate-300 focus:outline-none px-2 py-1"
+              />
+            </div>
+            <div className="p-4 overflow-auto flex-1">
+              {editingFile.kind === "excel" ? (
+                <ExcelEditor
+                  content={editingFile.content}
+                  onChange={(content) => setEditingFile({ ...editingFile, content })}
+                />
+              ) : (
+                <textarea
+                  value={editingFile.content}
+                  onChange={(e) => setEditingFile({ ...editingFile, content: e.target.value })}
+                  placeholder={editingFile.kind === "word" ? "ابدأ الكتابة هنا..." : "أدخل النص..."}
+                  className={`w-full h-[60vh] border border-slate-200 rounded p-4 text-right focus:outline-none focus:border-[color:var(--eyenak-teal)] resize-none ${
+                    editingFile.kind === "word" ? "font-serif text-base leading-7" : "font-mono text-sm"
+                  }`}
+                />
+              )}
+            </div>
           </div>
         </div>
       )}
@@ -1390,7 +1588,7 @@ function Index() {
         >
           <div className="flex min-h-full">
             {/* Right rail */}
-            <aside className="w-24 bg-[#0b1e3a] text-white flex flex-col items-center py-4 gap-1">
+            <aside className="w-24 bg-[#0b1e3a] text-white flex flex-col items-center py-4 gap-1 sticky top-0 self-start max-h-screen overflow-y-auto">
               {[
                 { id: "services", label: "خدمات", Icon: LayoutTemplate },
                 { id: "all", label: "جميع الحجوزات", Icon: ClipboardList },
@@ -1491,6 +1689,60 @@ function Stat({ color, value, label }: { color: string; value: number; label: st
       <div className="h-1 rounded-full mb-2" style={{ backgroundColor: color }} />
       <div className="text-2xl font-bold text-slate-800">{value}</div>
       <div className="text-xs text-slate-500 mt-1">{label}</div>
+    </div>
+  );
+}
+
+function ExcelEditor({
+  content,
+  onChange,
+}: {
+  content: string;
+  onChange: (content: string) => void;
+}) {
+  const parse = (txt: string): string[][] => {
+    if (!txt.trim()) return Array.from({ length: 8 }, () => Array(5).fill(""));
+    return txt.split("\n").map((row) => row.split("\t"));
+  };
+  const rows = parse(content);
+  const cols = Math.max(5, ...rows.map((r) => r.length));
+  const normalized = rows.map((r) => {
+    const copy = [...r];
+    while (copy.length < cols) copy.push("");
+    return copy;
+  });
+  const setCell = (ri: number, ci: number, val: string) => {
+    const next = normalized.map((r) => [...r]);
+    next[ri][ci] = val;
+    onChange(next.map((r) => r.join("\t")).join("\n"));
+  };
+  const addRow = () => onChange([...normalized.map((r) => r.join("\t")), Array(cols).fill("").join("\t")].join("\n"));
+  const addCol = () => onChange(normalized.map((r) => [...r, ""].join("\t")).join("\n"));
+  return (
+    <div className="space-y-3">
+      <div className="flex gap-2 justify-end">
+        <button onClick={addRow} className="h-8 px-3 text-xs border border-slate-300 rounded hover:bg-slate-50">+ صف</button>
+        <button onClick={addCol} className="h-8 px-3 text-xs border border-slate-300 rounded hover:bg-slate-50">+ عمود</button>
+      </div>
+      <div className="overflow-auto border border-slate-200 rounded">
+        <table className="w-full border-collapse text-sm">
+          <tbody>
+            {normalized.map((row, ri) => (
+              <tr key={ri}>
+                {row.map((cell, ci) => (
+                  <td key={ci} className="border border-slate-200 p-0">
+                    <input
+                      value={cell}
+                      onChange={(e) => setCell(ri, ci, e.target.value)}
+                      className="w-full px-2 py-1.5 text-right focus:outline-none focus:bg-emerald-50"
+                    />
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }
