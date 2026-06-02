@@ -508,6 +508,11 @@ function Index() {
     setNpEnd("");
     setNpMembers([]);
     setNpMemberInput("");
+    setNpValue("");
+    setNpRespName("");
+    setNpRespPhone("");
+    setNpAssignee("");
+    setNpPayments([]);
   };
   const toggle = (name: string) =>
     setOpenProjects((s) => ({ ...s, [name]: !s[name] }));
