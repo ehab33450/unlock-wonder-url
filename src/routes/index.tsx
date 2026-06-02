@@ -2795,6 +2795,8 @@ function ProjectDetailOverlay({
   employeeCanEdit,
   onClose,
   onUpdate,
+  onOpenChat,
+  onOpenFiles,
 }: {
   name: string;
   meta: DMeta | undefined;
@@ -2803,6 +2805,8 @@ function ProjectDetailOverlay({
   employeeCanEdit?: boolean;
   onClose: () => void;
   onUpdate: (updater: (cur: DMeta) => DMeta) => void;
+  onOpenChat?: () => void;
+  onOpenFiles?: () => void;
 }) {
   const fallback: DMeta = {
     contract: {
@@ -2888,9 +2892,29 @@ function ProjectDetailOverlay({
       >
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-3 bg-white border-b border-slate-200 rounded-t-md">
-          <button onClick={onClose} className="text-slate-400 hover:text-slate-700">
-            <X className="w-5 h-5" />
-          </button>
+          <div className="flex items-center gap-2">
+            <button onClick={onClose} className="text-slate-400 hover:text-slate-700" aria-label="إغلاق">
+              <X className="w-5 h-5" />
+            </button>
+            {onOpenChat && (
+              <button
+                onClick={onOpenChat}
+                className="h-8 px-3 rounded-md border border-slate-200 hover:bg-slate-50 text-xs text-slate-700 flex items-center gap-1"
+              >
+                <MessageSquare className="w-4 h-4 text-[color:var(--eyenak-teal)]" />
+                <span>محادثة المشروع</span>
+              </button>
+            )}
+            {onOpenFiles && (
+              <button
+                onClick={onOpenFiles}
+                className="h-8 px-3 rounded-md border border-slate-200 hover:bg-slate-50 text-xs text-slate-700 flex items-center gap-1"
+              >
+                <Folder className="w-4 h-4 text-amber-500" />
+                <span>ملفات المشروع</span>
+              </button>
+            )}
+          </div>
           <div className="flex items-center gap-2">
             <h2 className="text-lg font-bold text-slate-800">{name}</h2>
             <Folder className="w-5 h-5 text-[color:var(--eyenak-teal)]" />
