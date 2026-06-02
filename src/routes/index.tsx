@@ -826,7 +826,13 @@ function Index() {
                     p.children.map((c) => (
                       <div key={c}>
                         <button
-                          onClick={() => employeeTasks[c] && toggleEmp(c)}
+                          onClick={() => {
+                            if (employeeTasks[c]) {
+                              toggleEmp(c);
+                            } else {
+                              setDetailProject(c);
+                            }
+                          }}
                           className="w-full flex items-center justify-between pr-8 pl-4 py-2.5 hover:bg-white/5 text-sm text-white/85"
                         >
                           {employeeTasks[c] ? (
