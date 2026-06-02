@@ -1536,7 +1536,7 @@ function Index() {
         >
           <div className="flex min-h-full">
             {/* Right rail */}
-            <aside className="w-24 bg-[#0b1e3a] text-white flex flex-col items-center py-4 gap-1">
+            <aside className="w-24 bg-[#0b1e3a] text-white flex flex-col items-center py-4 gap-1 sticky top-0 self-start max-h-screen overflow-y-auto">
               {[
                 { id: "services", label: "خدمات", Icon: LayoutTemplate },
                 { id: "all", label: "جميع الحجوزات", Icon: ClipboardList },
