@@ -2636,17 +2636,6 @@ function Index() {
         </div>
       )}
 
-      {detailProject && false && (
-        <ProjectDetailOverlay
-          name={detailProject}
-          meta={projectMeta[detailProject]}
-          isAdmin={isAdmin}
-          currentUser={currentUser}
-          employeeCanEdit={employeeCanEdit}
-          onClose={() => setDetailProject(null)}
-          onUpdate={() => {}}
-        />
-      )}
     </div>
   );
 }
