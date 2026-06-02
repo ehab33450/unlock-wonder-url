@@ -1160,6 +1160,22 @@ function Index() {
                       <span>مجلد جديد</span>
                     </button>
                   )}
+                  <div className="relative">
+                    <button
+                      onClick={() => setNewFileMenuOpen((v) => !v)}
+                      className="h-9 px-4 border border-slate-300 rounded text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2"
+                    >
+                      <FilePlus2 className="w-4 h-4" />
+                      <span>ملف جديد</span>
+                    </button>
+                    {newFileMenuOpen && (
+                      <div className="absolute z-10 mt-1 right-0 w-44 bg-white border border-slate-200 rounded shadow-lg py-1 text-right">
+                        <button onClick={() => addBlankFile("text")} className="block w-full px-3 py-2 text-sm hover:bg-slate-50">ملف نصي</button>
+                        <button onClick={() => addBlankFile("word")} className="block w-full px-3 py-2 text-sm hover:bg-slate-50">مستند Word</button>
+                        <button onClick={() => addBlankFile("excel")} className="block w-full px-3 py-2 text-sm hover:bg-slate-50">جدول Excel</button>
+                      </div>
+                    )}
+                  </div>
                 </div>
                 <h3 className="text-sm font-bold text-slate-700">المجلد</h3>
               </div>
