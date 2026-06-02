@@ -1299,13 +1299,15 @@ function Index() {
                         className="flex items-center justify-between px-4 py-3 hover:bg-slate-50"
                       >
                         <div className="flex items-center gap-3">
-                          <button
-                            onClick={() => removeFile(f.id)}
-                            className="text-slate-300 hover:text-red-500"
-                            aria-label="حذف"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
+                          {canDelete && (
+                            <button
+                              onClick={() => removeFile(f.id)}
+                              className="text-slate-300 hover:text-red-500"
+                              aria-label="حذف"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          )}
                           <span className="text-xs text-slate-400">{todayLabel}</span>
                         </div>
                         <button
