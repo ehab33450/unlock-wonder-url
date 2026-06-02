@@ -2128,6 +2128,34 @@ function Index() {
           </div>
         </div>
       )}
+
+      {detailProject && (
+        <ProjectDetailOverlay
+          name={detailProject}
+          meta={projectMeta[detailProject]}
+          isAdmin={isAdmin}
+          currentUser={currentUser}
+          onClose={() => setDetailProject(null)}
+          onUpdate={(updater) =>
+            setProjectMeta((m) => {
+              const cur =
+                m[detailProject!] ?? {
+                  contract: {
+                    startDate: "",
+                    endDate: "",
+                    value: "",
+                    payments: [],
+                    responsibleName: "",
+                    responsiblePhone: "",
+                    assignee: "",
+                  },
+                  tasks: [],
+                };
+              return { ...m, [detailProject!]: updater(cur) };
+            })
+          }
+        />
+      )}
     </div>
   );
 }
