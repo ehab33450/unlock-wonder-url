@@ -450,6 +450,7 @@ function Index() {
       };
     });
     setChats((c) => (c[name] ? c : { ...c, [name]: [] }));
+    if (npFolder) setProjectFolders((f) => ({ ...f, [name]: npFolder }));
     closeNewProject();
     setFolderViewProject(name);
     setCurrentSubfolder(null);
