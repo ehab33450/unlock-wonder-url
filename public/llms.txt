@@ -1,0 +1,7 @@
+# EYENAK
+
+> EYENAK is a project management and team collaboration platform for managing projects, employees, contracts, tasks, calendar events, and files.
+
+## Pages
+
+- [Dashboard](/): Main control panel for projects, tasks, files, and team activity.
