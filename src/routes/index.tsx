@@ -128,6 +128,7 @@ function Index() {
   const [editingFile, setEditingFile] = useState<{ id: string; name: string; content: string; kind: FileItem["kind"] } | null>(null);
   const [newFileMenuOpen, setNewFileMenuOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const [filesViewOpen, setFilesViewOpen] = useState(false);
 
   // Calendar
   type CalEvent = {
