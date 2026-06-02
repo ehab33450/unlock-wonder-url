@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Calendar,
   FileText,
@@ -187,6 +187,47 @@ function Index() {
   // Project detail overlay
   const [detailProject, setDetailProject] = useState<string | null>(null);
   const taskFileRefs = useRef<Record<string, HTMLInputElement | null>>({});
+
+  // Notifications: derive from tasks' end dates
+  const [notifOpen, setNotifOpen] = useState(false);
+  const [dismissedNotifs, setDismissedNotifs] = useState<Record<string, true>>({});
+  const [nowTs, setNowTs] = useState(() => Date.now());
+  useEffect(() => {
+    const id = setInterval(() => setNowTs(Date.now()), 60000);
+    return () => clearInterval(id);
+  }, []);
+  type Notif = {
+    id: string;
+    project: string;
+    taskName: string;
+    assignee: string;
+    endDate: string;
+    level: "7d" | "24h" | "late";
+    msLeft: number;
+  };
+  const notifications = useMemo<Notif[]>(() => {
+    const out: Notif[] = [];
+    for (const [project, meta] of Object.entries(projectMeta)) {
+      for (const t of meta.tasks) {
+        if (!t.endDate || t.status === "تم") continue;
+        const end = new Date(t.endDate).getTime();
+        if (Number.isNaN(end)) continue;
+        const diff = end - nowTs;
+        const day = 86400000;
+        let level: Notif["level"] | null = null;
+        if (diff < 0) level = "late";
+        else if (diff <= day) level = "24h";
+        else if (diff <= 7 * day) level = "7d";
+        if (!level) continue;
+        const assignee = meta.contract.assignee || "";
+        if (!isAdmin && assignee !== currentUser) continue;
+        const id = `${project}::${t.id}::${level}`;
+        if (dismissedNotifs[id]) continue;
+        out.push({ id, project, taskName: t.name || "(بدون اسم)", assignee, endDate: t.endDate, level, msLeft: diff });
+      }
+    }
+    return out.sort((a, b) => a.msLeft - b.msLeft);
+  }, [projectMeta, nowTs, isAdmin, currentUser, dismissedNotifs]);
 
   // Calendar
   type CalEvent = {
@@ -556,9 +597,85 @@ function Index() {
           <button className="p-2 rounded hover:bg-slate-100 text-slate-600">
             <RefreshCw className="w-5 h-5" />
           </button>
-          <button className="p-2 rounded hover:bg-slate-100 text-slate-600">
-            <Bell className="w-5 h-5" />
-          </button>
+          <div className="relative">
+            <button
+              onClick={() => setNotifOpen((v) => !v)}
+              className="relative p-2 rounded hover:bg-slate-100 text-slate-600"
+            >
+              <Bell className="w-5 h-5" />
+              {notifications.length > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center">
+                  {notifications.length}
+                </span>
+              )}
+            </button>
+            {notifOpen && (
+              <div className="absolute left-0 mt-2 w-96 max-h-[70vh] overflow-auto bg-white border border-slate-200 rounded-lg shadow-xl z-50" dir="rtl">
+                <div className="flex items-center justify-between px-3 py-2 border-b border-slate-100">
+                  <span className="text-sm font-bold text-slate-800">الإشعارات</span>
+                  <button
+                    onClick={() => setNotifOpen(false)}
+                    className="text-xs text-slate-500 hover:text-slate-700"
+                  >
+                    إغلاق
+                  </button>
+                </div>
+                {notifications.length === 0 ? (
+                  <div className="p-6 text-center text-sm text-slate-500">لا توجد إشعارات</div>
+                ) : (
+                  <ul className="divide-y divide-slate-100">
+                    {notifications.map((n) => {
+                      const badge =
+                        n.level === "late"
+                          ? { txt: "متأخرة", cls: "bg-red-100 text-red-700" }
+                          : n.level === "24h"
+                            ? { txt: "أقل من 24 ساعة", cls: "bg-orange-100 text-orange-700" }
+                            : { txt: "خلال 7 أيام", cls: "bg-amber-100 text-amber-700" };
+                      return (
+                        <li key={n.id} className="px-3 py-2 hover:bg-slate-50">
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 mb-1">
+                                <span className={`text-[10px] px-1.5 py-0.5 rounded ${badge.cls}`}>
+                                  {badge.txt}
+                                </span>
+                                <span className="text-xs text-slate-500">{n.endDate}</span>
+                              </div>
+                              <div className="text-sm font-semibold text-slate-800 truncate">
+                                {n.taskName}
+                              </div>
+                              <div className="text-xs text-slate-500 truncate">
+                                المشروع: {n.project}
+                                {n.assignee ? ` • المسؤول: ${n.assignee}` : ""}
+                              </div>
+                              <button
+                                onClick={() => {
+                                  setDetailProject(n.project);
+                                  setNotifOpen(false);
+                                }}
+                                className="mt-1 text-xs text-[color:var(--eyenak-teal)] hover:underline"
+                              >
+                                فتح المشروع
+                              </button>
+                            </div>
+                            <button
+                              onClick={() =>
+                                setDismissedNotifs((d) => ({ ...d, [n.id]: true }))
+                              }
+                              className="text-xs text-slate-400 hover:text-slate-600"
+                              title="تجاهل"
+                            >
+                              ✕
+                            </button>
+                          </div>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                )}
+              </div>
+            )}
+          </div>
           <button className="flex items-center gap-1 px-2 py-1 rounded hover:bg-slate-100 text-slate-600 text-sm">
             <Globe className="w-4 h-4" />
             <span>AR</span>
