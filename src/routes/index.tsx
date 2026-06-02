@@ -1311,6 +1311,58 @@ function Index() {
         </div>
       )}
 
+      {editingFile && (
+        <div
+          className="fixed inset-0 z-[70] bg-black/50 flex items-center justify-center p-4"
+          onClick={() => setEditingFile(null)}
+        >
+          <div
+            className="bg-white rounded-md shadow-2xl w-full max-w-4xl flex flex-col max-h-[90vh]"
+            onClick={(e) => e.stopPropagation()}
+            dir="rtl"
+          >
+            <div className="flex items-center justify-between px-5 py-3 border-b border-slate-200">
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setEditingFile(null)}
+                  className="text-slate-400 hover:text-slate-700"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+                <button
+                  onClick={saveEditingFile}
+                  className="h-9 px-4 bg-[color:var(--eyenak-teal)] text-white rounded text-sm font-semibold hover:opacity-90"
+                >
+                  حفظ
+                </button>
+              </div>
+              <input
+                value={editingFile.name}
+                onChange={(e) => setEditingFile({ ...editingFile, name: e.target.value })}
+                className="text-right text-base font-bold text-slate-800 border-b border-transparent focus:border-slate-300 focus:outline-none px-2 py-1"
+              />
+            </div>
+            <div className="p-4 overflow-auto flex-1">
+              {editingFile.kind === "excel" ? (
+                <ExcelEditor
+                  content={editingFile.content}
+                  onChange={(content) => setEditingFile({ ...editingFile, content })}
+                />
+              ) : (
+                <textarea
+                  value={editingFile.content}
+                  onChange={(e) => setEditingFile({ ...editingFile, content: e.target.value })}
+                  placeholder={editingFile.kind === "word" ? "ابدأ الكتابة هنا..." : "أدخل النص..."}
+                  className={`w-full h-[60vh] border border-slate-200 rounded p-4 text-right focus:outline-none focus:border-[color:var(--eyenak-teal)] resize-none ${
+                    editingFile.kind === "word" ? "font-serif text-base leading-7" : "font-mono text-sm"
+                  }`}
+                />
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       {calendarOpen && (
         <div
           dir="rtl"
