@@ -601,15 +601,16 @@ function Index() {
 
         {/* Left: user controls */}
         <div className="flex items-center gap-3">
-          <button className="p-2 rounded hover:bg-slate-100 text-slate-600">
+          <button aria-label="بحث" className="p-2 rounded hover:bg-slate-100 text-slate-600">
             <Search className="w-5 h-5" />
           </button>
-          <button className="p-2 rounded hover:bg-slate-100 text-slate-600">
+          <button aria-label="تحديث" className="p-2 rounded hover:bg-slate-100 text-slate-600">
             <RefreshCw className="w-5 h-5" />
           </button>
           <div className="relative">
             <button
               onClick={() => setNotifOpen((v) => !v)}
+              aria-label="الإشعارات"
               className="relative p-2 rounded hover:bg-slate-100 text-slate-600"
             >
               <Bell className="w-5 h-5" />
@@ -686,7 +687,7 @@ function Index() {
               </div>
             )}
           </div>
-          <button className="flex items-center gap-1 px-2 py-1 rounded hover:bg-slate-100 text-slate-600 text-sm">
+          <button aria-label="تغيير اللغة" className="flex items-center gap-1 px-2 py-1 rounded hover:bg-slate-100 text-slate-600 text-sm">
             <Globe className="w-4 h-4" />
             <span>AR</span>
           </button>
@@ -735,7 +736,7 @@ function Index() {
                 <Pencil className="w-4 h-4" />
                 <span>تخصيص لوحة التحكم</span>
               </button>
-              <h1 className="text-xl font-bold text-slate-800">لوحة التحكم</h1>
+              <h1 className="text-xl font-bold text-slate-800">لوحة التحكم - EYENAK Project Management</h1>
             </div>
           </div>
 
