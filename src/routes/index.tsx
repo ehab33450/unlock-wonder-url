@@ -118,7 +118,7 @@ function Index() {
 
   // Project folders/files store
   type FileItem = { id: string; name: string; content: string; kind: "text" | "word" | "excel" };
-  type SubFolder = { name: string; createdAt: string; files: FileItem[] };
+  type SubFolder = { name: string; createdAt: string; files: FileItem[]; locked?: boolean };
   type ProjectData = { folders: SubFolder[]; files: FileItem[] };
   const [projectData, setProjectData] = useState<Record<string, ProjectData>>({});
   const [folderViewProject, setFolderViewProject] = useState<string | null>(null);
@@ -129,6 +129,20 @@ function Index() {
   const [newFileMenuOpen, setNewFileMenuOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [filesViewOpen, setFilesViewOpen] = useState(false);
+
+  // Roles & permissions
+  const DEFAULT_FOLDERS = [
+    "اليوزرات",
+    "التقارير",
+    "المستندات",
+    "الخطابات والوثائق المصدقة",
+    "عقود وبيانات الموظفين",
+  ];
+  const [isAdmin, setIsAdmin] = useState(true);
+  const [employeePerms, setEmployeePerms] = useState({ add: true, delete: false });
+  const [permsOpen, setPermsOpen] = useState(false);
+  const canAdd = isAdmin || employeePerms.add;
+  const canDelete = isAdmin || employeePerms.delete;
 
   // Calendar
   type CalEvent = {
