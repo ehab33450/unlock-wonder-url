@@ -825,7 +825,18 @@ function Index() {
 
           {/* Tabs row */}
           <div className="flex items-center justify-end gap-2 flex-wrap mb-4">
-            {topTabs.map((t) => {
+            {[
+              { icon: Home, label: "لوحة التحكم", active: true },
+              { icon: FileCheck, label: "جديد المهام", badge: newCount },
+              { icon: FileText, label: "المقالات" },
+              { icon: Star, label: "المفضلة" },
+              { icon: ClipboardList, label: "المهام الجديدة", badge: newCount },
+              { icon: ClipboardList, label: "المهام المعلقة", badge: pending },
+              { icon: ClipboardList, label: "المهام المنتهية", badge: completed },
+              { icon: Clock, label: "المؤقتات النشطة", badge: inProgress },
+              { icon: Activity, label: "النشاط" },
+              { icon: MapPin, label: "تقرير التتبع" },
+            ].map((t) => {
               const Icon = t.icon;
               return (
                 <button
@@ -838,7 +849,7 @@ function Index() {
                 >
                   <span>{t.label}</span>
                   <Icon className="w-4 h-4" />
-                  {t.badge !== undefined && (
+                  {t.badge !== undefined && t.badge > 0 && (
                     <span className="absolute -top-1 -left-1 bg-red-500 text-white text-[10px] font-bold rounded-full w-5 h-5 flex items-center justify-center">
                       {t.badge}
                     </span>
