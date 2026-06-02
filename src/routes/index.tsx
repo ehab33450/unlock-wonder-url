@@ -2366,6 +2366,7 @@ function Index() {
           meta={projectMeta[detailProject]}
           isAdmin={isAdmin}
           currentUser={currentUser}
+          employeeCanEdit={employeeCanEdit}
           onClose={() => setDetailProject(null)}
           onUpdate={(updater) =>
             setProjectMeta((m) => {
