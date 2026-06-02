@@ -1217,16 +1217,36 @@ function Index() {
                   </div>
                 ) : (
                   <ul className="divide-y divide-slate-100 bg-white rounded mt-3">
-                    {currentFiles.map((f, i) => (
+                    {currentFiles.map((f) => (
                       <li
-                        key={`${f}-${i}`}
-                        className="flex items-center justify-between px-4 py-3"
+                        key={f.id}
+                        className="flex items-center justify-between px-4 py-3 hover:bg-slate-50"
                       >
-                        <span className="text-xs text-slate-400">{todayLabel}</span>
-                        <div className="flex items-center gap-2 text-sm text-slate-700">
-                          <span>{f}</span>
-                          <FileIcon className="w-4 h-4 text-slate-400" />
+                        <div className="flex items-center gap-3">
+                          <button
+                            onClick={() => removeFile(f.id)}
+                            className="text-slate-300 hover:text-red-500"
+                            aria-label="حذف"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                          <span className="text-xs text-slate-400">{todayLabel}</span>
                         </div>
+                        <button
+                          onClick={() => setEditingFile({ id: f.id, name: f.name, content: f.content, kind: f.kind })}
+                          className="flex items-center gap-2 text-sm text-slate-700 hover:text-[color:var(--eyenak-teal)]"
+                        >
+                          <span>{f.name}</span>
+                          <FileIcon
+                            className={`w-4 h-4 ${
+                              f.kind === "word"
+                                ? "text-blue-500"
+                                : f.kind === "excel"
+                                ? "text-green-600"
+                                : "text-slate-400"
+                            }`}
+                          />
+                        </button>
                       </li>
                     ))}
                   </ul>
