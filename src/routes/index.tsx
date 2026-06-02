@@ -43,6 +43,8 @@ import {
   Upload,
   Megaphone,
   Trash2,
+  Send,
+  Eye,
 } from "lucide-react";
 
 export const Route = createFileRoute("/")({
@@ -250,6 +252,59 @@ function Index() {
     return out.sort((a, b) => a.msLeft - b.msLeft);
   }, [projectMeta, nowTs, isAdmin, currentUser, dismissedNotifs]);
 
+  // ============ Internal Chat (Admin / Employee / Client) ============
+  type ChatRole = "admin" | "employee" | "client";
+  type ChatVisibility = "all" | "admin-employee" | "admin-client";
+  type ChatMessage = {
+    id: string;
+    sender: string;
+    role: ChatRole;
+    text: string;
+    visibility: ChatVisibility;
+    createdAt: number;
+  };
+  const [chats, setChats] = useState<Record<string, ChatMessage[]>>({});
+  const [chatViewOpen, setChatViewOpen] = useState(false);
+  const [chatProject, setChatProject] = useState<string | null>(null);
+  const [chatInput, setChatInput] = useState("");
+  const [chatVisibility, setChatVisibility] = useState<ChatVisibility>("all");
+  const [chatRoleView, setChatRoleView] = useState<ChatRole>(isAdmin ? "admin" : "employee");
+  useEffect(() => {
+    setChatRoleView(isAdmin ? "admin" : "employee");
+  }, [isAdmin]);
+  const visibilityLabel = (v: ChatVisibility) =>
+    v === "all" ? "للجميع" : v === "admin-employee" ? "الأدمن + الموظف" : "الأدمن + العميل";
+  const canSeeMessage = (m: ChatMessage, role: ChatRole) => {
+    if (m.visibility === "all") return true;
+    if (m.visibility === "admin-employee") return role === "admin" || role === "employee";
+    if (m.visibility === "admin-client") return role === "admin" || role === "client";
+    return false;
+  };
+  const sendChatMessage = () => {
+    if (!chatProject || !chatInput.trim()) return;
+    const role: ChatRole = chatRoleView;
+    const sender =
+      role === "admin"
+        ? "الأدمن"
+        : role === "client"
+        ? projectMeta[chatProject]?.contract.responsibleName || "العميل"
+        : currentUser;
+    // Constrain visibility based on role
+    let vis = chatVisibility;
+    if (role === "employee" && vis === "admin-client") vis = "admin-employee";
+    if (role === "client" && vis === "admin-employee") vis = "admin-client";
+    const msg: ChatMessage = {
+      id: Math.random().toString(36).slice(2),
+      sender,
+      role,
+      text: chatInput.trim(),
+      visibility: vis,
+      createdAt: Date.now(),
+    };
+    setChats((c) => ({ ...c, [chatProject]: [...(c[chatProject] ?? []), msg] }));
+    setChatInput("");
+  };
+
   // Calendar
   type CalEvent = {
     id: string;
@@ -392,6 +447,7 @@ function Index() {
         },
       };
     });
+    setChats((c) => (c[name] ? c : { ...c, [name]: [] }));
     closeNewProject();
     setFolderViewProject(name);
     setCurrentSubfolder(null);
@@ -727,6 +783,7 @@ function Index() {
                   if (item.label === "التقويم") setCalendarOpen(true);
                   if (item.label === "الحجز") setBookingOpen(true);
                   if (item.label === "الملفات") setFilesViewOpen(true);
+                  if (item.label === "المحادثة") setChatViewOpen(true);
                 }}
                 className="w-16 py-3 flex flex-col items-center gap-1 rounded-lg hover:bg-slate-100 text-slate-600 transition"
               >
@@ -2388,6 +2445,197 @@ function Index() {
           }
         />
       )}
+
+      {chatViewOpen && (
+        <div dir="rtl" className="fixed inset-0 z-[60] bg-slate-50 flex overflow-hidden">
+          {/* Right list: companies / projects */}
+          <aside className="w-72 bg-white border-l border-slate-200 flex flex-col">
+            <div className="h-14 px-4 flex items-center justify-between border-b border-slate-200">
+              <button
+                onClick={() => setChatViewOpen(false)}
+                className="text-slate-400 hover:text-slate-700 p-1"
+                aria-label="إغلاق"
+              >
+                <X className="w-5 h-5" />
+              </button>
+              <div className="flex items-center gap-2 text-sm font-bold text-slate-700">
+                <MessageSquare className="w-4 h-4 text-[color:var(--eyenak-teal)]" />
+                <span>محادثات المشاريع</span>
+              </div>
+            </div>
+            <div className="flex-1 overflow-y-auto p-2">
+              {(() => {
+                const projectNames = Object.keys(projectMeta);
+                if (projectNames.length === 0) {
+                  return (
+                    <div className="text-xs text-slate-400 text-center py-8">
+                      لا توجد مشاريع بعد. أنشئ مشروعاً جديداً لبدء المحادثة.
+                    </div>
+                  );
+                }
+                // Group by company (responsibleName)
+                const groups: Record<string, string[]> = {};
+                for (const p of projectNames) {
+                  const company = projectMeta[p].contract.responsibleName || "غير محدد";
+                  // Employee view: only show projects they own
+                  if (!isAdmin && projectMeta[p].contract.assignee !== currentUser) continue;
+                  (groups[company] ||= []).push(p);
+                }
+                const entries = Object.entries(groups);
+                if (entries.length === 0) {
+                  return (
+                    <div className="text-xs text-slate-400 text-center py-8">
+                      لا توجد مشاريع مكلَّفة لك.
+                    </div>
+                  );
+                }
+                return entries.map(([company, list]) => (
+                  <div key={company} className="mb-3">
+                    <div className="px-2 py-1 text-[11px] font-bold text-slate-500 flex items-center gap-1">
+                      <Users className="w-3 h-3" />
+                      <span>{company}</span>
+                    </div>
+                    <ul className="space-y-1">
+                      {list.map((p) => {
+                        const last = chats[p]?.[chats[p].length - 1];
+                        const active = chatProject === p;
+                        return (
+                          <li key={p}>
+                            <button
+                              onClick={() => setChatProject(p)}
+                              className={`w-full text-right px-3 py-2 rounded-md text-sm transition ${
+                                active
+                                  ? "bg-[color:var(--eyenak-teal)] text-white"
+                                  : "hover:bg-slate-100 text-slate-700"
+                              }`}
+                            >
+                              <div className="font-semibold truncate">{p}</div>
+                              <div className={`text-[11px] truncate ${active ? "text-white/80" : "text-slate-400"}`}>
+                                {last ? `${last.sender}: ${last.text}` : "لا توجد رسائل"}
+                              </div>
+                            </button>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  </div>
+                ));
+              })()}
+            </div>
+          </aside>
+
+          {/* Chat thread */}
+          <section className="flex-1 flex flex-col">
+            {!chatProject ? (
+              <div className="flex-1 flex flex-col items-center justify-center text-slate-400">
+                <MessageSquare className="w-16 h-16 mb-3 text-slate-300" />
+                <span className="text-sm">اختر مشروعاً لبدء المحادثة</span>
+              </div>
+            ) : (
+              <>
+                {/* Header */}
+                <div className="h-14 px-4 flex items-center justify-between border-b border-slate-200 bg-white">
+                  <div className="flex items-center gap-2 text-xs">
+                    <Eye className="w-4 h-4 text-slate-400" />
+                    <span className="text-slate-500">عرض كـ:</span>
+                    <select
+                      value={chatRoleView}
+                      onChange={(e) => setChatRoleView(e.target.value as ChatRole)}
+                      className="border border-slate-200 rounded px-2 py-1 text-xs bg-white"
+                      disabled={!isAdmin}
+                    >
+                      <option value="admin">أدمن</option>
+                      <option value="employee">موظف</option>
+                      <option value="client">عميل</option>
+                    </select>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-sm font-bold text-slate-800">{chatProject}</div>
+                    <div className="text-[11px] text-slate-500">
+                      الموظف: {projectMeta[chatProject]?.contract.assignee || "—"} · العميل: {projectMeta[chatProject]?.contract.responsibleName || "—"}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Messages */}
+                <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-slate-50">
+                  {(chats[chatProject] ?? []).filter((m) => canSeeMessage(m, chatRoleView)).length === 0 ? (
+                    <div className="text-center text-xs text-slate-400 py-10">لا توجد رسائل مرئية لك بعد.</div>
+                  ) : (
+                    (chats[chatProject] ?? [])
+                      .filter((m) => canSeeMessage(m, chatRoleView))
+                      .map((m) => {
+                        const mine = m.role === chatRoleView;
+                        return (
+                          <div key={m.id} className={`flex ${mine ? "justify-start" : "justify-end"}`}>
+                            <div className={`max-w-[70%] rounded-lg px-3 py-2 shadow-sm ${
+                              mine ? "bg-[color:var(--eyenak-teal)] text-white" : "bg-white border border-slate-200 text-slate-800"
+                            }`}>
+                              <div className={`text-[10px] mb-1 flex items-center gap-2 ${mine ? "text-white/80" : "text-slate-400"}`}>
+                                <span className="font-bold">{m.sender}</span>
+                                <span>·</span>
+                                <span>{m.role === "admin" ? "أدمن" : m.role === "employee" ? "موظف" : "عميل"}</span>
+                                <span>·</span>
+                                <span>{visibilityLabel(m.visibility)}</span>
+                              </div>
+                              <div className="text-sm whitespace-pre-wrap break-words">{m.text}</div>
+                              <div className={`text-[10px] mt-1 ${mine ? "text-white/70" : "text-slate-400"}`}>
+                                {new Date(m.createdAt).toLocaleTimeString("ar-EG", { hour: "2-digit", minute: "2-digit" })}
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })
+                  )}
+                </div>
+
+                {/* Composer */}
+                <div className="border-t border-slate-200 bg-white p-3">
+                  <div className="flex items-center gap-2 mb-2 text-xs text-slate-600">
+                    <span>إظهار الرسالة لـ:</span>
+                    <select
+                      value={chatVisibility}
+                      onChange={(e) => setChatVisibility(e.target.value as ChatVisibility)}
+                      className="border border-slate-200 rounded px-2 py-1 text-xs bg-white"
+                    >
+                      <option value="all">الجميع (أدمن + موظف + عميل)</option>
+                      {chatRoleView !== "client" && (
+                        <option value="admin-employee">الأدمن + الموظف فقط</option>
+                      )}
+                      {chatRoleView !== "employee" && (
+                        <option value="admin-client">الأدمن + العميل فقط</option>
+                      )}
+                    </select>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={sendChatMessage}
+                      disabled={!chatInput.trim()}
+                      className="h-10 px-4 rounded-md bg-[color:var(--eyenak-teal)] text-white flex items-center gap-2 disabled:opacity-40"
+                    >
+                      <Send className="w-4 h-4" />
+                      <span>إرسال</span>
+                    </button>
+                    <input
+                      value={chatInput}
+                      onChange={(e) => setChatInput(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" && !e.shiftKey) {
+                          e.preventDefault();
+                          sendChatMessage();
+                        }
+                      }}
+                      placeholder="اكتب رسالة..."
+                      className="flex-1 h-10 px-3 border border-slate-200 rounded-md text-sm text-right bg-white"
+                    />
+                  </div>
+                </div>
+              </>
+            )}
+          </section>
+        </div>
+      )}
+
     </div>
   );
 }
