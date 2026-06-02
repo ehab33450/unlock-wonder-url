@@ -965,6 +965,133 @@ function Index() {
                   </div>
                 </div>
 
+                {/* Contract info */}
+                <div className="grid grid-cols-2 gap-3 mb-4">
+                  <div>
+                    <label className="block text-sm text-slate-600 mb-2 text-right">قيمة العقد (ر.س)</label>
+                    <input
+                      type="number"
+                      value={npValue}
+                      onChange={(e) => setNpValue(e.target.value)}
+                      className="w-full h-11 border border-slate-300 rounded px-3 text-right focus:outline-none focus:border-[color:var(--eyenak-teal)]"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm text-slate-600 mb-2 text-right">الموظف المُكلَّف</label>
+                    <input
+                      list="np-assignees"
+                      value={npAssignee}
+                      onChange={(e) => setNpAssignee(e.target.value)}
+                      placeholder="اسم الموظف"
+                      className="w-full h-11 border border-slate-300 rounded px-3 text-right focus:outline-none focus:border-[color:var(--eyenak-teal)]"
+                    />
+                    <datalist id="np-assignees">
+                      {Object.keys(employeeTasks).map((n) => (
+                        <option key={n} value={n} />
+                      ))}
+                      <option value="ايهاب فاتح" />
+                    </datalist>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-3 mb-4">
+                  <div>
+                    <label className="block text-sm text-slate-600 mb-2 text-right">المسؤول من الشركة</label>
+                    <input
+                      value={npRespName}
+                      onChange={(e) => setNpRespName(e.target.value)}
+                      className="w-full h-11 border border-slate-300 rounded px-3 text-right focus:outline-none focus:border-[color:var(--eyenak-teal)]"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm text-slate-600 mb-2 text-right">رقم جوال المسؤول</label>
+                    <input
+                      type="tel"
+                      value={npRespPhone}
+                      onChange={(e) => setNpRespPhone(e.target.value)}
+                      placeholder="+9665..."
+                      className="w-full h-11 border border-slate-300 rounded px-3 text-right focus:outline-none focus:border-[color:var(--eyenak-teal)]"
+                    />
+                  </div>
+                </div>
+
+                {/* Payments */}
+                <div className="mb-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setNpPayments((p) => [
+                          ...p,
+                          { id: `${Date.now()}-${p.length}`, amount: "", date: "", paid: false },
+                        ])
+                      }
+                      className="text-xs text-[color:var(--eyenak-teal)] hover:underline flex items-center gap-1"
+                    >
+                      <Plus className="w-3 h-3" />
+                      <span>إضافة دفعة</span>
+                    </button>
+                    <label className="block text-sm text-slate-600 text-right">الدفعات</label>
+                  </div>
+                  {npPayments.length === 0 ? (
+                    <div className="text-xs text-slate-400 text-right">لا توجد دفعات</div>
+                  ) : (
+                    <div className="space-y-2">
+                      {npPayments.map((p, i) => (
+                        <div key={p.id} className="grid grid-cols-[auto_1fr_1fr_auto] gap-2 items-center">
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setNpPayments((arr) => arr.filter((_, idx) => idx !== i))
+                            }
+                            className="text-slate-400 hover:text-red-500"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+                          <label className="inline-flex items-center gap-1 text-xs text-slate-600">
+                            <input
+                              type="checkbox"
+                              checked={p.paid}
+                              onChange={(e) =>
+                                setNpPayments((arr) =>
+                                  arr.map((x, idx) =>
+                                    idx === i ? { ...x, paid: e.target.checked } : x,
+                                  ),
+                                )
+                              }
+                            />
+                            <span>مدفوعة</span>
+                          </label>
+                          <input
+                            type="date"
+                            value={p.date}
+                            onChange={(e) =>
+                              setNpPayments((arr) =>
+                                arr.map((x, idx) =>
+                                  idx === i ? { ...x, date: e.target.value } : x,
+                                ),
+                              )
+                            }
+                            className="h-9 border border-slate-300 rounded px-2 text-xs text-right"
+                          />
+                          <input
+                            type="number"
+                            value={p.amount}
+                            placeholder="المبلغ"
+                            onChange={(e) =>
+                              setNpPayments((arr) =>
+                                arr.map((x, idx) =>
+                                  idx === i ? { ...x, amount: e.target.value } : x,
+                                ),
+                              )
+                            }
+                            className="h-9 border border-slate-300 rounded px-2 text-xs text-right"
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
                 <div className="mb-6">
                   <label className="block text-sm text-slate-600 mb-2 text-right">الأعضاء</label>
                   <div className="relative mb-2">
