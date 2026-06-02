@@ -1026,7 +1026,31 @@ function Index() {
 
           {/* Projects list */}
           <div className="flex-1 overflow-auto bg-[color:var(--eyenak-dark)] text-white">
-            {projects.map((p) => {
+            {(() => {
+              // Merge static projects with dynamically-created projects (grouped by their folder)
+              const dynamicByFolder: Record<string, string[]> = {};
+              for (const [pname, folder] of Object.entries(projectFolders)) {
+                (dynamicByFolder[folder] ||= []).push(pname);
+              }
+              const merged = projects.map((p) => ({
+                ...p,
+                children: [...p.children, ...(dynamicByFolder[p.name] ?? [])],
+              }));
+              // Extra folders not in static list
+              for (const [folder, list] of Object.entries(dynamicByFolder)) {
+                if (!projects.some((p) => p.name === folder)) {
+                  merged.push({ name: folder, children: list });
+                }
+              }
+              // Projects with no folder mapping
+              const orphans = Object.keys(projectMeta).filter(
+                (p) => !projectFolders[p],
+              );
+              if (orphans.length > 0) {
+                merged.push({ name: "مشاريع أخرى", children: orphans });
+              }
+              return merged;
+            })().map((p) => {
               const open = openProjects[p.name];
               return (
                 <div key={p.name} className="border-b border-white/5">
@@ -1051,6 +1075,8 @@ function Index() {
                           onClick={() => {
                             if (employeeTasks[c]) {
                               toggleEmp(c);
+                            } else if (projectMeta[c]) {
+                              setDetailProject(c);
                             } else {
                               setDetailProject(c);
                             }
@@ -1067,6 +1093,34 @@ function Index() {
                             <span className="w-3.5" />
                           )}
                           <div className="flex items-center gap-2">
+                            {projectMeta[c] && (
+                              <>
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setChatProject(c);
+                                    setChatViewOpen(true);
+                                  }}
+                                  className="text-white/50 hover:text-white"
+                                  aria-label="فتح المحادثة"
+                                  title="فتح المحادثة"
+                                >
+                                  <MessageSquare className="w-3.5 h-3.5" />
+                                </button>
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setFolderViewProject(c);
+                                    setCurrentSubfolder(null);
+                                  }}
+                                  className="text-white/50 hover:text-white"
+                                  aria-label="فتح الملفات"
+                                  title="فتح الملفات"
+                                >
+                                  <Folder className="w-3.5 h-3.5" />
+                                </button>
+                              </>
+                            )}
                             <span>{c}</span>
                             <FileIcon className="w-4 h-4 text-white/60" />
                           </div>
