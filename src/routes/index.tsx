@@ -2464,6 +2464,7 @@ function ProjectDetailOverlay({
   meta,
   isAdmin,
   currentUser,
+  employeeCanEdit,
   onClose,
   onUpdate,
 }: {
@@ -2471,6 +2472,7 @@ function ProjectDetailOverlay({
   meta: DMeta | undefined;
   isAdmin: boolean;
   currentUser: string;
+  employeeCanEdit?: boolean;
   onClose: () => void;
   onUpdate: (updater: (cur: DMeta) => DMeta) => void;
 }) {
@@ -2490,7 +2492,7 @@ function ProjectDetailOverlay({
   const isAssignee = data.contract.assignee === currentUser;
   const canView = isAdmin || isAssignee || !data.contract.assignee;
   const canEditAll = isAdmin;
-  const canEditOwn = isAdmin || isAssignee;
+  const canEditOwn = isAdmin || (isAssignee && !!employeeCanEdit);
 
   const addTask = () => {
     onUpdate((cur) => ({
