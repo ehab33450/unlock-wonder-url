@@ -252,6 +252,59 @@ function Index() {
     return out.sort((a, b) => a.msLeft - b.msLeft);
   }, [projectMeta, nowTs, isAdmin, currentUser, dismissedNotifs]);
 
+  // ============ Internal Chat (Admin / Employee / Client) ============
+  type ChatRole = "admin" | "employee" | "client";
+  type ChatVisibility = "all" | "admin-employee" | "admin-client";
+  type ChatMessage = {
+    id: string;
+    sender: string;
+    role: ChatRole;
+    text: string;
+    visibility: ChatVisibility;
+    createdAt: number;
+  };
+  const [chats, setChats] = useState<Record<string, ChatMessage[]>>({});
+  const [chatViewOpen, setChatViewOpen] = useState(false);
+  const [chatProject, setChatProject] = useState<string | null>(null);
+  const [chatInput, setChatInput] = useState("");
+  const [chatVisibility, setChatVisibility] = useState<ChatVisibility>("all");
+  const [chatRoleView, setChatRoleView] = useState<ChatRole>(isAdmin ? "admin" : "employee");
+  useEffect(() => {
+    setChatRoleView(isAdmin ? "admin" : "employee");
+  }, [isAdmin]);
+  const visibilityLabel = (v: ChatVisibility) =>
+    v === "all" ? "للجميع" : v === "admin-employee" ? "الأدمن + الموظف" : "الأدمن + العميل";
+  const canSeeMessage = (m: ChatMessage, role: ChatRole) => {
+    if (m.visibility === "all") return true;
+    if (m.visibility === "admin-employee") return role === "admin" || role === "employee";
+    if (m.visibility === "admin-client") return role === "admin" || role === "client";
+    return false;
+  };
+  const sendChatMessage = () => {
+    if (!chatProject || !chatInput.trim()) return;
+    const role: ChatRole = chatRoleView;
+    const sender =
+      role === "admin"
+        ? "الأدمن"
+        : role === "client"
+        ? projectMeta[chatProject]?.contract.responsibleName || "العميل"
+        : currentUser;
+    // Constrain visibility based on role
+    let vis = chatVisibility;
+    if (role === "employee" && vis === "admin-client") vis = "admin-employee";
+    if (role === "client" && vis === "admin-employee") vis = "admin-client";
+    const msg: ChatMessage = {
+      id: Math.random().toString(36).slice(2),
+      sender,
+      role,
+      text: chatInput.trim(),
+      visibility: vis,
+      createdAt: Date.now(),
+    };
+    setChats((c) => ({ ...c, [chatProject]: [...(c[chatProject] ?? []), msg] }));
+    setChatInput("");
+  };
+
   // Calendar
   type CalEvent = {
     id: string;
