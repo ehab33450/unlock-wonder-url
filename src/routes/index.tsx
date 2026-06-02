@@ -43,6 +43,8 @@ import {
   Upload,
   Megaphone,
   Trash2,
+  Send,
+  Eye,
 } from "lucide-react";
 
 export const Route = createFileRoute("/")({
