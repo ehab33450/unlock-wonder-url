@@ -117,13 +117,16 @@ function Index() {
   const [memberSearch, setMemberSearch] = useState("");
 
   // Project folders/files store
-  type SubFolder = { name: string; createdAt: string; files: string[] };
-  type ProjectData = { folders: SubFolder[]; files: string[] };
+  type FileItem = { id: string; name: string; content: string; kind: "text" | "word" | "excel" };
+  type SubFolder = { name: string; createdAt: string; files: FileItem[] };
+  type ProjectData = { folders: SubFolder[]; files: FileItem[] };
   const [projectData, setProjectData] = useState<Record<string, ProjectData>>({});
   const [folderViewProject, setFolderViewProject] = useState<string | null>(null);
   const [currentSubfolder, setCurrentSubfolder] = useState<string | null>(null);
   const [newSubfolderOpen, setNewSubfolderOpen] = useState(false);
   const [newSubfolderName, setNewSubfolderName] = useState("");
+  const [editingFile, setEditingFile] = useState<{ id: string; name: string; content: string; kind: FileItem["kind"] } | null>(null);
+  const [newFileMenuOpen, setNewFileMenuOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   // Calendar
@@ -234,10 +237,16 @@ function Index() {
   const handleCreateProject = () => {
     const name = npName.trim();
     if (!name) return;
-    setProjectData((d) => ({
-      ...d,
-      [name]: d[name] ?? { folders: [], files: [] },
-    }));
+    setProjectData((d) => {
+      if (d[name]) return d;
+      const emptyFile: FileItem = {
+        id: `${Date.now()}`,
+        name: "ملف جديد.txt",
+        content: "",
+        kind: "text",
+      };
+      return { ...d, [name]: { folders: [], files: [emptyFile] } };
+    });
     closeNewProject();
     setFolderViewProject(name);
     setCurrentSubfolder(null);
@@ -262,8 +271,62 @@ function Index() {
   };
 
   const handleUploadFiles = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files ?? []).map((f) => f.name);
-    if (!folderViewProject || files.length === 0) return;
+    const fileList = Array.from(e.target.files ?? []);
+    if (!folderViewProject || fileList.length === 0) return;
+    Promise.all(
+      fileList.map(
+        (f) =>
+          new Promise<FileItem>((resolve) => {
+            const reader = new FileReader();
+            const ext = f.name.split(".").pop()?.toLowerCase() ?? "";
+            const kind: FileItem["kind"] =
+              ext === "doc" || ext === "docx" ? "word" :
+              ext === "xls" || ext === "xlsx" || ext === "csv" ? "excel" : "text";
+            reader.onload = () =>
+              resolve({
+                id: `${Date.now()}-${Math.random()}`,
+                name: f.name,
+                content: typeof reader.result === "string" ? reader.result : "",
+                kind,
+              });
+            reader.onerror = () =>
+              resolve({ id: `${Date.now()}-${Math.random()}`, name: f.name, content: "", kind });
+            reader.readAsText(f);
+          }),
+      ),
+    ).then((items) => {
+      setProjectData((d) => {
+        const cur = d[folderViewProject] ?? { folders: [], files: [] };
+        if (currentSubfolder) {
+          return {
+            ...d,
+            [folderViewProject]: {
+              ...cur,
+              folders: cur.folders.map((f) =>
+                f.name === currentSubfolder ? { ...f, files: [...f.files, ...items] } : f,
+              ),
+            },
+          };
+        }
+        return {
+          ...d,
+          [folderViewProject]: { ...cur, files: [...cur.files, ...items] },
+        };
+      });
+    });
+    e.target.value = "";
+  };
+
+  const addBlankFile = (kind: FileItem["kind"]) => {
+    if (!folderViewProject) return;
+    const ext = kind === "word" ? "docx" : kind === "excel" ? "xlsx" : "txt";
+    const label = kind === "word" ? "مستند Word" : kind === "excel" ? "جدول Excel" : "ملف نصي";
+    const item: FileItem = {
+      id: `${Date.now()}-${Math.random()}`,
+      name: `${label}.${ext}`,
+      content: "",
+      kind,
+    };
     setProjectData((d) => {
       const cur = d[folderViewProject] ?? { folders: [], files: [] };
       if (currentSubfolder) {
@@ -272,19 +335,66 @@ function Index() {
           [folderViewProject]: {
             ...cur,
             folders: cur.folders.map((f) =>
-              f.name === currentSubfolder
-                ? { ...f, files: [...f.files, ...files] }
-                : f,
+              f.name === currentSubfolder ? { ...f, files: [...f.files, item] } : f,
             ),
           },
         };
       }
       return {
         ...d,
-        [folderViewProject]: { ...cur, files: [...cur.files, ...files] },
+        [folderViewProject]: { ...cur, files: [...cur.files, item] },
       };
     });
-    e.target.value = "";
+    setNewFileMenuOpen(false);
+    setEditingFile(item);
+  };
+
+  const saveEditingFile = () => {
+    if (!editingFile || !folderViewProject) return;
+    setProjectData((d) => {
+      const cur = d[folderViewProject];
+      if (!cur) return d;
+      const mapFiles = (arr: FileItem[]) =>
+        arr.map((f) =>
+          f.id === editingFile.id
+            ? { ...f, name: editingFile.name, content: editingFile.content }
+            : f,
+        );
+      if (currentSubfolder) {
+        return {
+          ...d,
+          [folderViewProject]: {
+            ...cur,
+            folders: cur.folders.map((f) =>
+              f.name === currentSubfolder ? { ...f, files: mapFiles(f.files) } : f,
+            ),
+          },
+        };
+      }
+      return { ...d, [folderViewProject]: { ...cur, files: mapFiles(cur.files) } };
+    });
+    setEditingFile(null);
+  };
+
+  const removeFile = (id: string) => {
+    if (!folderViewProject) return;
+    setProjectData((d) => {
+      const cur = d[folderViewProject];
+      if (!cur) return d;
+      const filterFiles = (arr: FileItem[]) => arr.filter((f) => f.id !== id);
+      if (currentSubfolder) {
+        return {
+          ...d,
+          [folderViewProject]: {
+            ...cur,
+            folders: cur.folders.map((f) =>
+              f.name === currentSubfolder ? { ...f, files: filterFiles(f.files) } : f,
+            ),
+          },
+        };
+      }
+      return { ...d, [folderViewProject]: { ...cur, files: filterFiles(cur.files) } };
+    });
   };
 
   const removeSubfolder = (name: string) => {
