@@ -47,6 +47,16 @@ import {
 
 export const Route = createFileRoute("/")({
   component: Index,
+  head: () => ({
+    meta: [
+      { title: "EYENAK Dashboard — Manage Projects, Tasks & Files" },
+      { name: "description", content: "EYENAK control panel for managing projects, employees, contracts, tasks, calendar, files, and team collaboration." },
+      { property: "og:title", content: "EYENAK Dashboard — Manage Projects, Tasks & Files" },
+      { property: "og:description", content: "EYENAK control panel for managing projects, employees, contracts, tasks, calendar, files, and team collaboration." },
+      { property: "og:url", content: "https://unlock-wonder-url.lovable.app/" },
+    ],
+    links: [{ rel: "canonical", href: "https://unlock-wonder-url.lovable.app/" }],
+  }),
 });
 
 const sidebarItems = [
