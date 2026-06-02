@@ -155,7 +155,18 @@ function Index() {
   const canDelete = isAdmin || employeePerms.delete;
 
   // Current logged-in user (for non-admin filtering)
-  const currentUser = "ايهاب فاتح";
+  type Employee = { id: string; name: string; email: string; canEdit: boolean };
+  const [employees, setEmployees] = useState<Employee[]>([
+    { id: "u1", name: "ايهاب فاتح", email: "ehab@example.com", canEdit: false },
+  ]);
+  const [currentUser, setCurrentUser] = useState<string>("ايهاب فاتح");
+  const [newEmpName, setNewEmpName] = useState("");
+  const [newEmpEmail, setNewEmpEmail] = useState("");
+  const currentEmployee = useMemo(
+    () => employees.find((e) => e.name === currentUser) ?? null,
+    [employees, currentUser]
+  );
+  const employeeCanEdit = !!currentEmployee?.canEdit;
 
   // Contract info + Tasks per project
   type Payment = { id: string; amount: string; date: string; paid: boolean };
