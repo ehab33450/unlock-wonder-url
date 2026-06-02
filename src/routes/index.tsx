@@ -312,6 +312,24 @@ function Index() {
       }));
       return { ...d, [name]: { folders: defaultFolders, files: [emptyFile] } };
     });
+    setProjectMeta((m) => {
+      if (m[name]) return m;
+      return {
+        ...m,
+        [name]: {
+          contract: {
+            startDate: npStart,
+            endDate: npEnd,
+            value: npValue,
+            payments: npPayments,
+            responsibleName: npRespName,
+            responsiblePhone: npRespPhone,
+            assignee: npAssignee || (npMembers[0] ?? ""),
+          },
+          tasks: [],
+        },
+      };
+    });
     closeNewProject();
     setFolderViewProject(name);
     setCurrentSubfolder(null);
