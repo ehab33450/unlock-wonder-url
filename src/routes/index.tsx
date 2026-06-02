@@ -2170,6 +2170,499 @@ function Stat({ color, value, label }: { color: string; value: number; label: st
   );
 }
 
+type DPayment = { id: string; amount: string; date: string; paid: boolean };
+type DContract = {
+  startDate: string;
+  endDate: string;
+  value: string;
+  payments: DPayment[];
+  responsibleName: string;
+  responsiblePhone: string;
+  assignee: string;
+};
+type DStatus = "جديد" | "جاري العمل" | "تم" | "معلق";
+type DPriority = "لاشيء" | "منخفض" | "متوسط" | "عالي";
+type DTask = {
+  id: string;
+  name: string;
+  platform: string;
+  beneficiary: string;
+  documentNo: string;
+  startDate: string;
+  endDate: string;
+  doneDate: string;
+  status: DStatus;
+  priority: DPriority;
+  attachmentName?: string;
+  attachmentData?: string;
+};
+type DMeta = { contract: DContract; tasks: DTask[] };
+
+function Countdown({ end, status }: { end: string; status: DStatus }) {
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const id = setInterval(() => setNow(Date.now()), 60_000);
+    return () => clearInterval(id);
+  }, []);
+  if (status === "تم") {
+    return <span className="text-xs text-emerald-600 font-semibold">مكتملة</span>;
+  }
+  if (!end) {
+    return <span className="text-xs text-slate-400">—</span>;
+  }
+  const target = new Date(end + "T23:59:59").getTime();
+  const diff = target - now;
+  if (diff <= 0) {
+    return <span className="text-xs text-red-600 font-semibold">متأخر</span>;
+  }
+  const days = Math.floor(diff / 86_400_000);
+  const hours = Math.floor((diff % 86_400_000) / 3_600_000);
+  const urgent = diff < 86_400_000;
+  return (
+    <span
+      className={`text-xs font-mono font-semibold ${urgent ? "text-red-600" : "text-slate-700"}`}
+    >
+      {days > 0 ? `${days}ي ${hours}س` : `${hours}س`}
+    </span>
+  );
+}
+
+function ProjectDetailOverlay({
+  name,
+  meta,
+  isAdmin,
+  currentUser,
+  onClose,
+  onUpdate,
+}: {
+  name: string;
+  meta: DMeta | undefined;
+  isAdmin: boolean;
+  currentUser: string;
+  onClose: () => void;
+  onUpdate: (updater: (cur: DMeta) => DMeta) => void;
+}) {
+  const fallback: DMeta = {
+    contract: {
+      startDate: "",
+      endDate: "",
+      value: "",
+      payments: [],
+      responsibleName: "",
+      responsiblePhone: "",
+      assignee: "",
+    },
+    tasks: [],
+  };
+  const data = meta ?? fallback;
+  const isAssignee = data.contract.assignee === currentUser;
+  const canView = isAdmin || isAssignee || !data.contract.assignee;
+  const canEditAll = isAdmin;
+  const canEditOwn = isAdmin || isAssignee;
+
+  const addTask = () => {
+    onUpdate((cur) => ({
+      ...cur,
+      tasks: [
+        ...cur.tasks,
+        {
+          id: `${Date.now()}`,
+          name: "مهمة جديدة",
+          platform: "",
+          beneficiary: "",
+          documentNo: "",
+          startDate: new Date().toISOString().slice(0, 10),
+          endDate: "",
+          doneDate: "",
+          status: "جديد",
+          priority: "لاشيء",
+        },
+      ],
+    }));
+  };
+  const updateTask = (id: string, patch: Partial<DTask>) => {
+    onUpdate((cur) => ({
+      ...cur,
+      tasks: cur.tasks.map((t) => (t.id === id ? { ...t, ...patch } : t)),
+    }));
+  };
+  const removeTask = (id: string) => {
+    onUpdate((cur) => ({ ...cur, tasks: cur.tasks.filter((t) => t.id !== id) }));
+  };
+
+  const onAttach = (id: string, file: File) => {
+    const reader = new FileReader();
+    reader.onload = () =>
+      updateTask(id, {
+        attachmentName: file.name,
+        attachmentData: typeof reader.result === "string" ? reader.result : "",
+      });
+    reader.readAsDataURL(file);
+  };
+
+  const paidCount = data.contract.payments.filter((p) => p.paid).length;
+  const statusColors: Record<DStatus, string> = {
+    "جديد": "bg-slate-200 text-slate-700",
+    "جاري العمل": "bg-amber-100 text-amber-700",
+    "تم": "bg-emerald-100 text-emerald-700",
+    "معلق": "bg-rose-100 text-rose-700",
+  };
+  const priorityColors: Record<DPriority, string> = {
+    "لاشيء": "bg-slate-100 text-slate-500",
+    "منخفض": "bg-sky-100 text-sky-700",
+    "متوسط": "bg-amber-100 text-amber-700",
+    "عالي": "bg-red-100 text-red-700",
+  };
+
+  return (
+    <div
+      className="fixed inset-0 z-50 bg-black/40 flex items-start justify-center p-4 overflow-y-auto"
+      onClick={onClose}
+    >
+      <div
+        dir="rtl"
+        className="bg-slate-50 rounded-md shadow-xl w-full max-w-7xl mt-4 min-h-[600px]"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 py-3 bg-white border-b border-slate-200 rounded-t-md">
+          <button onClick={onClose} className="text-slate-400 hover:text-slate-700">
+            <X className="w-5 h-5" />
+          </button>
+          <div className="flex items-center gap-2">
+            <h2 className="text-lg font-bold text-slate-800">{name}</h2>
+            <Folder className="w-5 h-5 text-[color:var(--eyenak-teal)]" />
+          </div>
+        </div>
+
+        {!canView ? (
+          <div className="p-12 text-center text-slate-500">
+            لا تملك صلاحية الوصول لهذا المشروع
+          </div>
+        ) : (
+          <>
+            {/* Contract bar */}
+            <div className="px-6 py-4 bg-white border-b border-slate-200">
+              <h3 className="text-sm font-bold text-slate-700 mb-3 text-right">بيانات العقد</h3>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-right">
+                <InfoCell
+                  label="بداية العقد"
+                  value={data.contract.startDate || "—"}
+                  editable={canEditAll}
+                  type="date"
+                  onSave={(v) =>
+                    onUpdate((c) => ({ ...c, contract: { ...c.contract, startDate: v } }))
+                  }
+                />
+                <InfoCell
+                  label="نهاية العقد"
+                  value={data.contract.endDate || "—"}
+                  editable={canEditAll}
+                  type="date"
+                  onSave={(v) =>
+                    onUpdate((c) => ({ ...c, contract: { ...c.contract, endDate: v } }))
+                  }
+                />
+                <InfoCell
+                  label="قيمة العقد"
+                  value={data.contract.value ? `${Number(data.contract.value).toLocaleString()} ر.س` : "—"}
+                  editable={canEditAll}
+                  type="number"
+                  rawValue={data.contract.value}
+                  onSave={(v) =>
+                    onUpdate((c) => ({ ...c, contract: { ...c.contract, value: v } }))
+                  }
+                />
+                <InfoCell
+                  label="الموظف المُكلَّف"
+                  value={data.contract.assignee || "—"}
+                  editable={canEditAll}
+                  onSave={(v) =>
+                    onUpdate((c) => ({ ...c, contract: { ...c.contract, assignee: v } }))
+                  }
+                />
+                <InfoCell
+                  label="المسؤول من الشركة"
+                  value={data.contract.responsibleName || "—"}
+                  editable={canEditAll}
+                  onSave={(v) =>
+                    onUpdate((c) => ({ ...c, contract: { ...c.contract, responsibleName: v } }))
+                  }
+                />
+                <div className="bg-slate-50 rounded border border-slate-200 p-3">
+                  <div className="text-xs text-slate-500 mb-1">رقم الجوال</div>
+                  {data.contract.responsiblePhone ? (
+                    <a
+                      href={`tel:${data.contract.responsiblePhone}`}
+                      className="text-sm font-semibold text-[color:var(--eyenak-teal)] hover:underline"
+                      dir="ltr"
+                    >
+                      {data.contract.responsiblePhone}
+                    </a>
+                  ) : (
+                    <span className="text-sm text-slate-400">—</span>
+                  )}
+                </div>
+                <div className="bg-slate-50 rounded border border-slate-200 p-3">
+                  <div className="text-xs text-slate-500 mb-1">الدفعات</div>
+                  <div className="text-sm font-semibold text-slate-800">
+                    {paidCount} / {data.contract.payments.length}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Tasks table */}
+            <div className="px-6 py-5">
+              <div className="flex items-center justify-between mb-3">
+                {canEditOwn && (
+                  <button
+                    onClick={addTask}
+                    className="h-9 px-4 bg-[color:var(--eyenak-teal)] hover:opacity-90 text-white rounded text-sm font-semibold flex items-center gap-2"
+                  >
+                    <Plus className="w-4 h-4" />
+                    <span>إضافة مهمة</span>
+                  </button>
+                )}
+                <h3 className="text-base font-bold text-slate-800">المهام ({data.tasks.length})</h3>
+              </div>
+
+              <div className="overflow-auto bg-white rounded-lg border border-slate-200">
+                <table className="w-full text-sm">
+                  <thead className="bg-slate-100 text-slate-600 text-xs">
+                    <tr>
+                      <th className="px-2 py-2 text-right font-semibold">اسم المهمة</th>
+                      <th className="px-2 py-2 text-right font-semibold">المنصة</th>
+                      <th className="px-2 py-2 text-right font-semibold">المستفيد</th>
+                      <th className="px-2 py-2 text-right font-semibold">رقم المستند</th>
+                      <th className="px-2 py-2 text-right font-semibold">البداية</th>
+                      <th className="px-2 py-2 text-right font-semibold">الانتهاء</th>
+                      <th className="px-2 py-2 text-right font-semibold">عد تنازلي</th>
+                      <th className="px-2 py-2 text-right font-semibold">تاريخ الإنجاز</th>
+                      <th className="px-2 py-2 text-right font-semibold">الحالة</th>
+                      <th className="px-2 py-2 text-right font-semibold">الأهمية</th>
+                      <th className="px-2 py-2 text-right font-semibold">المرفق</th>
+                      {canEditOwn && <th className="px-2 py-2"></th>}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {data.tasks.length === 0 ? (
+                      <tr>
+                        <td colSpan={12} className="py-12 text-center text-slate-400">
+                          لا توجد مهام بعد. اضغط "إضافة مهمة" للبدء.
+                        </td>
+                      </tr>
+                    ) : (
+                      data.tasks.map((t) => (
+                        <tr key={t.id} className="border-t border-slate-100 hover:bg-slate-50">
+                          <td className="px-1 py-1">
+                            <input
+                              value={t.name}
+                              disabled={!canEditOwn}
+                              onChange={(e) => updateTask(t.id, { name: e.target.value })}
+                              className="w-32 px-2 py-1 text-right text-xs rounded focus:outline-none focus:bg-emerald-50"
+                            />
+                          </td>
+                          <td className="px-1 py-1">
+                            <input
+                              value={t.platform}
+                              disabled={!canEditOwn}
+                              onChange={(e) => updateTask(t.id, { platform: e.target.value })}
+                              className="w-28 px-2 py-1 text-right text-xs rounded focus:outline-none focus:bg-emerald-50"
+                            />
+                          </td>
+                          <td className="px-1 py-1">
+                            <input
+                              value={t.beneficiary}
+                              disabled={!canEditOwn}
+                              onChange={(e) => updateTask(t.id, { beneficiary: e.target.value })}
+                              className="w-28 px-2 py-1 text-right text-xs rounded focus:outline-none focus:bg-emerald-50"
+                            />
+                          </td>
+                          <td className="px-1 py-1">
+                            <input
+                              value={t.documentNo}
+                              disabled={!canEditOwn}
+                              onChange={(e) => updateTask(t.id, { documentNo: e.target.value })}
+                              className="w-24 px-2 py-1 text-right text-xs rounded focus:outline-none focus:bg-emerald-50"
+                            />
+                          </td>
+                          <td className="px-1 py-1">
+                            <input
+                              type="date"
+                              value={t.startDate}
+                              disabled={!canEditOwn}
+                              onChange={(e) => updateTask(t.id, { startDate: e.target.value })}
+                              className="px-1 py-1 text-xs rounded focus:outline-none focus:bg-emerald-50"
+                            />
+                          </td>
+                          <td className="px-1 py-1">
+                            <input
+                              type="date"
+                              value={t.endDate}
+                              disabled={!canEditOwn}
+                              onChange={(e) => updateTask(t.id, { endDate: e.target.value })}
+                              className="px-1 py-1 text-xs rounded focus:outline-none focus:bg-emerald-50"
+                            />
+                          </td>
+                          <td className="px-2 py-1 whitespace-nowrap">
+                            <Countdown end={t.endDate} status={t.status} />
+                          </td>
+                          <td className="px-1 py-1">
+                            <input
+                              type="date"
+                              value={t.doneDate}
+                              disabled={!canEditOwn}
+                              onChange={(e) => updateTask(t.id, { doneDate: e.target.value })}
+                              className="px-1 py-1 text-xs rounded focus:outline-none focus:bg-emerald-50"
+                            />
+                          </td>
+                          <td className="px-1 py-1">
+                            <select
+                              value={t.status}
+                              disabled={!canEditOwn}
+                              onChange={(e) =>
+                                updateTask(t.id, { status: e.target.value as DStatus })
+                              }
+                              className={`text-xs font-semibold rounded px-2 py-1 focus:outline-none ${statusColors[t.status]}`}
+                            >
+                              <option value="جديد">جديد</option>
+                              <option value="جاري العمل">جاري العمل</option>
+                              <option value="تم">تم</option>
+                              <option value="معلق">معلق</option>
+                            </select>
+                          </td>
+                          <td className="px-1 py-1">
+                            <select
+                              value={t.priority}
+                              disabled={!canEditOwn}
+                              onChange={(e) =>
+                                updateTask(t.id, { priority: e.target.value as DPriority })
+                              }
+                              className={`text-xs font-semibold rounded px-2 py-1 focus:outline-none ${priorityColors[t.priority]}`}
+                            >
+                              <option value="لاشيء">لاشيء</option>
+                              <option value="منخفض">منخفض</option>
+                              <option value="متوسط">متوسط</option>
+                              <option value="عالي">عالي</option>
+                            </select>
+                          </td>
+                          <td className="px-1 py-1">
+                            <div className="flex items-center gap-1 justify-end">
+                              {t.attachmentName ? (
+                                <a
+                                  href={t.attachmentData}
+                                  download={t.attachmentName}
+                                  className="text-xs text-[color:var(--eyenak-teal)] hover:underline truncate max-w-[120px]"
+                                  title={t.attachmentName}
+                                >
+                                  {t.attachmentName}
+                                </a>
+                              ) : (
+                                <span className="text-xs text-slate-400">—</span>
+                              )}
+                              {canEditOwn && (
+                                <>
+                                  <input
+                                    type="file"
+                                    className="hidden"
+                                    id={`att-${t.id}`}
+                                    onChange={(e) => {
+                                      const f = e.target.files?.[0];
+                                      if (f) onAttach(t.id, f);
+                                    }}
+                                  />
+                                  <label
+                                    htmlFor={`att-${t.id}`}
+                                    className="cursor-pointer p-1 rounded hover:bg-slate-100 text-slate-500"
+                                    title="رفع التقرير النهائي"
+                                  >
+                                    <Upload className="w-3.5 h-3.5" />
+                                  </label>
+                                </>
+                              )}
+                            </div>
+                          </td>
+                          {canEditOwn && (
+                            <td className="px-1 py-1">
+                              {isAdmin && (
+                                <button
+                                  onClick={() => removeTask(t.id)}
+                                  className="p-1 rounded hover:bg-red-50 text-slate-400 hover:text-red-500"
+                                  title="حذف المهمة"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </button>
+                              )}
+                            </td>
+                          )}
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function InfoCell({
+  label,
+  value,
+  editable,
+  type = "text",
+  rawValue,
+  onSave,
+}: {
+  label: string;
+  value: string;
+  editable: boolean;
+  type?: "text" | "date" | "number";
+  rawValue?: string;
+  onSave: (v: string) => void;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(rawValue ?? value);
+  useEffect(() => {
+    setDraft(rawValue ?? value);
+  }, [rawValue, value]);
+  return (
+    <div className="bg-slate-50 rounded border border-slate-200 p-3">
+      <div className="text-xs text-slate-500 mb-1">{label}</div>
+      {editable && editing ? (
+        <input
+          autoFocus
+          type={type}
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          onBlur={() => {
+            onSave(draft);
+            setEditing(false);
+          }}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              onSave(draft);
+              setEditing(false);
+            }
+          }}
+          className="w-full h-7 border border-slate-300 rounded px-2 text-sm text-right focus:outline-none focus:border-[color:var(--eyenak-teal)]"
+        />
+      ) : (
+        <button
+          onClick={() => editable && setEditing(true)}
+          className={`w-full text-sm font-semibold text-slate-800 text-right ${editable ? "hover:text-[color:var(--eyenak-teal)]" : "cursor-default"}`}
+        >
+          {value}
+        </button>
+      )}
+    </div>
+  );
+}
+
 function ExcelEditor({
   content,
   onChange,
