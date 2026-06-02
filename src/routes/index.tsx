@@ -2505,6 +2505,15 @@ function Index() {
           currentUser={currentUser}
           employeeCanEdit={employeeCanEdit}
           onClose={() => setDetailProject(null)}
+          onOpenChat={() => {
+            setChatProject(detailProject);
+            setChatViewOpen(true);
+          }}
+          onOpenFiles={() => {
+            setFolderViewProject(detailProject);
+            setCurrentSubfolder(null);
+            setDetailProject(null);
+          }}
           onUpdate={(updater) =>
             setProjectMeta((m) => {
               const cur =
