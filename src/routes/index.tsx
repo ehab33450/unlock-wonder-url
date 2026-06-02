@@ -1313,6 +1313,106 @@ function Index() {
         </div>
       )}
 
+      {filesViewOpen && (
+        <div
+          dir="rtl"
+          className="fixed inset-0 z-[55] bg-black/40 flex items-start justify-center p-4 overflow-y-auto"
+          onClick={() => setFilesViewOpen(false)}
+        >
+          <div
+            className="bg-white rounded-md shadow-xl w-full max-w-4xl mt-6"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between px-6 py-3 border-b border-slate-200">
+              <button
+                onClick={() => setFilesViewOpen(false)}
+                className="text-slate-400 hover:text-slate-700"
+              >
+                <X className="w-5 h-5" />
+              </button>
+              <h2 className="text-base font-bold text-slate-800">الملفات</h2>
+            </div>
+            <div className="p-6">
+              {Object.keys(projectData).length === 0 ? (
+                <div className="text-center py-16 text-slate-400 text-sm">
+                  لا توجد ملفات بعد. أنشئ مشروعاً جديداً لإضافة ملفات.
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {Object.entries(projectData).map(([projName, pd]) => {
+                    const allFiles = [
+                      ...pd.files.map((f) => ({ ...f, folder: null as string | null })),
+                      ...pd.folders.flatMap((sf) =>
+                        sf.files.map((f) => ({ ...f, folder: sf.name })),
+                      ),
+                    ];
+                    return (
+                      <div key={projName} className="border border-slate-200 rounded-md">
+                        <button
+                          onClick={() => {
+                            setFolderViewProject(projName);
+                            setCurrentSubfolder(null);
+                            setFilesViewOpen(false);
+                          }}
+                          className="w-full flex items-center justify-between px-4 py-3 bg-slate-50 hover:bg-slate-100 rounded-t-md"
+                        >
+                          <span className="text-xs text-slate-500">
+                            {allFiles.length} ملف
+                          </span>
+                          <div className="flex items-center gap-2">
+                            <span className="font-bold text-slate-800 text-sm">{projName}</span>
+                            <Folder className="w-5 h-5 text-amber-500" />
+                          </div>
+                        </button>
+                        {allFiles.length > 0 && (
+                          <ul className="divide-y divide-slate-100">
+                            {allFiles.map((f) => (
+                              <li
+                                key={`${projName}-${f.id}`}
+                                className="flex items-center justify-between px-4 py-2 hover:bg-slate-50"
+                              >
+                                <span className="text-xs text-slate-400">
+                                  {f.folder ? `داخل: ${f.folder}` : "—"}
+                                </span>
+                                <button
+                                  onClick={() => {
+                                    setFolderViewProject(projName);
+                                    setCurrentSubfolder(f.folder);
+                                    setEditingFile({
+                                      id: f.id,
+                                      name: f.name,
+                                      content: f.content,
+                                      kind: f.kind,
+                                    });
+                                    setFilesViewOpen(false);
+                                  }}
+                                  className="flex items-center gap-2 text-sm text-slate-700 hover:text-[color:var(--eyenak-teal)]"
+                                >
+                                  <span>{f.name}</span>
+                                  <FileIcon
+                                    className={`w-4 h-4 ${
+                                      f.kind === "word"
+                                        ? "text-blue-500"
+                                        : f.kind === "excel"
+                                        ? "text-green-600"
+                                        : "text-slate-400"
+                                    }`}
+                                  />
+                                </button>
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       {editingFile && (
         <div
           className="fixed inset-0 z-[70] bg-black/50 flex items-center justify-center p-4"
