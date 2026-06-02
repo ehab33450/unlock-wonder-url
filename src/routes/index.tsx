@@ -188,6 +188,47 @@ function Index() {
   const [detailProject, setDetailProject] = useState<string | null>(null);
   const taskFileRefs = useRef<Record<string, HTMLInputElement | null>>({});
 
+  // Notifications: derive from tasks' end dates
+  const [notifOpen, setNotifOpen] = useState(false);
+  const [dismissedNotifs, setDismissedNotifs] = useState<Record<string, true>>({});
+  const [nowTs, setNowTs] = useState(() => Date.now());
+  useEffect(() => {
+    const id = setInterval(() => setNowTs(Date.now()), 60000);
+    return () => clearInterval(id);
+  }, []);
+  type Notif = {
+    id: string;
+    project: string;
+    taskName: string;
+    assignee: string;
+    endDate: string;
+    level: "7d" | "24h" | "late";
+    msLeft: number;
+  };
+  const notifications = useMemo<Notif[]>(() => {
+    const out: Notif[] = [];
+    for (const [project, meta] of Object.entries(projectMeta)) {
+      for (const t of meta.tasks) {
+        if (!t.endDate || t.status === "تم") continue;
+        const end = new Date(t.endDate).getTime();
+        if (Number.isNaN(end)) continue;
+        const diff = end - nowTs;
+        const day = 86400000;
+        let level: Notif["level"] | null = null;
+        if (diff < 0) level = "late";
+        else if (diff <= day) level = "24h";
+        else if (diff <= 7 * day) level = "7d";
+        if (!level) continue;
+        const assignee = meta.contract.assignee || "";
+        if (!isAdmin && assignee !== currentUser) continue;
+        const id = `${project}::${t.id}::${level}`;
+        if (dismissedNotifs[id]) continue;
+        out.push({ id, project, taskName: t.name || "(بدون اسم)", assignee, endDate: t.endDate, level, msLeft: diff });
+      }
+    }
+    return out.sort((a, b) => a.msLeft - b.msLeft);
+  }, [projectMeta, nowTs, isAdmin, currentUser, dismissedNotifs]);
+
   // Calendar
   type CalEvent = {
     id: string;
