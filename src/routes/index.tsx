@@ -1376,146 +1376,187 @@ function Index() {
       {filesViewOpen && (
         <div
           dir="rtl"
-          className="fixed inset-0 z-[55] bg-black/40 flex items-start justify-center p-4 overflow-y-auto"
-          onClick={() => setFilesViewOpen(false)}
+          className="fixed inset-0 z-[55] bg-slate-100 flex overflow-hidden"
         >
-          <div
-            className="bg-white rounded-md shadow-xl w-full max-w-4xl mt-6"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-center justify-between px-6 py-3 border-b border-slate-200">
-              <button
-                onClick={() => setFilesViewOpen(false)}
-                className="text-slate-400 hover:text-slate-700"
-              >
-                <X className="w-5 h-5" />
-              </button>
-              <h2 className="text-base font-bold text-slate-800">الملفات</h2>
+          {/* Main content area */}
+          <div className="flex-1 overflow-auto p-6">
+            {/* Top action bar */}
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setFilesViewOpen(false)}
+                  className="text-slate-400 hover:text-slate-700 p-1"
+                  aria-label="إغلاق"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+                <button className="h-9 px-4 bg-slate-200 border border-slate-300 rounded text-sm text-slate-700 hover:bg-slate-300 flex items-center gap-2">
+                  <Upload className="w-4 h-4" />
+                  <span>رفع الملفات</span>
+                </button>
+                <button className="h-9 px-4 border border-slate-300 rounded text-sm text-slate-500 hover:bg-slate-50 flex items-center gap-2 bg-white">
+                  <FolderPlus className="w-4 h-4" />
+                  <span>مجلد جديد</span>
+                </button>
+              </div>
+              <h3 className="text-sm font-bold text-slate-700">المجلد</h3>
             </div>
-            <div className="p-6">
-              {Object.keys(projectData).length === 0 ? (
-                <div className="text-center py-16 text-slate-400 text-sm">
-                  لا توجد ملفات بعد. أنشئ مشروعاً جديداً لإضافة ملفات.
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {Object.entries(projectData).map(([projName, pd]) => {
-                    const totalFiles =
-                      pd.files.length +
-                      pd.folders.reduce((n, sf) => n + sf.files.length, 0);
-                    return (
-                      <div key={projName} className="border border-slate-200 rounded-md">
-                        <button
-                          onClick={() => {
-                            setFolderViewProject(projName);
-                            setCurrentSubfolder(null);
-                            setFilesViewOpen(false);
-                          }}
-                          className="w-full flex items-center justify-between px-4 py-3 bg-slate-50 hover:bg-slate-100 rounded-t-md"
-                        >
-                          <span className="text-xs text-slate-500">
-                            {pd.folders.length} مجلد · {totalFiles} ملف
-                          </span>
-                          <div className="flex items-center gap-2">
-                            <span className="font-bold text-slate-800 text-sm">{projName}</span>
-                            <Folder className="w-5 h-5 text-amber-500" />
+
+            {/* Folders grid or empty state */}
+            {Object.keys(projectData).length === 0 ? (
+              <div className="bg-white rounded-md py-16 flex flex-col items-center justify-center text-slate-400 text-sm">
+                <Megaphone className="w-16 h-16 mb-3 text-slate-300" />
+                <span>لا يوجد نتائج.</span>
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 mb-8">
+                {Object.entries(projectData).map(([projName, pd]) => {
+                  const totalFiles =
+                    pd.files.length +
+                    pd.folders.reduce((n, sf) => n + sf.files.length, 0);
+                  return (
+                    <button
+                      key={projName}
+                      onClick={() => {
+                        setFolderViewProject(projName);
+                        setCurrentSubfolder(null);
+                        setFilesViewOpen(false);
+                      }}
+                      className="bg-white rounded-lg shadow-sm border border-slate-100 flex items-center justify-between px-4 py-3 hover:shadow-md transition text-right"
+                    >
+                      <div className="text-[10px] text-slate-400">
+                        {pd.folders.length} مجلد · {totalFiles} ملف
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <div>
+                          <div className="font-bold text-slate-800 text-sm">{projName}</div>
+                          <div className="text-xs text-slate-400 mt-0.5">
+                            مجلد المهمة
                           </div>
-                        </button>
-                        <div className="divide-y divide-slate-100">
-                          {pd.folders.map((sf) => (
-                            <div key={`${projName}-${sf.name}`} className="px-4 py-2">
-                              <button
-                                onClick={() => {
-                                  setFolderViewProject(projName);
-                                  setCurrentSubfolder(sf.name);
-                                  setFilesViewOpen(false);
-                                }}
-                                className="w-full flex items-center justify-between hover:bg-slate-50 rounded px-2 py-1"
-                              >
-                                <span className="text-[11px] text-slate-400">
-                                  {sf.files.length} ملف
-                                </span>
-                                <div className="flex items-center gap-2">
-                                  <span className="text-sm text-slate-700">{sf.name}</span>
-                                  <Folder className="w-4 h-4 text-amber-400" />
-                                </div>
-                              </button>
-                              {sf.files.length > 0 && (
-                                <ul className="mt-1 mr-6 border-r border-slate-100 pr-3">
-                                  {sf.files.map((f) => (
-                                    <li key={f.id} className="py-1">
-                                      <button
-                                        onClick={() => {
-                                          setFolderViewProject(projName);
-                                          setCurrentSubfolder(sf.name);
-                                          setEditingFile({
-                                            id: f.id,
-                                            name: f.name,
-                                            content: f.content,
-                                            kind: f.kind,
-                                          });
-                                          setFilesViewOpen(false);
-                                        }}
-                                        className="flex items-center gap-2 text-xs text-slate-600 hover:text-[color:var(--eyenak-teal)] w-full justify-end"
-                                      >
-                                        <span>{f.name}</span>
-                                        <FileIcon
-                                          className={`w-3.5 h-3.5 ${
-                                            f.kind === "word"
-                                              ? "text-blue-500"
-                                              : f.kind === "excel"
-                                              ? "text-green-600"
-                                              : "text-slate-400"
-                                          }`}
-                                        />
-                                      </button>
-                                    </li>
-                                  ))}
-                                </ul>
-                              )}
-                            </div>
-                          ))}
-                          {pd.files.length > 0 && (
-                            <ul className="px-4 py-2">
-                              {pd.files.map((f) => (
-                                <li key={f.id} className="py-1">
-                                  <button
-                                    onClick={() => {
-                                      setFolderViewProject(projName);
-                                      setCurrentSubfolder(null);
-                                      setEditingFile({
-                                        id: f.id,
-                                        name: f.name,
-                                        content: f.content,
-                                        kind: f.kind,
-                                      });
-                                      setFilesViewOpen(false);
-                                    }}
-                                    className="flex items-center gap-2 text-xs text-slate-600 hover:text-[color:var(--eyenak-teal)] w-full justify-end"
-                                  >
-                                    <span>{f.name}</span>
-                                    <FileIcon
-                                      className={`w-3.5 h-3.5 ${
-                                        f.kind === "word"
-                                          ? "text-blue-500"
-                                          : f.kind === "excel"
-                                          ? "text-green-600"
-                                          : "text-slate-400"
-                                      }`}
-                                    />
-                                  </button>
-                                </li>
-                              ))}
-                            </ul>
-                          )}
+                        </div>
+                        <div className="w-10 h-10 rounded bg-amber-100 flex items-center justify-center text-amber-500">
+                          <Folder className="w-6 h-6" />
                         </div>
                       </div>
-                    );
-                  })}
-                </div>
-              )}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* Files section */}
+            <div className="mt-6">
+              <h3 className="text-sm font-bold text-slate-700 text-right mb-2">الملفات</h3>
+              <div className="border-t border-slate-200 mb-3" />
+              {(() => {
+                const looseFiles = Object.entries(projectData).flatMap(([pn, pd]) =>
+                  pd.files.map((f) => ({ ...f, proj: pn })),
+                );
+                if (looseFiles.length === 0) {
+                  return (
+                    <div className="bg-white rounded-md py-16 flex flex-col items-center justify-center text-slate-400 text-sm">
+                      <Megaphone className="w-16 h-16 mb-3 text-slate-300" />
+                      <span>لا يوجد نتائج.</span>
+                    </div>
+                  );
+                }
+                return (
+                  <ul className="divide-y divide-slate-100 bg-white rounded-md">
+                    {looseFiles.map((f) => (
+                      <li
+                        key={`${f.proj}-${f.id}`}
+                        className="flex items-center justify-between px-4 py-3 hover:bg-slate-50"
+                      >
+                        <span className="text-xs text-slate-400">{f.proj}</span>
+                        <button
+                          onClick={() => {
+                            setFolderViewProject(f.proj);
+                            setCurrentSubfolder(null);
+                            setEditingFile({
+                              id: f.id,
+                              name: f.name,
+                              content: f.content,
+                              kind: f.kind,
+                            });
+                            setFilesViewOpen(false);
+                          }}
+                          className="flex items-center gap-2 text-sm text-slate-700 hover:text-[color:var(--eyenak-teal)]"
+                        >
+                          <span>{f.name}</span>
+                          <FileIcon
+                            className={`w-4 h-4 ${
+                              f.kind === "word"
+                                ? "text-blue-500"
+                                : f.kind === "excel"
+                                ? "text-green-600"
+                                : "text-slate-400"
+                            }`}
+                          />
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                );
+              })()}
             </div>
           </div>
+
+          {/* Right rail */}
+          <aside className="w-72 bg-[#0b1e3a] text-white flex flex-col">
+            <nav className="p-3 space-y-1 text-sm">
+              {[
+                { icon: FileIcon, label: "ملفاتي", active: true },
+                { icon: Users, label: "تمت مشاركتها معي" },
+                { icon: Star, label: "المفضلة" },
+                { icon: Trash2, label: "المهملات" },
+              ].map((it) => {
+                const Icon = it.icon;
+                return (
+                  <button
+                    key={it.label}
+                    className={`w-full flex items-center justify-between px-3 py-2 rounded ${
+                      it.active
+                        ? "bg-white text-[#0b1e3a] font-semibold"
+                        : "hover:bg-white/10 text-white/90"
+                    }`}
+                  >
+                    <Icon className="w-4 h-4" />
+                    <span>{it.label}</span>
+                  </button>
+                );
+              })}
+            </nav>
+            <div className="px-4 py-3 border-t border-white/10 mt-2">
+              <div className="flex items-center gap-2 text-xs text-white/80 mb-3">
+                <Clock className="w-3.5 h-3.5" />
+                <span>تم عرضها مؤخرًا</span>
+              </div>
+              <div className="text-xs text-white/70 space-y-2">
+                {Object.entries(projectData).slice(0, 5).flatMap(([pn, pd]) =>
+                  [...pd.files, ...pd.folders.flatMap((sf) => sf.files)]
+                    .slice(0, 3)
+                    .map((f) => (
+                      <div
+                        key={`${pn}-${f.id}`}
+                        className="flex items-center gap-2 truncate"
+                      >
+                        <FileIcon className="w-3.5 h-3.5 shrink-0" />
+                        <span className="truncate">{f.name}</span>
+                      </div>
+                    )),
+                )}
+              </div>
+            </div>
+            <div className="mt-auto p-4 border-t border-white/10 text-xs text-white/70">
+              <div className="mb-2 text-right">1654.09MB من 302 GB مستخدم</div>
+              <div className="h-1 bg-white/15 rounded">
+                <div className="h-1 bg-white rounded" style={{ width: "1%" }} />
+              </div>
+              <div className="mt-4 text-center text-[10px] text-white/40">
+                © 2026 EYENAK
+              </div>
+            </div>
+          </aside>
         </div>
       )}
 
