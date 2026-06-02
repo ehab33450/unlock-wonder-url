@@ -141,6 +141,8 @@ function Index() {
   const [newFileMenuOpen, setNewFileMenuOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [filesViewOpen, setFilesViewOpen] = useState(false);
+  // Mapping of project -> folder/company group it belongs to (for sidebar grouping)
+  const [projectFolders, setProjectFolders] = useState<Record<string, string>>({});
 
   // Roles & permissions
   const DEFAULT_FOLDERS = [
