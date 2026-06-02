@@ -1070,8 +1070,8 @@ function Index() {
       </div>
 
       {newProjectOpen && (
-        <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/40 pt-24 px-4">
-          <div className="bg-white rounded-md shadow-xl w-full max-w-xl p-6">
+        <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/40 pt-10 pb-10 px-4 overflow-y-auto">
+          <div className="bg-white rounded-md shadow-xl w-full max-w-xl p-6 max-h-[90vh] overflow-y-auto my-auto">
             <div className="flex items-center justify-between mb-6">
               <button
                 onClick={closeNewProject}
