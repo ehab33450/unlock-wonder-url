@@ -1546,7 +1546,7 @@ function Index() {
                       onClick={() => setPermsOpen((v) => !v)}
                       className="h-9 px-3 border border-slate-300 rounded text-xs text-slate-600 hover:bg-slate-50 flex items-center gap-2"
                     >
-                      <span>{isAdmin ? "مدير" : "موظف"}</span>
+                      <span>{isAdmin ? "مدير" : `موظف: ${currentUser}`}</span>
                     </button>
                     {permsOpen && (
                       <div className="absolute z-20 mt-1 right-0 w-80 bg-white border border-slate-200 rounded shadow-lg p-3 text-right text-xs space-y-2 max-h-[70vh] overflow-y-auto">
