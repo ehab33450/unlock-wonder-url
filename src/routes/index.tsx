@@ -260,7 +260,7 @@ function Index() {
         content: "",
         kind: "text",
       };
-      const defaultFolders: SubFolder[] = DEFAULT_FOLDERS.map((fn, i) => ({
+      const defaultFolders: SubFolder[] = DEFAULT_FOLDERS.map((fn) => ({
         name: fn,
         createdAt: todayLabel,
         files: [],
