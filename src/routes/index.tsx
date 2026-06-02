@@ -640,11 +640,23 @@ function Index() {
   const toggleEmp = (name: string) =>
     setOpenEmployees((s) => ({ ...s, [name]: !s[name] }));
 
-  const completed = 7266;
-  const inProgress = 95;
-  const pending = 82;
-  const total = 11383;
-  const completedPct = 63;
+  // Live stats derived from real tasks across all projects (filtered by role)
+  const visibleTasks = useMemo(() => {
+    const list: { status: string; endDate: string; project: string }[] = [];
+    for (const [proj, meta] of Object.entries(projectMeta)) {
+      if (!isAdmin && meta.contract.assignee !== currentUser) continue;
+      for (const t of meta.tasks) {
+        list.push({ status: t.status, endDate: t.endDate, project: proj });
+      }
+    }
+    return list;
+  }, [projectMeta, isAdmin, currentUser]);
+  const completed = visibleTasks.filter((t) => t.status === "تم").length;
+  const inProgress = visibleTasks.filter((t) => t.status === "جاري العمل").length;
+  const pending = visibleTasks.filter((t) => t.status === "معلق").length;
+  const newCount = visibleTasks.filter((t) => t.status === "جديد").length;
+  const total = visibleTasks.length || 1;
+  const completedPct = Math.round((completed / total) * 100);
 
   // Donut math
   const r = 70;
