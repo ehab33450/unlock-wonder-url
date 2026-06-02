@@ -118,7 +118,7 @@ function Index() {
 
   // Project folders/files store
   type FileItem = { id: string; name: string; content: string; kind: "text" | "word" | "excel" };
-  type SubFolder = { name: string; createdAt: string; files: FileItem[] };
+  type SubFolder = { name: string; createdAt: string; files: FileItem[]; locked?: boolean };
   type ProjectData = { folders: SubFolder[]; files: FileItem[] };
   const [projectData, setProjectData] = useState<Record<string, ProjectData>>({});
   const [folderViewProject, setFolderViewProject] = useState<string | null>(null);
@@ -129,6 +129,20 @@ function Index() {
   const [newFileMenuOpen, setNewFileMenuOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [filesViewOpen, setFilesViewOpen] = useState(false);
+
+  // Roles & permissions
+  const DEFAULT_FOLDERS = [
+    "اليوزرات",
+    "التقارير",
+    "المستندات",
+    "الخطابات والوثائق المصدقة",
+    "عقود وبيانات الموظفين",
+  ];
+  const [isAdmin, setIsAdmin] = useState(true);
+  const [employeePerms, setEmployeePerms] = useState({ add: true, delete: false });
+  const [permsOpen, setPermsOpen] = useState(false);
+  const canAdd = isAdmin || employeePerms.add;
+  const canDelete = isAdmin || employeePerms.delete;
 
   // Calendar
   type CalEvent = {
@@ -246,7 +260,13 @@ function Index() {
         content: "",
         kind: "text",
       };
-      return { ...d, [name]: { folders: [], files: [emptyFile] } };
+      const defaultFolders: SubFolder[] = DEFAULT_FOLDERS.map((fn) => ({
+        name: fn,
+        createdAt: todayLabel,
+        files: [],
+        locked: true,
+      }));
+      return { ...d, [name]: { folders: defaultFolders, files: [emptyFile] } };
     });
     closeNewProject();
     setFolderViewProject(name);
@@ -1155,8 +1175,10 @@ function Index() {
                   </button>
                   {!currentSubfolder && (
                     <button
-                      onClick={() => setNewSubfolderOpen(true)}
-                      className="h-9 px-4 border border-slate-300 rounded text-sm text-slate-500 hover:bg-slate-50 flex items-center gap-2"
+                      onClick={() => canAdd && setNewSubfolderOpen(true)}
+                      disabled={!canAdd}
+                      className="h-9 px-4 border border-slate-300 rounded text-sm text-slate-500 hover:bg-slate-50 flex items-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed"
+                      title={canAdd ? "" : "لا تملك صلاحية إضافة المجلدات"}
                     >
                       <FolderPlus className="w-4 h-4" />
                       <span>مجلد جديد</span>
@@ -1164,8 +1186,10 @@ function Index() {
                   )}
                   <div className="relative">
                     <button
-                      onClick={() => setNewFileMenuOpen((v) => !v)}
-                      className="h-9 px-4 border border-slate-300 rounded text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2"
+                      onClick={() => canAdd && setNewFileMenuOpen((v) => !v)}
+                      disabled={!canAdd}
+                      className="h-9 px-4 border border-slate-300 rounded text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed"
+                      title={canAdd ? "" : "لا تملك صلاحية إضافة الملفات"}
                     >
                       <FilePlus2 className="w-4 h-4" />
                       <span>ملف جديد</span>
@@ -1175,6 +1199,35 @@ function Index() {
                         <button onClick={() => addBlankFile("text")} className="block w-full px-3 py-2 text-sm hover:bg-slate-50">ملف نصي</button>
                         <button onClick={() => addBlankFile("word")} className="block w-full px-3 py-2 text-sm hover:bg-slate-50">مستند Word</button>
                         <button onClick={() => addBlankFile("excel")} className="block w-full px-3 py-2 text-sm hover:bg-slate-50">جدول Excel</button>
+                      </div>
+                    )}
+                  </div>
+                  <div className="relative">
+                    <button
+                      onClick={() => setPermsOpen((v) => !v)}
+                      className="h-9 px-3 border border-slate-300 rounded text-xs text-slate-600 hover:bg-slate-50 flex items-center gap-2"
+                    >
+                      <span>{isAdmin ? "مدير" : "موظف"}</span>
+                    </button>
+                    {permsOpen && (
+                      <div className="absolute z-20 mt-1 right-0 w-64 bg-white border border-slate-200 rounded shadow-lg p-3 text-right text-xs space-y-2">
+                        <div className="font-bold text-slate-700">الصلاحيات</div>
+                        <label className="flex items-center justify-end gap-2 cursor-pointer">
+                          <span>تشغيل وضع المدير</span>
+                          <input type="checkbox" checked={isAdmin} onChange={(e) => setIsAdmin(e.target.checked)} />
+                        </label>
+                        <div className="border-t border-slate-200 pt-2">
+                          <div className="text-slate-500 mb-1">صلاحيات الموظف:</div>
+                          <label className="flex items-center justify-end gap-2 cursor-pointer">
+                            <span>إضافة ملفات/مجلدات</span>
+                            <input type="checkbox" checked={employeePerms.add} onChange={(e) => setEmployeePerms((p) => ({ ...p, add: e.target.checked }))} />
+                          </label>
+                          <label className="flex items-center justify-end gap-2 cursor-pointer mt-1">
+                            <span>حذف ملفات/مجلدات</span>
+                            <input type="checkbox" checked={employeePerms.delete} onChange={(e) => setEmployeePerms((p) => ({ ...p, delete: e.target.checked }))} />
+                          </label>
+                        </div>
+                        <div className="text-[10px] text-slate-400 pt-1">المجلدات الأساسية الخمسة لا يمكن حذفها إلا من قبل المدير.</div>
                       </div>
                     )}
                   </div>
@@ -1202,7 +1255,10 @@ function Index() {
                           className="flex items-center gap-3 flex-1 justify-end text-right"
                         >
                           <div>
-                            <div className="font-bold text-slate-800 text-sm">{f.name}</div>
+                            <div className="font-bold text-slate-800 text-sm flex items-center gap-1 justify-end">
+                              {f.locked && <span className="text-[10px] text-amber-600 bg-amber-50 border border-amber-200 rounded px-1">أساسي</span>}
+                              <span>{f.name}</span>
+                            </div>
                             <div className="text-xs text-slate-400 mt-0.5">
                               تاريخ الإنشاء: {f.createdAt}
                             </div>
@@ -1211,13 +1267,15 @@ function Index() {
                             <Folder className="w-6 h-6" />
                           </div>
                         </button>
-                        <button
-                          onClick={() => removeSubfolder(f.name)}
-                          className="text-slate-300 hover:text-red-500 ml-2"
-                          aria-label="حذف"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
+                        {(f.locked ? isAdmin : canDelete) && (
+                          <button
+                            onClick={() => removeSubfolder(f.name)}
+                            className="text-slate-300 hover:text-red-500 ml-2"
+                            aria-label="حذف"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        )}
                       </div>
                     ))
                   )}
@@ -1241,13 +1299,15 @@ function Index() {
                         className="flex items-center justify-between px-4 py-3 hover:bg-slate-50"
                       >
                         <div className="flex items-center gap-3">
-                          <button
-                            onClick={() => removeFile(f.id)}
-                            className="text-slate-300 hover:text-red-500"
-                            aria-label="حذف"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
+                          {canDelete && (
+                            <button
+                              onClick={() => removeFile(f.id)}
+                              className="text-slate-300 hover:text-red-500"
+                              aria-label="حذف"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          )}
                           <span className="text-xs text-slate-400">{todayLabel}</span>
                         </div>
                         <button
