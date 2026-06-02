@@ -141,6 +141,8 @@ function Index() {
   const [newFileMenuOpen, setNewFileMenuOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [filesViewOpen, setFilesViewOpen] = useState(false);
+  // Mapping of project -> folder/company group it belongs to (for sidebar grouping)
+  const [projectFolders, setProjectFolders] = useState<Record<string, string>>({});
 
   // Roles & permissions
   const DEFAULT_FOLDERS = [
@@ -448,6 +450,7 @@ function Index() {
       };
     });
     setChats((c) => (c[name] ? c : { ...c, [name]: [] }));
+    if (npFolder) setProjectFolders((f) => ({ ...f, [name]: npFolder }));
     closeNewProject();
     setFolderViewProject(name);
     setCurrentSubfolder(null);
@@ -637,11 +640,23 @@ function Index() {
   const toggleEmp = (name: string) =>
     setOpenEmployees((s) => ({ ...s, [name]: !s[name] }));
 
-  const completed = 7266;
-  const inProgress = 95;
-  const pending = 82;
-  const total = 11383;
-  const completedPct = 63;
+  // Live stats derived from real tasks across all projects (filtered by role)
+  const visibleTasks = useMemo(() => {
+    const list: { status: string; endDate: string; project: string }[] = [];
+    for (const [proj, meta] of Object.entries(projectMeta)) {
+      if (!isAdmin && meta.contract.assignee !== currentUser) continue;
+      for (const t of meta.tasks) {
+        list.push({ status: t.status, endDate: t.endDate, project: proj });
+      }
+    }
+    return list;
+  }, [projectMeta, isAdmin, currentUser]);
+  const completed = visibleTasks.filter((t) => t.status === "تم").length;
+  const inProgress = visibleTasks.filter((t) => t.status === "جاري العمل").length;
+  const pending = visibleTasks.filter((t) => t.status === "معلق").length;
+  const newCount = visibleTasks.filter((t) => t.status === "جديد").length;
+  const total = visibleTasks.length || 1;
+  const completedPct = Math.round((completed / total) * 100);
 
   // Donut math
   const r = 70;
@@ -810,7 +825,18 @@ function Index() {
 
           {/* Tabs row */}
           <div className="flex items-center justify-end gap-2 flex-wrap mb-4">
-            {topTabs.map((t) => {
+            {[
+              { icon: Home, label: "لوحة التحكم", active: true },
+              { icon: FileCheck, label: "جديد المهام", badge: newCount },
+              { icon: FileText, label: "المقالات" },
+              { icon: Star, label: "المفضلة" },
+              { icon: ClipboardList, label: "المهام الجديدة", badge: newCount },
+              { icon: ClipboardList, label: "المهام المعلقة", badge: pending },
+              { icon: ClipboardList, label: "المهام المنتهية", badge: completed },
+              { icon: Clock, label: "المؤقتات النشطة", badge: inProgress },
+              { icon: Activity, label: "النشاط" },
+              { icon: MapPin, label: "تقرير التتبع" },
+            ].map((t) => {
               const Icon = t.icon;
               return (
                 <button
@@ -823,7 +849,7 @@ function Index() {
                 >
                   <span>{t.label}</span>
                   <Icon className="w-4 h-4" />
-                  {t.badge !== undefined && (
+                  {t.badge !== undefined && t.badge > 0 && (
                     <span className="absolute -top-1 -left-1 bg-red-500 text-white text-[10px] font-bold rounded-full w-5 h-5 flex items-center justify-center">
                       {t.badge}
                     </span>
@@ -1000,7 +1026,31 @@ function Index() {
 
           {/* Projects list */}
           <div className="flex-1 overflow-auto bg-[color:var(--eyenak-dark)] text-white">
-            {projects.map((p) => {
+            {(() => {
+              // Merge static projects with dynamically-created projects (grouped by their folder)
+              const dynamicByFolder: Record<string, string[]> = {};
+              for (const [pname, folder] of Object.entries(projectFolders)) {
+                (dynamicByFolder[folder] ||= []).push(pname);
+              }
+              const merged = projects.map((p) => ({
+                ...p,
+                children: [...p.children, ...(dynamicByFolder[p.name] ?? [])],
+              }));
+              // Extra folders not in static list
+              for (const [folder, list] of Object.entries(dynamicByFolder)) {
+                if (!projects.some((p) => p.name === folder)) {
+                  merged.push({ name: folder, children: list });
+                }
+              }
+              // Projects with no folder mapping
+              const orphans = Object.keys(projectMeta).filter(
+                (p) => !projectFolders[p],
+              );
+              if (orphans.length > 0) {
+                merged.push({ name: "مشاريع أخرى", children: orphans });
+              }
+              return merged;
+            })().map((p) => {
               const open = openProjects[p.name];
               return (
                 <div key={p.name} className="border-b border-white/5">
@@ -1025,6 +1075,8 @@ function Index() {
                           onClick={() => {
                             if (employeeTasks[c]) {
                               toggleEmp(c);
+                            } else if (projectMeta[c]) {
+                              setDetailProject(c);
                             } else {
                               setDetailProject(c);
                             }
@@ -1041,6 +1093,34 @@ function Index() {
                             <span className="w-3.5" />
                           )}
                           <div className="flex items-center gap-2">
+                            {projectMeta[c] && (
+                              <>
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setChatProject(c);
+                                    setChatViewOpen(true);
+                                  }}
+                                  className="text-white/50 hover:text-white"
+                                  aria-label="فتح المحادثة"
+                                  title="فتح المحادثة"
+                                >
+                                  <MessageSquare className="w-3.5 h-3.5" />
+                                </button>
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setFolderViewProject(c);
+                                    setCurrentSubfolder(null);
+                                  }}
+                                  className="text-white/50 hover:text-white"
+                                  aria-label="فتح الملفات"
+                                  title="فتح الملفات"
+                                >
+                                  <Folder className="w-3.5 h-3.5" />
+                                </button>
+                              </>
+                            )}
                             <span>{c}</span>
                             <FileIcon className="w-4 h-4 text-white/60" />
                           </div>
@@ -2425,6 +2505,15 @@ function Index() {
           currentUser={currentUser}
           employeeCanEdit={employeeCanEdit}
           onClose={() => setDetailProject(null)}
+          onOpenChat={() => {
+            setChatProject(detailProject);
+            setChatViewOpen(true);
+          }}
+          onOpenFiles={() => {
+            setFolderViewProject(detailProject);
+            setCurrentSubfolder(null);
+            setDetailProject(null);
+          }}
           onUpdate={(updater) =>
             setProjectMeta((m) => {
               const cur =
@@ -2715,6 +2804,8 @@ function ProjectDetailOverlay({
   employeeCanEdit,
   onClose,
   onUpdate,
+  onOpenChat,
+  onOpenFiles,
 }: {
   name: string;
   meta: DMeta | undefined;
@@ -2723,6 +2814,8 @@ function ProjectDetailOverlay({
   employeeCanEdit?: boolean;
   onClose: () => void;
   onUpdate: (updater: (cur: DMeta) => DMeta) => void;
+  onOpenChat?: () => void;
+  onOpenFiles?: () => void;
 }) {
   const fallback: DMeta = {
     contract: {
@@ -2808,9 +2901,29 @@ function ProjectDetailOverlay({
       >
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-3 bg-white border-b border-slate-200 rounded-t-md">
-          <button onClick={onClose} className="text-slate-400 hover:text-slate-700">
-            <X className="w-5 h-5" />
-          </button>
+          <div className="flex items-center gap-2">
+            <button onClick={onClose} className="text-slate-400 hover:text-slate-700" aria-label="إغلاق">
+              <X className="w-5 h-5" />
+            </button>
+            {onOpenChat && (
+              <button
+                onClick={onOpenChat}
+                className="h-8 px-3 rounded-md border border-slate-200 hover:bg-slate-50 text-xs text-slate-700 flex items-center gap-1"
+              >
+                <MessageSquare className="w-4 h-4 text-[color:var(--eyenak-teal)]" />
+                <span>محادثة المشروع</span>
+              </button>
+            )}
+            {onOpenFiles && (
+              <button
+                onClick={onOpenFiles}
+                className="h-8 px-3 rounded-md border border-slate-200 hover:bg-slate-50 text-xs text-slate-700 flex items-center gap-1"
+              >
+                <Folder className="w-4 h-4 text-amber-500" />
+                <span>ملفات المشروع</span>
+              </button>
+            )}
+          </div>
           <div className="flex items-center gap-2">
             <h2 className="text-lg font-bold text-slate-800">{name}</h2>
             <Folder className="w-5 h-5 text-[color:var(--eyenak-teal)]" />
