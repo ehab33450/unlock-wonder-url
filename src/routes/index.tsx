@@ -1692,3 +1692,57 @@ function Stat({ color, value, label }: { color: string; value: number; label: st
     </div>
   );
 }
+
+function ExcelEditor({
+  content,
+  onChange,
+}: {
+  content: string;
+  onChange: (content: string) => void;
+}) {
+  const parse = (txt: string): string[][] => {
+    if (!txt.trim()) return Array.from({ length: 8 }, () => Array(5).fill(""));
+    return txt.split("\n").map((row) => row.split("\t"));
+  };
+  const rows = parse(content);
+  const cols = Math.max(5, ...rows.map((r) => r.length));
+  const normalized = rows.map((r) => {
+    const copy = [...r];
+    while (copy.length < cols) copy.push("");
+    return copy;
+  });
+  const setCell = (ri: number, ci: number, val: string) => {
+    const next = normalized.map((r) => [...r]);
+    next[ri][ci] = val;
+    onChange(next.map((r) => r.join("\t")).join("\n"));
+  };
+  const addRow = () => onChange([...normalized.map((r) => r.join("\t")), Array(cols).fill("").join("\t")].join("\n"));
+  const addCol = () => onChange(normalized.map((r) => [...r, ""].join("\t")).join("\n"));
+  return (
+    <div className="space-y-3">
+      <div className="flex gap-2 justify-end">
+        <button onClick={addRow} className="h-8 px-3 text-xs border border-slate-300 rounded hover:bg-slate-50">+ صف</button>
+        <button onClick={addCol} className="h-8 px-3 text-xs border border-slate-300 rounded hover:bg-slate-50">+ عمود</button>
+      </div>
+      <div className="overflow-auto border border-slate-200 rounded">
+        <table className="w-full border-collapse text-sm">
+          <tbody>
+            {normalized.map((row, ri) => (
+              <tr key={ri}>
+                {row.map((cell, ci) => (
+                  <td key={ci} className="border border-slate-200 p-0">
+                    <input
+                      value={cell}
+                      onChange={(e) => setCell(ri, ci, e.target.value)}
+                      className="w-full px-2 py-1.5 text-right focus:outline-none focus:bg-emerald-50"
+                    />
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
