@@ -447,6 +447,7 @@ function Index() {
         },
       };
     });
+    setChats((c) => (c[name] ? c : { ...c, [name]: [] }));
     closeNewProject();
     setFolderViewProject(name);
     setCurrentSubfolder(null);
