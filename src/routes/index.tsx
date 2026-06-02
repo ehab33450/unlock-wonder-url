@@ -144,6 +144,50 @@ function Index() {
   const canAdd = isAdmin || employeePerms.add;
   const canDelete = isAdmin || employeePerms.delete;
 
+  // Current logged-in user (for non-admin filtering)
+  const currentUser = "ايهاب فاتح";
+
+  // Contract info + Tasks per project
+  type Payment = { id: string; amount: string; date: string; paid: boolean };
+  type ContractInfo = {
+    startDate: string;
+    endDate: string;
+    value: string;
+    payments: Payment[];
+    responsibleName: string;
+    responsiblePhone: string;
+    assignee: string;
+  };
+  type TaskStatus = "جديد" | "جاري العمل" | "تم" | "معلق";
+  type Priority = "لاشيء" | "منخفض" | "متوسط" | "عالي";
+  type TaskRow = {
+    id: string;
+    name: string;
+    platform: string;
+    beneficiary: string;
+    documentNo: string;
+    startDate: string;
+    endDate: string;
+    doneDate: string;
+    status: TaskStatus;
+    priority: Priority;
+    attachmentName?: string;
+    attachmentData?: string;
+  };
+  type ProjectMeta = { contract: ContractInfo; tasks: TaskRow[] };
+  const [projectMeta, setProjectMeta] = useState<Record<string, ProjectMeta>>({});
+
+  // New-project contract form fields
+  const [npValue, setNpValue] = useState("");
+  const [npRespName, setNpRespName] = useState("");
+  const [npRespPhone, setNpRespPhone] = useState("");
+  const [npAssignee, setNpAssignee] = useState("");
+  const [npPayments, setNpPayments] = useState<Payment[]>([]);
+
+  // Project detail overlay
+  const [detailProject, setDetailProject] = useState<string | null>(null);
+  const taskFileRefs = useRef<Record<string, HTMLInputElement | null>>({});
+
   // Calendar
   type CalEvent = {
     id: string;
