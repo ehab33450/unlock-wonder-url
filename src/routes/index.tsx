@@ -1400,12 +1400,9 @@ function Index() {
               ) : (
                 <div className="space-y-4">
                   {Object.entries(projectData).map(([projName, pd]) => {
-                    const allFiles = [
-                      ...pd.files.map((f) => ({ ...f, folder: null as string | null })),
-                      ...pd.folders.flatMap((sf) =>
-                        sf.files.map((f) => ({ ...f, folder: sf.name })),
-                      ),
-                    ];
+                    const totalFiles =
+                      pd.files.length +
+                      pd.folders.reduce((n, sf) => n + sf.files.length, 0);
                     return (
                       <div key={projName} className="border border-slate-200 rounded-md">
                         <button
@@ -1417,52 +1414,101 @@ function Index() {
                           className="w-full flex items-center justify-between px-4 py-3 bg-slate-50 hover:bg-slate-100 rounded-t-md"
                         >
                           <span className="text-xs text-slate-500">
-                            {allFiles.length} ملف
+                            {pd.folders.length} مجلد · {totalFiles} ملف
                           </span>
                           <div className="flex items-center gap-2">
                             <span className="font-bold text-slate-800 text-sm">{projName}</span>
                             <Folder className="w-5 h-5 text-amber-500" />
                           </div>
                         </button>
-                        {allFiles.length > 0 && (
-                          <ul className="divide-y divide-slate-100">
-                            {allFiles.map((f) => (
-                              <li
-                                key={`${projName}-${f.id}`}
-                                className="flex items-center justify-between px-4 py-2 hover:bg-slate-50"
+                        <div className="divide-y divide-slate-100">
+                          {pd.folders.map((sf) => (
+                            <div key={`${projName}-${sf.name}`} className="px-4 py-2">
+                              <button
+                                onClick={() => {
+                                  setFolderViewProject(projName);
+                                  setCurrentSubfolder(sf.name);
+                                  setFilesViewOpen(false);
+                                }}
+                                className="w-full flex items-center justify-between hover:bg-slate-50 rounded px-2 py-1"
                               >
-                                <span className="text-xs text-slate-400">
-                                  {f.folder ? `داخل: ${f.folder}` : "—"}
+                                <span className="text-[11px] text-slate-400">
+                                  {sf.files.length} ملف
                                 </span>
-                                <button
-                                  onClick={() => {
-                                    setFolderViewProject(projName);
-                                    setCurrentSubfolder(f.folder);
-                                    setEditingFile({
-                                      id: f.id,
-                                      name: f.name,
-                                      content: f.content,
-                                      kind: f.kind,
-                                    });
-                                    setFilesViewOpen(false);
-                                  }}
-                                  className="flex items-center gap-2 text-sm text-slate-700 hover:text-[color:var(--eyenak-teal)]"
-                                >
-                                  <span>{f.name}</span>
-                                  <FileIcon
-                                    className={`w-4 h-4 ${
-                                      f.kind === "word"
-                                        ? "text-blue-500"
-                                        : f.kind === "excel"
-                                        ? "text-green-600"
-                                        : "text-slate-400"
-                                    }`}
-                                  />
-                                </button>
-                              </li>
-                            ))}
-                          </ul>
-                        )}
+                                <div className="flex items-center gap-2">
+                                  <span className="text-sm text-slate-700">{sf.name}</span>
+                                  <Folder className="w-4 h-4 text-amber-400" />
+                                </div>
+                              </button>
+                              {sf.files.length > 0 && (
+                                <ul className="mt-1 mr-6 border-r border-slate-100 pr-3">
+                                  {sf.files.map((f) => (
+                                    <li key={f.id} className="py-1">
+                                      <button
+                                        onClick={() => {
+                                          setFolderViewProject(projName);
+                                          setCurrentSubfolder(sf.name);
+                                          setEditingFile({
+                                            id: f.id,
+                                            name: f.name,
+                                            content: f.content,
+                                            kind: f.kind,
+                                          });
+                                          setFilesViewOpen(false);
+                                        }}
+                                        className="flex items-center gap-2 text-xs text-slate-600 hover:text-[color:var(--eyenak-teal)] w-full justify-end"
+                                      >
+                                        <span>{f.name}</span>
+                                        <FileIcon
+                                          className={`w-3.5 h-3.5 ${
+                                            f.kind === "word"
+                                              ? "text-blue-500"
+                                              : f.kind === "excel"
+                                              ? "text-green-600"
+                                              : "text-slate-400"
+                                          }`}
+                                        />
+                                      </button>
+                                    </li>
+                                  ))}
+                                </ul>
+                              )}
+                            </div>
+                          ))}
+                          {pd.files.length > 0 && (
+                            <ul className="px-4 py-2">
+                              {pd.files.map((f) => (
+                                <li key={f.id} className="py-1">
+                                  <button
+                                    onClick={() => {
+                                      setFolderViewProject(projName);
+                                      setCurrentSubfolder(null);
+                                      setEditingFile({
+                                        id: f.id,
+                                        name: f.name,
+                                        content: f.content,
+                                        kind: f.kind,
+                                      });
+                                      setFilesViewOpen(false);
+                                    }}
+                                    className="flex items-center gap-2 text-xs text-slate-600 hover:text-[color:var(--eyenak-teal)] w-full justify-end"
+                                  >
+                                    <span>{f.name}</span>
+                                    <FileIcon
+                                      className={`w-3.5 h-3.5 ${
+                                        f.kind === "word"
+                                          ? "text-blue-500"
+                                          : f.kind === "excel"
+                                          ? "text-green-600"
+                                          : "text-slate-400"
+                                      }`}
+                                    />
+                                  </button>
+                                </li>
+                              ))}
+                            </ul>
+                          )}
+                        </div>
                       </div>
                     );
                   })}
