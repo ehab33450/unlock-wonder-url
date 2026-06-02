@@ -260,7 +260,13 @@ function Index() {
         content: "",
         kind: "text",
       };
-      return { ...d, [name]: { folders: [], files: [emptyFile] } };
+      const defaultFolders: SubFolder[] = DEFAULT_FOLDERS.map((fn, i) => ({
+        name: fn,
+        createdAt: todayLabel,
+        files: [],
+        locked: true,
+      }));
+      return { ...d, [name]: { folders: defaultFolders, files: [emptyFile] } };
     });
     closeNewProject();
     setFolderViewProject(name);
