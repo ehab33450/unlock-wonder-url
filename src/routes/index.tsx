@@ -1841,8 +1841,14 @@ function Index() {
                     )}
                     {w.key === "upcomingMeetings" && (
                       <ul className="space-y-2 text-xs">
-                        <li className="border border-slate-100 rounded p-2"><div className="text-slate-400">12:59 PM</div><div className="font-semibold">Daily Standup</div></li>
-                        <li className="border border-slate-100 rounded p-2"><div className="text-slate-400">2:30 PM</div><div className="font-semibold">Scrum Meeting</div></li>
+                        {meetings.length === 0 && <li className="text-slate-400 text-center">لا توجد اجتماعات</li>}
+                        {meetings.slice(0, 3).map((m) => (
+                          <li key={m.id} className="border border-slate-100 rounded p-2">
+                            <div className="text-slate-400">{new Date(m.date).toLocaleString("ar-EG", { dateStyle: "short", timeStyle: "short" })}</div>
+                            <div className="font-semibold">{m.title}</div>
+                          </li>
+                        ))}
+                        <li><button onClick={() => setMeetingsOpen(true)} className="text-[10px] text-[color:var(--eyenak-teal)] hover:underline">+ اجتماع جديد</button></li>
                       </ul>
                     )}
                     {w.key === "latestUpdates" && (
