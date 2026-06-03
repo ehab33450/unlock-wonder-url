@@ -1754,10 +1754,30 @@ function Index() {
           <section className="bg-white rounded-lg border border-slate-200 shadow-sm p-5">
             {/* Card header */}
             <div className="flex items-center justify-between mb-4">
-              <button className="flex items-center gap-2 px-3 py-1.5 border border-slate-200 rounded text-sm text-slate-600 hover:bg-slate-50">
-                <span>جميع المشاريع</span>
-                <ChevronDown className="w-4 h-4" />
-              </button>
+              <div className="relative">
+                <button
+                  onClick={() => setAllProjectsOpen((v) => !v)}
+                  className="flex items-center gap-2 px-3 py-1.5 border border-slate-200 rounded text-sm text-slate-600 hover:bg-slate-50 bg-white"
+                >
+                  <span>{projectFilter ?? "جميع المشاريع"}</span>
+                  <ChevronDown className="w-4 h-4" />
+                </button>
+                {allProjectsOpen && (
+                  <div className="absolute right-0 mt-1 w-64 max-h-72 overflow-auto bg-white border border-slate-200 rounded-lg shadow-xl z-40" dir="rtl">
+                    <button
+                      onClick={() => { setProjectFilter(null); setAllProjectsOpen(false); }}
+                      className="w-full text-right px-3 py-2 text-sm hover:bg-slate-50 border-b border-slate-100 font-semibold text-[color:var(--eyenak-teal)]"
+                    >جميع المشاريع</button>
+                    {projects.flatMap((p) => p.children).map((proj) => (
+                      <button
+                        key={proj}
+                        onClick={() => { setProjectFilter(proj); setAllProjectsOpen(false); }}
+                        className="w-full text-right px-3 py-2 text-sm hover:bg-slate-50 text-slate-700 border-b border-slate-50"
+                      >{proj}</button>
+                    ))}
+                  </div>
+                )}
+              </div>
               <div className="flex items-center gap-2">
                 <h2 className="font-bold text-slate-700">حالة المهام</h2>
                 <PieChart className="w-5 h-5 text-slate-500" />
@@ -1766,10 +1786,18 @@ function Index() {
 
             {/* Toolbar */}
             <div className="flex items-center gap-2 mb-6">
-              <button className="p-2 rounded border border-slate-200 text-slate-500 hover:bg-slate-50">
+              <button
+                onClick={() => document.documentElement.requestFullscreen?.()}
+                title="ملء الشاشة"
+                className="p-2 rounded border border-slate-200 text-slate-500 hover:bg-slate-50"
+              >
                 <Maximize2 className="w-4 h-4" />
               </button>
-              <button className="p-2 rounded border border-slate-200 text-slate-500 hover:bg-slate-50">
+              <button
+                onClick={() => window.print()}
+                title="طباعة"
+                className="p-2 rounded border border-slate-200 text-slate-500 hover:bg-slate-50"
+              >
                 <Printer className="w-4 h-4" />
               </button>
             </div>
