@@ -5522,6 +5522,32 @@ function ProjectDetailOverlay({
                             </select>
                           </td>
                           <td className="px-1 py-1">
+                            <div className="flex items-center gap-1.5">
+                              <select
+                                value={t.progress}
+                                disabled={!canEditOwn}
+                                onChange={(e) => {
+                                  const v = Number(e.target.value);
+                                  updateTask(t.id, {
+                                    progress: v,
+                                    ...(v === 100 && t.status !== "تم" ? { status: "تم" as DStatus } : {}),
+                                  });
+                                }}
+                                className="text-xs font-semibold rounded px-1 py-1 bg-slate-50 border border-slate-200 focus:outline-none"
+                              >
+                                {[0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100].map((n) => (
+                                  <option key={n} value={n}>{n}%</option>
+                                ))}
+                              </select>
+                              <div className="w-12 h-1.5 bg-slate-200 rounded-full overflow-hidden">
+                                <div
+                                  className={`h-full ${t.progress === 100 ? "bg-emerald-500" : t.progress >= 50 ? "bg-amber-500" : "bg-sky-500"}`}
+                                  style={{ width: `${t.progress}%` }}
+                                />
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-1 py-1">
                             <select
                               value={t.priority}
                               disabled={!canEditOwn}
