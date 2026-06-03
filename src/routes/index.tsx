@@ -53,6 +53,8 @@ import {
   Bot,
   Copy,
   Link as LinkIcon,
+  Wallet,
+  Receipt,
 } from "lucide-react";
 
 export const Route = createFileRoute("/")({
