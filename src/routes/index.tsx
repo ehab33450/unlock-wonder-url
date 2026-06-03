@@ -1768,8 +1768,8 @@ function Index() {
               {activeTab !== "النشاط" && activeTab !== "تقرير التتبع" && activeTab !== "المقالات" && (
                 <div className="flex items-center justify-end gap-1 mb-3">
                   {([
-                    { k: "mine" as TaskScope, label: "مهامي فقط", icon: User },
-                    { k: "shared" as TaskScope, label: "مشترك بها", icon: Users },
+                    { k: "mine" as TaskScope, label: "أنا فقط", icon: User },
+                    { k: "shared" as TaskScope, label: "المشترك بها", icon: Users },
                     { k: "all" as TaskScope, label: "الجميع", icon: List },
                   ]).map((o) => {
                     const Icon = o.icon;
