@@ -4464,6 +4464,177 @@ function Index() {
         </div>
       )}
 
+      {/* نافذة رابط دخول الموظف للمشاركة */}
+      {linkEmp && (
+        <div
+          className="fixed inset-0 z-[70] bg-slate-900/70 backdrop-blur-sm flex items-center justify-center p-4"
+          onClick={() => setLinkEmp(null)}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            dir="rtl"
+            className="bg-white rounded-xl shadow-2xl w-full max-w-lg p-6"
+          >
+            <div className="flex items-center justify-between mb-4">
+              <button onClick={() => setLinkEmp(null)} className="text-slate-400 hover:text-slate-700">
+                <X className="w-5 h-5" />
+              </button>
+              <h2 className="text-lg font-bold text-slate-800">رابط دخول الموظف</h2>
+            </div>
+            <div className="text-sm text-slate-600 mb-3 text-right">
+              شارك الرابط التالي مع <b>{linkEmp.name}</b> ليدخل مباشرة دون كتابة كلمة المرور، أو زوّده بـ
+              اسم المستخدم والرمز يدوياً.
+            </div>
+            <div className="bg-slate-50 border border-slate-200 rounded p-3 mb-3 text-xs text-right space-y-1">
+              <div className="flex justify-between"><span className="font-mono text-slate-700">{linkEmp.username}</span><span className="text-slate-500">اسم المستخدم</span></div>
+              <div className="flex justify-between"><span className="font-mono text-slate-700">{linkEmp.password}</span><span className="text-slate-500">كلمة المرور</span></div>
+            </div>
+            <div className="bg-slate-900 text-slate-100 rounded p-3 text-[11px] font-mono break-all text-left mb-3 max-h-28 overflow-y-auto">
+              {buildLoginLink(linkEmp)}
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                onClick={() => {
+                  const link = buildLoginLink(linkEmp);
+                  navigator.clipboard?.writeText(link);
+                  setLinkCopied(true);
+                  setTimeout(() => setLinkCopied(false), 1800);
+                }}
+                className="h-10 rounded bg-[color:var(--eyenak-teal)] text-white text-sm flex items-center justify-center gap-2 hover:opacity-90"
+              >
+                <Copy className="w-4 h-4" />
+                {linkCopied ? "تم النسخ ✓" : "نسخ الرابط"}
+              </button>
+              <a
+                href={`https://wa.me/?text=${encodeURIComponent(
+                  `مرحباً ${linkEmp.name}، هذا رابط دخولك إلى منصة EYENAK:\n${buildLoginLink(linkEmp)}\nاسم المستخدم: ${linkEmp.username}\nالرمز: ${linkEmp.password}`
+                )}`}
+                target="_blank"
+                rel="noreferrer"
+                className="h-10 rounded border border-emerald-500 text-emerald-600 text-sm flex items-center justify-center gap-2 hover:bg-emerald-50"
+              >
+                <Send className="w-4 h-4" />
+                مشاركة عبر واتساب
+              </a>
+              {linkEmp.email && (
+                <a
+                  href={`mailto:${linkEmp.email}?subject=${encodeURIComponent("بيانات دخولك إلى منصة EYENAK")}&body=${encodeURIComponent(
+                    `مرحباً ${linkEmp.name}،\n\nرابط الدخول المباشر:\n${buildLoginLink(linkEmp)}\n\nاسم المستخدم: ${linkEmp.username}\nالرمز: ${linkEmp.password}`
+                  )}`}
+                  className="col-span-2 h-10 rounded border border-slate-300 text-slate-700 text-sm flex items-center justify-center gap-2 hover:bg-slate-50"
+                >
+                  <Send className="w-4 h-4" />
+                  إرسال إلى البريد ({linkEmp.email})
+                </a>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* المساعد الذكي — زر عائم + لوحة محادثة */}
+      <button
+        onClick={() => setAiOpen((v) => !v)}
+        aria-label="المساعد الذكي"
+        className="fixed bottom-5 left-5 z-[55] w-14 h-14 rounded-full shadow-2xl bg-gradient-to-br from-[color:var(--eyenak-teal)] to-emerald-500 text-white flex items-center justify-center hover:scale-105 transition-transform"
+      >
+        <Bot className="w-7 h-7" />
+      </button>
+      {aiOpen && (
+        <div
+          dir="rtl"
+          className="fixed bottom-24 left-5 z-[55] w-[360px] max-w-[92vw] h-[520px] max-h-[80vh] bg-white rounded-2xl shadow-2xl border border-slate-200 flex flex-col overflow-hidden"
+        >
+          <div className="flex items-center justify-between px-4 py-3 bg-gradient-to-r from-[color:var(--eyenak-teal)] to-emerald-500 text-white">
+            <button onClick={() => setAiOpen(false)} className="text-white/80 hover:text-white">
+              <X className="w-5 h-5" />
+            </button>
+            <div className="flex items-center gap-2">
+              <div className="text-right">
+                <div className="font-bold text-sm">مساعد EYENAK</div>
+                <div className="text-[10px] opacity-90">{isAdmin ? "وضع المدير" : `الموظف: ${currentUser}`}</div>
+              </div>
+              <Bot className="w-6 h-6" />
+            </div>
+          </div>
+          <div className="flex-1 overflow-y-auto p-3 space-y-2 bg-slate-50">
+            {aiMessages.map((m, i) => (
+              <div key={i} className={`flex ${m.role === "user" ? "justify-start" : "justify-end"}`}>
+                <div
+                  className={`max-w-[80%] px-3 py-2 rounded-2xl text-sm whitespace-pre-wrap ${
+                    m.role === "user"
+                      ? "bg-slate-200 text-slate-800 rounded-tr-2xl rounded-bl-md"
+                      : "bg-white border border-slate-200 text-slate-700 rounded-tl-2xl rounded-br-md"
+                  }`}
+                >
+                  {m.content}
+                </div>
+              </div>
+            ))}
+            {aiLoading && (
+              <div className="flex justify-end">
+                <div className="bg-white border border-slate-200 rounded-2xl px-3 py-2 text-xs text-slate-500">
+                  يفكر…
+                </div>
+              </div>
+            )}
+          </div>
+          <form
+            onSubmit={async (e) => {
+              e.preventDefault();
+              const text = aiInput.trim();
+              if (!text || aiLoading) return;
+              const nextMsgs: AIMsg[] = [...aiMessages, { role: "user", content: text }];
+              setAiMessages(nextMsgs);
+              setAiInput("");
+              setAiLoading(true);
+              try {
+                const ctx = isAdmin
+                  ? `الدور: مدير. عدد الموظفين: ${employees.length}.`
+                  : `الدور: موظف باسم ${currentUser}. الصلاحيات المفتوحة: ${
+                      currentEmployee
+                        ? PERMS.filter((p) => currentEmployee.perms[p.key]).map((p) => p.label).join("، ") || "لا توجد"
+                        : "—"
+                    }.`;
+                const res = await callAssistant({
+                  data: {
+                    messages: nextMsgs.map((m) => ({ role: m.role, content: m.content })),
+                    context: ctx,
+                  },
+                });
+                if (res.ok) {
+                  setAiMessages((prev) => [...prev, { role: "assistant", content: res.reply || "…" }]);
+                } else {
+                  setAiMessages((prev) => [...prev, { role: "assistant", content: `تعذّر الرد: ${res.error}` }]);
+                }
+              } catch (err) {
+                setAiMessages((prev) => [
+                  ...prev,
+                  { role: "assistant", content: "حصل خطأ بالاتصال، حاول مرة ثانية." },
+                ]);
+              } finally {
+                setAiLoading(false);
+              }
+            }}
+            className="border-t border-slate-200 p-2 bg-white flex items-center gap-2"
+          >
+            <button
+              type="submit"
+              disabled={aiLoading || !aiInput.trim()}
+              className="w-9 h-9 rounded-full bg-[color:var(--eyenak-teal)] text-white flex items-center justify-center disabled:opacity-40"
+            >
+              <Send className="w-4 h-4 rotate-180" />
+            </button>
+            <input
+              value={aiInput}
+              onChange={(e) => setAiInput(e.target.value)}
+              placeholder="اسأل عن أي شيء داخل المنصة…"
+              className="flex-1 h-9 px-3 text-sm border border-slate-300 rounded-full focus:outline-none focus:border-[color:var(--eyenak-teal)]"
+            />
+          </form>
+        </div>
+      )}
+
     </div>
   );
 }
