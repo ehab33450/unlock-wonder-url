@@ -487,6 +487,47 @@ function Index() {
   useEffect(() => {
     setChatRoleView(isAdmin ? "admin" : "employee");
   }, [isAdmin]);
+  // Group members per project (مجموعة المحادثة)
+  const [chatMembers, setChatMembers] = useState<Record<string, string[]>>({});
+  const [membersModalOpen, setMembersModalOpen] = useState(false);
+  const [newMemberName, setNewMemberName] = useState("");
+  // Auto-seed members for each project: الأدمن + الموظف المُكلَّف + العميل
+  useEffect(() => {
+    setChatMembers((prev) => {
+      const next = { ...prev };
+      let changed = false;
+      for (const p of Object.keys(projectMeta)) {
+        if (!next[p]) {
+          const assignee = projectMeta[p].contract.assignee || "";
+          const client = projectMeta[p].contract.responsibleName || "";
+          const seed = ["الأدمن", assignee, client].filter(Boolean);
+          next[p] = Array.from(new Set(seed));
+          changed = true;
+        }
+      }
+      return changed ? next : prev;
+    });
+  }, [projectMeta]);
+  const isMemberOfProject = (project: string) => {
+    if (isAdmin) return true;
+    return (chatMembers[project] ?? []).includes(currentUser);
+  };
+  const addChatMember = (project: string, name: string) => {
+    const n = name.trim();
+    if (!n) return;
+    setChatMembers((m) => ({
+      ...m,
+      [project]: Array.from(new Set([...(m[project] ?? []), n])),
+    }));
+  };
+  const removeChatMember = (project: string, name: string) => {
+    // لا تسمح بإزالة الأدمن
+    if (name === "الأدمن") return;
+    setChatMembers((m) => ({
+      ...m,
+      [project]: (m[project] ?? []).filter((x) => x !== name),
+    }));
+  };
   const visibilityLabel = (v: ChatVisibility) =>
     v === "all" ? "للجميع" : v === "admin-employee" ? "الأدمن + الموظف" : "الأدمن + العميل";
   const canSeeMessage = (m: ChatMessage, role: ChatRole) => {
