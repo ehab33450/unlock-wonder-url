@@ -256,6 +256,13 @@ function Index() {
   const [loginUser, setLoginUser] = useState("");
   const [loginPass, setLoginPass] = useState("");
   const [loginErr, setLoginErr] = useState("");
+  // واجهة عامة
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [accountOpen, setAccountOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [moreMenuOpen, setMoreMenuOpen] = useState(false);
+  const [allProjectsOpen, setAllProjectsOpen] = useState(false);
+  const [projectFilter, setProjectFilter] = useState<string | null>(null);
 
   // رسالة تأكيد إضافة الموظف + نافذة رابط الدخول
   const [addEmpMsg, setAddEmpMsg] = useState<{ type: "ok" | "err"; text: string } | null>(null);
@@ -1429,10 +1436,33 @@ function Index() {
     [meetingNotifs, isAdmin, currentUser]
   );
 
+  // إغلاق كل اللوحات المنبثقة قبل فتح أخرى أو عند الضغط في فراغ
+  const closeAllPanels = () => {
+    setCalendarOpen(false);
+    setBookingOpen(false);
+    setFilesViewOpen(false);
+    setChatViewOpen(false);
+    setNotesViewOpen(false);
+    setMeetingsOpen(false);
+    setMembersOpen(false);
+    setFinanceOpen(false);
+    setGuidesOpen(false);
+    setNotifOpen(false);
+    setCreateOpen(false);
+    setTasksMenuOpen(false);
+    setNewFileMenuOpen(false);
+    setPermsOpen(false);
+    setWidgetsOpen(false);
+    setNewProjectOpen(false);
+    setUserMenuOpen(false);
+    setMoreMenuOpen(false);
+    setAllProjectsOpen(false);
+  };
+
   return (
     <div dir={isEn ? "ltr" : "rtl"} className="min-h-screen bg-slate-50 text-slate-800 font-[Cairo]">
       {/* Top header */}
-      <header className="h-14 bg-white border-b border-slate-200 flex items-center justify-between px-4">
+      <header className="h-14 bg-gradient-to-l from-white via-white to-slate-50 border-b border-slate-200 flex items-center justify-between px-4 shadow-sm">
         {/* Right: logo */}
         <div className="flex items-center gap-2" dir="ltr">
           <div className="flex items-baseline">
@@ -1565,15 +1595,46 @@ function Index() {
             <Globe className="w-4 h-4" />
             <span>{isEn ? "EN" : "AR"}</span>
           </button>
-          <div className="flex items-center gap-2 pr-2 border-r border-slate-200">
-            <div className="text-right leading-tight">
-              <div className="text-sm font-semibold text-slate-800">{t("ايهاب فاتح", "Ehab Fateh")}</div>
-              <div className="text-xs text-slate-500">{t("مطور", "Developer")}</div>
-            </div>
-            <div className="w-10 h-10 rounded-full bg-[color:var(--eyenak-teal)] text-white flex items-center justify-center font-bold ring-2 ring-white shadow">
-              EA
-            </div>
-            <ChevronDown className="w-4 h-4 text-slate-400" />
+          <div className="relative">
+            <button
+              onClick={() => { const v = !userMenuOpen; closeAllPanels(); setUserMenuOpen(v); }}
+              className="flex items-center gap-2 pr-2 border-r border-slate-200 hover:bg-slate-50 rounded-l-lg pl-2 py-1 transition"
+            >
+              <div className="text-right leading-tight">
+                <div className="text-sm font-semibold text-slate-800">{t(currentUser, "Ehab Fateh")}</div>
+                <div className="text-xs text-slate-500">{isAdmin ? t("مدير", "Admin") : t("مطور", "Developer")}</div>
+              </div>
+              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[color:var(--eyenak-teal)] to-[color:var(--eyenak-dark)] text-white flex items-center justify-center font-bold ring-2 ring-white shadow">
+                {currentUser.charAt(0)}
+              </div>
+              <ChevronDown className="w-4 h-4 text-slate-400" />
+            </button>
+            {userMenuOpen && (
+              <div dir={isEn ? "ltr" : "rtl"} className="absolute left-0 mt-2 w-56 bg-white border border-slate-200 rounded-lg shadow-xl z-50 overflow-hidden">
+                <button
+                  onClick={() => { setUserMenuOpen(false); setAccountOpen(true); }}
+                  className="w-full text-right px-4 py-2.5 text-sm hover:bg-slate-50 flex items-center gap-2 text-slate-700"
+                >
+                  <User className="w-4 h-4 text-[color:var(--eyenak-teal)]" />
+                  {t("حسابي", "My account")}
+                </button>
+                <button
+                  onClick={() => { setUserMenuOpen(false); setSettingsOpen(true); }}
+                  className="w-full text-right px-4 py-2.5 text-sm hover:bg-slate-50 flex items-center gap-2 text-slate-700"
+                >
+                  <svg className="w-4 h-4 text-[color:var(--eyenak-teal)]" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h0a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h0a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v0a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                  {t("إعدادات الموقع", "Site settings")}
+                </button>
+                <div className="border-t border-slate-100" />
+                <button
+                  onClick={() => { setUserMenuOpen(false); setIsAdmin(false); setCurrentUser(t("ايهاب فاتح","Ehab Fateh")); setLoginOpen(true); }}
+                  className="w-full text-right px-4 py-2.5 text-sm hover:bg-red-50 flex items-center gap-2 text-red-600"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>
+                  {t("تسجيل الخروج", "Logout")}
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </header>
@@ -1596,6 +1657,7 @@ function Index() {
               <button
                 key={item.label}
                 onClick={() => {
+                  closeAllPanels();
                   if (item.label === "التقويم") setCalendarOpen(true);
                   if (item.label === "الحجز") setBookingOpen(true);
                   if (item.label === "الملفات") setFilesViewOpen(true);
@@ -1605,6 +1667,7 @@ function Index() {
                   if (item.label === "مستخدم") setMembersOpen(true);
                   if (item.label === "المالية") setFinanceOpen(true);
                   if (item.label === "الإرشادات") setGuidesOpen(true);
+                  if (item.label === "المزيد") setMoreMenuOpen(true);
                 }}
                 className={`group w-16 py-2.5 flex flex-col items-center gap-1 rounded-xl transition-all duration-200 hover:-translate-y-0.5 ${
                   isActive
@@ -1691,10 +1754,30 @@ function Index() {
           <section className="bg-white rounded-lg border border-slate-200 shadow-sm p-5">
             {/* Card header */}
             <div className="flex items-center justify-between mb-4">
-              <button className="flex items-center gap-2 px-3 py-1.5 border border-slate-200 rounded text-sm text-slate-600 hover:bg-slate-50">
-                <span>جميع المشاريع</span>
-                <ChevronDown className="w-4 h-4" />
-              </button>
+              <div className="relative">
+                <button
+                  onClick={() => setAllProjectsOpen((v) => !v)}
+                  className="flex items-center gap-2 px-3 py-1.5 border border-slate-200 rounded text-sm text-slate-600 hover:bg-slate-50 bg-white"
+                >
+                  <span>{projectFilter ?? "جميع المشاريع"}</span>
+                  <ChevronDown className="w-4 h-4" />
+                </button>
+                {allProjectsOpen && (
+                  <div className="absolute right-0 mt-1 w-64 max-h-72 overflow-auto bg-white border border-slate-200 rounded-lg shadow-xl z-40" dir="rtl">
+                    <button
+                      onClick={() => { setProjectFilter(null); setAllProjectsOpen(false); }}
+                      className="w-full text-right px-3 py-2 text-sm hover:bg-slate-50 border-b border-slate-100 font-semibold text-[color:var(--eyenak-teal)]"
+                    >جميع المشاريع</button>
+                    {projects.flatMap((p) => p.children).map((proj) => (
+                      <button
+                        key={proj}
+                        onClick={() => { setProjectFilter(proj); setAllProjectsOpen(false); }}
+                        className="w-full text-right px-3 py-2 text-sm hover:bg-slate-50 text-slate-700 border-b border-slate-50"
+                      >{proj}</button>
+                    ))}
+                  </div>
+                )}
+              </div>
               <div className="flex items-center gap-2">
                 <h2 className="font-bold text-slate-700">حالة المهام</h2>
                 <PieChart className="w-5 h-5 text-slate-500" />
@@ -1703,10 +1786,18 @@ function Index() {
 
             {/* Toolbar */}
             <div className="flex items-center gap-2 mb-6">
-              <button className="p-2 rounded border border-slate-200 text-slate-500 hover:bg-slate-50">
+              <button
+                onClick={() => document.documentElement.requestFullscreen?.()}
+                title="ملء الشاشة"
+                className="p-2 rounded border border-slate-200 text-slate-500 hover:bg-slate-50"
+              >
                 <Maximize2 className="w-4 h-4" />
               </button>
-              <button className="p-2 rounded border border-slate-200 text-slate-500 hover:bg-slate-50">
+              <button
+                onClick={() => window.print()}
+                title="طباعة"
+                className="p-2 rounded border border-slate-200 text-slate-500 hover:bg-slate-50"
+              >
                 <Printer className="w-4 h-4" />
               </button>
             </div>
@@ -4821,6 +4912,20 @@ function Index() {
               >
                 إلغاء
               </button>
+              <div className="relative my-2">
+                <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-slate-200" /></div>
+                <div className="relative flex justify-center"><span className="bg-white px-2 text-[11px] text-slate-400">أو</span></div>
+              </div>
+              <button
+                onClick={() => {
+                  // تسجيل دخول جوجل: يتطلب تفعيل Lovable Cloud لتوصيله فعلياً
+                  setLoginErr("لتفعيل تسجيل الدخول بجوجل، يلزم تفعيل Lovable Cloud من الإعدادات.");
+                }}
+                className="w-full h-11 rounded border border-slate-300 bg-white text-sm font-semibold text-slate-700 hover:bg-slate-50 flex items-center justify-center gap-2"
+              >
+                <svg className="w-5 h-5" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3c-1.6 4.7-6.1 8-11.3 8-6.6 0-12-5.4-12-12s5.4-12 12-12c3 0 5.8 1.1 7.9 3l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.2-.1-2.3-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 16 19 13 24 13c3 0 5.8 1.1 7.9 3l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2c-2 1.4-4.5 2.3-7.2 2.3-5.2 0-9.6-3.3-11.3-7.9l-6.5 5C9.6 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.3-2.3 4.2-4.1 5.6l6.2 5.2C41.2 35.8 44 30.4 44 24c0-1.2-.1-2.3-.4-3.5z"/></svg>
+                متابعة باستخدام Google
+              </button>
             </div>
           </div>
         </div>
@@ -5200,6 +5305,98 @@ function Index() {
           </form>
         </div>
       )}
+
+      {/* قائمة المزيد */}
+      {moreMenuOpen && (
+        <div className="fixed inset-0 z-[60] bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setMoreMenuOpen(false)}>
+          <div dir="rtl" onClick={(e) => e.stopPropagation()} className="bg-white rounded-xl shadow-2xl w-full max-w-md p-5">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-bold text-slate-800">{t("المزيد من الأدوات","More tools")}</h3>
+              <button onClick={() => setMoreMenuOpen(false)} className="p-1 hover:bg-slate-100 rounded"><X className="w-4 h-4" /></button>
+            </div>
+            <div className="grid grid-cols-3 gap-3">
+              {[
+                { icon: Bot, label: t("المساعد الذكي","AI"), action: () => { setMoreMenuOpen(false); setAiOpen(true); } },
+                { icon: Printer, label: t("طباعة","Print"), action: () => { setMoreMenuOpen(false); window.print(); } },
+                { icon: Globe, label: t("تبديل اللغة","Language"), action: () => { setLang((l) => l === "ar" ? "en" : "ar"); setMoreMenuOpen(false); } },
+                { icon: User, label: t("الأعضاء","Members"), action: () => { setMoreMenuOpen(false); setMembersOpen(true); } },
+                { icon: HelpCircle, label: t("الإرشادات","Guides"), action: () => { setMoreMenuOpen(false); setGuidesOpen(true); } },
+                { icon: Wallet, label: t("المالية","Finance"), action: () => { setMoreMenuOpen(false); setFinanceOpen(true); } },
+              ].map((it) => {
+                const I = it.icon;
+                return (
+                  <button key={it.label} onClick={it.action} className="flex flex-col items-center gap-1.5 p-3 rounded-lg border border-slate-200 hover:border-[color:var(--eyenak-teal)] hover:bg-teal-50 transition">
+                    <I className="w-5 h-5 text-[color:var(--eyenak-teal)]" />
+                    <span className="text-xs font-semibold text-slate-700">{it.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* حسابي */}
+      {accountOpen && (
+        <div className="fixed inset-0 z-[60] bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setAccountOpen(false)}>
+          <div dir="rtl" onClick={(e) => e.stopPropagation()} className="bg-white rounded-xl shadow-2xl w-full max-w-md p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-bold text-slate-800">{t("حسابي","My account")}</h3>
+              <button onClick={() => setAccountOpen(false)} className="p-1 hover:bg-slate-100 rounded"><X className="w-4 h-4" /></button>
+            </div>
+            <div className="flex items-center gap-3 mb-4 p-3 rounded-lg bg-gradient-to-l from-teal-50 to-white border border-slate-200">
+              <div className="w-14 h-14 rounded-full bg-gradient-to-br from-[color:var(--eyenak-teal)] to-[color:var(--eyenak-dark)] text-white flex items-center justify-center font-bold text-xl">{currentUser.charAt(0)}</div>
+              <div>
+                <div className="font-bold text-slate-800">{currentUser}</div>
+                <div className="text-xs text-slate-500">{isAdmin ? t("مدير النظام","Admin") : t("موظف","Employee")}</div>
+              </div>
+            </div>
+            <div className="space-y-2 text-sm">
+              <div className="flex justify-between p-2 border-b border-slate-100"><span className="text-slate-500">{t("البريد الإلكتروني","Email")}</span><span className="text-slate-800">{currentEmployee?.email ?? "ehab@example.com"}</span></div>
+              <div className="flex justify-between p-2 border-b border-slate-100"><span className="text-slate-500">{t("اسم المستخدم","Username")}</span><span className="text-slate-800">{currentEmployee?.username ?? "—"}</span></div>
+              <div className="flex justify-between p-2 border-b border-slate-100"><span className="text-slate-500">{t("الدور","Role")}</span><span className="text-slate-800">{isAdmin ? "Admin" : "Employee"}</span></div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* إعدادات الموقع */}
+      {settingsOpen && (
+        <div className="fixed inset-0 z-[60] bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setSettingsOpen(false)}>
+          <div dir="rtl" onClick={(e) => e.stopPropagation()} className="bg-white rounded-xl shadow-2xl w-full max-w-md p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-bold text-slate-800">{t("إعدادات الموقع","Site settings")}</h3>
+              <button onClick={() => setSettingsOpen(false)} className="p-1 hover:bg-slate-100 rounded"><X className="w-4 h-4" /></button>
+            </div>
+            <div className="space-y-3 text-sm">
+              <div className="flex items-center justify-between p-3 border border-slate-200 rounded-lg">
+                <span className="text-slate-700">{t("اللغة","Language")}</span>
+                <button onClick={() => setLang((l) => l === "ar" ? "en" : "ar")} className="px-3 py-1 rounded bg-[color:var(--eyenak-teal)] text-white text-xs font-semibold">{isEn ? "English" : "العربية"}</button>
+              </div>
+              <div className="flex items-center justify-between p-3 border border-slate-200 rounded-lg">
+                <span className="text-slate-700">{t("الإشعارات","Notifications")}</span>
+                <span className="text-xs text-emerald-600 font-semibold">{t("مفعّلة","Enabled")}</span>
+              </div>
+              <div className="flex items-center justify-between p-3 border border-slate-200 rounded-lg">
+                <span className="text-slate-700">{t("وضع المدير","Admin mode")}</span>
+                <button onClick={() => setIsAdmin((v) => !v)} className={`px-3 py-1 rounded text-xs font-semibold ${isAdmin ? "bg-emerald-500 text-white" : "bg-slate-200 text-slate-600"}`}>{isAdmin ? "ON" : "OFF"}</button>
+              </div>
+              <div className="p-3 border border-dashed border-slate-300 rounded-lg text-xs text-slate-500 text-center">
+                {t("مزيد من الإعدادات قريباً","More settings coming soon")}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* تذييل الصفحة - حقوق التطوير */}
+      <footer className="mt-8 border-t border-slate-200 bg-white py-4 px-4">
+        <div className="text-center text-xs text-slate-500">
+          <span className="font-semibold text-slate-600">برمجة وتطوير</span>
+          <span className="mx-1.5 text-[color:var(--eyenak-teal)] font-bold">ايهاب المزلم</span>
+          <span className="opacity-60">© {new Date().getFullYear()} EYENAK</span>
+        </div>
+      </footer>
 
     </div>
   );
