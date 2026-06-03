@@ -1146,7 +1146,8 @@ function Index() {
               (item.label === "التقويم" && calendarOpen) ||
               (item.label === "الملفات" && filesViewOpen) ||
               (item.label === "المحادثة" && chatViewOpen) ||
-              (item.label === "الحجز" && bookingOpen);
+              (item.label === "الحجز" && bookingOpen) ||
+              (item.label === "قائمة المذكرات" && notesViewOpen);
             return (
               <button
                 key={item.label}
@@ -1155,6 +1156,7 @@ function Index() {
                   if (item.label === "الحجز") setBookingOpen(true);
                   if (item.label === "الملفات") setFilesViewOpen(true);
                   if (item.label === "المحادثة") setChatViewOpen(true);
+                  if (item.label === "قائمة المذكرات") setNotesViewOpen(true);
                 }}
                 className={`group w-16 py-2.5 flex flex-col items-center gap-1 rounded-xl transition-all duration-200 hover:-translate-y-0.5 ${
                   isActive
