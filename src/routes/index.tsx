@@ -118,6 +118,9 @@ const employeeTasks: Record<string, string[]> = {
 };
 
 function Index() {
+  const [lang, setLang] = useState<"ar" | "en">("ar");
+  const isEn = lang === "en";
+  const t = (ar: string, en: string) => (isEn ? en : ar);
   const [openProjects, setOpenProjects] = useState<Record<string, boolean>>({
     "المدير التنفيذي": true,
     "عملاء أ.أروى الجعدي": true,
