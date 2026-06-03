@@ -1583,6 +1583,7 @@ function Index() {
               (item.label === "الحجز" && bookingOpen) ||
               (item.label === "الاجتماعات" && meetingsOpen) ||
               (item.label === "المالية" && financeOpen) ||
+              (item.label === "الإرشادات" && guidesOpen) ||
               (item.label === "قائمة المذكرات" && notesViewOpen);
             return (
               <button
@@ -1596,6 +1597,7 @@ function Index() {
                   if (item.label === "الاجتماعات") setMeetingsOpen(true);
                   if (item.label === "مستخدم") setMembersOpen(true);
                   if (item.label === "المالية") setFinanceOpen(true);
+                  if (item.label === "الإرشادات") setGuidesOpen(true);
                 }}
                 className={`group w-16 py-2.5 flex flex-col items-center gap-1 rounded-xl transition-all duration-200 hover:-translate-y-0.5 ${
                   isActive
