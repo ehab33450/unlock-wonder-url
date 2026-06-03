@@ -855,11 +855,11 @@ function Index() {
 
   // Live stats derived from real tasks across all projects (filtered by role)
   const visibleTasks = useMemo(() => {
-    const list: { status: string; endDate: string; project: string }[] = [];
+    const list: (TaskRow & { project: string; assignee: string })[] = [];
     for (const [proj, meta] of Object.entries(projectMeta)) {
       if (!isAdmin && meta.contract.assignee !== currentUser) continue;
       for (const t of meta.tasks) {
-        list.push({ status: t.status, endDate: t.endDate, project: proj });
+        list.push({ ...t, project: proj, assignee: meta.contract.assignee });
       }
     }
     return list;
@@ -877,6 +877,45 @@ function Index() {
   const segGreen = (completed / total) * c;
   const segOrange = (inProgress / total) * c;
   const segPink = (pending / total) * c;
+
+  // Dashboard tabs
+  type DashTab =
+    | "لوحة التحكم"
+    | "جديد المهام"
+    | "المقالات"
+    | "المفضلة"
+    | "المهام الجديدة"
+    | "المهام المعلقة"
+    | "المهام المنتهية"
+    | "المؤقتات النشطة"
+    | "النشاط"
+    | "تقرير التتبع";
+  const [activeTab, setActiveTab] = useState<DashTab>("لوحة التحكم");
+  const [favorites, setFavorites] = useState<Record<string, true>>({});
+  const toggleFav = (id: string) =>
+    setFavorites((f) => {
+      const n = { ...f };
+      if (n[id]) delete n[id];
+      else n[id] = true;
+      return n;
+    });
+  const tabFilteredTasks = useMemo(() => {
+    switch (activeTab) {
+      case "جديد المهام":
+      case "المهام الجديدة":
+        return visibleTasks.filter((t) => t.status === "جديد");
+      case "المهام المعلقة":
+        return visibleTasks.filter((t) => t.status === "معلق");
+      case "المهام المنتهية":
+        return visibleTasks.filter((t) => t.status === "تم");
+      case "المؤقتات النشطة":
+        return visibleTasks.filter((t) => t.status === "جاري العمل");
+      case "المفضلة":
+        return visibleTasks.filter((t) => favorites[t.id]);
+      default:
+        return visibleTasks;
+    }
+  }, [activeTab, visibleTasks, favorites]);
 
   return (
     <div dir="rtl" className="min-h-screen bg-slate-50 text-slate-800 font-[Cairo]">
