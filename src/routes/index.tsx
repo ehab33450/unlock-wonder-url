@@ -341,6 +341,7 @@ function Index() {
   // ============ الإرشادات ============
   const [guidesOpen, setGuidesOpen] = useState(false);
   const [guideVideos, setGuideVideos] = useState<Record<string, string>>({});
+  const [guideImages, setGuideImages] = useState<Record<string, string>>({});
   const [activeGuide, setActiveGuide] = useState<string>("dashboard");
 
   // New-project contract form fields
