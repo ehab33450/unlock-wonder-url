@@ -332,6 +332,11 @@ function Index() {
   // ============ المالية ============
   const [financeOpen, setFinanceOpen] = useState(false);
 
+  // ============ الإرشادات ============
+  const [guidesOpen, setGuidesOpen] = useState(false);
+  const [guideVideos, setGuideVideos] = useState<Record<string, string>>({});
+  const [activeGuide, setActiveGuide] = useState<string>("dashboard");
+
   // New-project contract form fields
   const [npValue, setNpValue] = useState("");
   const [npRespName, setNpRespName] = useState("");
