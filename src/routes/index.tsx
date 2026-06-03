@@ -1256,11 +1256,60 @@ function Index() {
     }
   }, [activeTab, visibleTasks, favorites]);
 
+  // ============ Task scope filter (mine / shared / all) ============
+  type TaskScope = "mine" | "shared" | "all";
+  const [taskScope, setTaskScope] = useState<TaskScope>("all");
+  const scopedTasks = useMemo(() => {
+    return tabFilteredTasks.filter((t) => {
+      const members = chatMembers[t.project] ?? [];
+      if (taskScope === "mine") return t.assignee === currentUser;
+      if (taskScope === "shared")
+        return t.assignee !== currentUser && members.includes(currentUser);
+      return true;
+    });
+  }, [tabFilteredTasks, taskScope, chatMembers, currentUser]);
+
+  // ============ Dashboard widgets center ============
+  type WidgetKey =
+    | "notes"
+    | "pendingTasks"
+    | "newTasks"
+    | "articles"
+    | "calendar"
+    | "tasksStatus"
+    | "projectStatus"
+    | "projectPlan"
+    | "topPerformer"
+    | "projectTimeline"
+    | "upcomingMeetings"
+    | "latestUpdates"
+    | "latestPosts";
+  const ALL_WIDGETS: { key: WidgetKey; label: string; desc: string }[] = [
+    { key: "tasksStatus", label: "حالة المهام", desc: "إجمالي المهام وتوزيع الحالات" },
+    { key: "projectStatus", label: "حالة المشروع", desc: "نسب التقدم لكل مشروع" },
+    { key: "notes", label: "قائمة المذكرات", desc: "آخر المذكرات الملصقة" },
+    { key: "pendingTasks", label: "المهام المعلقة", desc: "أحدث المهام المعلقة" },
+    { key: "newTasks", label: "المهام الجديدة", desc: "أحدث المهام الجديدة" },
+    { key: "articles", label: "المقالات", desc: "روابط ومقالات مرجعية" },
+    { key: "calendar", label: "التقويم", desc: "تقويم مصغر للشهر الحالي" },
+    { key: "projectPlan", label: "مخطط المشروع", desc: "ملخص الأيام المتأخرة والدفعات" },
+    { key: "topPerformer", label: "أفضل أداء", desc: "أعلى موظف من حيث الإنجاز" },
+    { key: "projectTimeline", label: "الفترة الزمنية للمشروع", desc: "بداية ونهاية الفترة" },
+    { key: "upcomingMeetings", label: "الاجتماعات القادمة", desc: "أقرب اجتماعاتك" },
+    { key: "latestUpdates", label: "التحديثات الأخيرة", desc: "آخر التحديثات على المنصة" },
+    { key: "latestPosts", label: "المنشورات الأخيرة", desc: "آخر المنشورات داخل الفريق" },
+  ];
+  const [widgetsOpen, setWidgetsOpen] = useState(false);
+  const [enabledWidgets, setEnabledWidgets] = useState<Record<string, boolean>>({
+    notes: true,
+    pendingTasks: true,
+    newTasks: true,
+    upcomingMeetings: true,
+  });
+  const toggleWidget = (k: WidgetKey) =>
+    setEnabledWidgets((w) => ({ ...w, [k]: !w[k] }));
+
   return (
-    // placeholder marker — will be removed by following edits
-    /* eslint-disable-next-line */
-    null as any
-  );
     <div dir="rtl" className="min-h-screen bg-slate-50 text-slate-800 font-[Cairo]">
       {/* Top header */}
       <header className="h-14 bg-white border-b border-slate-200 flex items-center justify-between px-4">
