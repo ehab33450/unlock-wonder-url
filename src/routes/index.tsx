@@ -118,6 +118,7 @@ function Index() {
   });
   const [openEmployees, setOpenEmployees] = useState<Record<string, boolean>>({});
   const [createOpen, setCreateOpen] = useState(false);
+  const [tasksMenuOpen, setTasksMenuOpen] = useState(false);
   const [newProjectOpen, setNewProjectOpen] = useState(false);
   const [npFolder, setNpFolder] = useState("");
   const [npName, setNpName] = useState("");
