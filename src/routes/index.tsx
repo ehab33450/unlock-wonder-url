@@ -72,29 +72,29 @@ export const Route = createFileRoute("/")({
 });
 
 const sidebarItems = [
-  { icon: Calendar, label: "التقويم", color: "#0ea5e9" },
-  { icon: FileText, label: "الملفات", color: "#8b5cf6" },
-  { icon: Pin, label: "قائمة المذكرات", color: "#f59e0b" },
-  { icon: MessageSquare, label: "المحادثة", color: "#10b981" },
-  { icon: Video, label: "الاجتماعات", color: "#ef4444" },
-  { icon: Wallet, label: "المالية", color: "#16a34a" },
-  { icon: User, label: "مستخدم", color: "#6366f1" },
-  { icon: HelpCircle, label: "الإرشادات", color: "#14b8a6" },
-  { icon: CheckSquare, label: "الحجز", color: "#ec4899" },
-  { icon: MoreHorizontal, label: "المزيد", color: "#64748b" },
+  { icon: Calendar, label: "التقويم", en: "Calendar", color: "#0ea5e9" },
+  { icon: FileText, label: "الملفات", en: "Files", color: "#8b5cf6" },
+  { icon: Pin, label: "قائمة المذكرات", en: "Notes", color: "#f59e0b" },
+  { icon: MessageSquare, label: "المحادثة", en: "Chat", color: "#10b981" },
+  { icon: Video, label: "الاجتماعات", en: "Meetings", color: "#ef4444" },
+  { icon: Wallet, label: "المالية", en: "Finance", color: "#16a34a" },
+  { icon: User, label: "مستخدم", en: "Users", color: "#6366f1" },
+  { icon: HelpCircle, label: "الإرشادات", en: "Guides", color: "#14b8a6" },
+  { icon: CheckSquare, label: "الحجز", en: "Booking", color: "#ec4899" },
+  { icon: MoreHorizontal, label: "المزيد", en: "More", color: "#64748b" },
 ];
 
 const topTabs = [
-  { icon: Home, label: "لوحة التحكم", active: true },
-  { icon: FileCheck, label: "جديد المهام", badge: 16 },
-  { icon: FileText, label: "المقالات" },
-  { icon: Star, label: "المفضلة" },
-  { icon: ClipboardList, label: "المهام الجديدة" },
-  { icon: ClipboardList, label: "المهام المعلقة" },
-  { icon: ClipboardList, label: "المهام المنتهية" },
-  { icon: Clock, label: "المؤقتات النشطة" },
-  { icon: Activity, label: "النشاط" },
-  { icon: MapPin, label: "تقرير التتبع" },
+  { icon: Home, label: "لوحة التحكم", en: "Dashboard", active: true },
+  { icon: FileCheck, label: "جديد المهام", en: "New Tasks", badge: 16 },
+  { icon: FileText, label: "المقالات", en: "Articles" },
+  { icon: Star, label: "المفضلة", en: "Favorites" },
+  { icon: ClipboardList, label: "المهام الجديدة", en: "New" },
+  { icon: ClipboardList, label: "المهام المعلقة", en: "Pending" },
+  { icon: ClipboardList, label: "المهام المنتهية", en: "Completed" },
+  { icon: Clock, label: "المؤقتات النشطة", en: "Active Timers" },
+  { icon: Activity, label: "النشاط", en: "Activity" },
+  { icon: MapPin, label: "تقرير التتبع", en: "Tracking" },
 ];
 
 type Project = { name: string; children: string[] };
