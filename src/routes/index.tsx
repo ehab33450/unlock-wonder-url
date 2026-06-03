@@ -1416,7 +1416,7 @@ function Index() {
   );
 
   return (
-    <div dir="rtl" className="min-h-screen bg-slate-50 text-slate-800 font-[Cairo]">
+    <div dir={isEn ? "ltr" : "rtl"} className="min-h-screen bg-slate-50 text-slate-800 font-[Cairo]">
       {/* Top header */}
       <header className="h-14 bg-white border-b border-slate-200 flex items-center justify-between px-4">
         {/* Right: logo */}
