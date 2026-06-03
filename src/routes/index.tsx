@@ -5229,6 +5229,7 @@ function ProjectDetailOverlay({
           doneDate: "",
           status: "جديد",
           priority: "لاشيء",
+          progress: 0,
         },
       ],
     }));
