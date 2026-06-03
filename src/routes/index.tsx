@@ -636,6 +636,67 @@ function Index() {
     return () => clearInterval(t);
   }, []);
   const [bookingTab, setBookingTab] = useState<"services" | "all" | "today" | "pending" | "book">("all");
+  // Booking services
+  type BookingService = {
+    id: string;
+    name: string;
+    description: string;
+    price: string;
+    image: string | null;
+    active: boolean;
+  };
+  const [services, setServices] = useState<BookingService[]>([]);
+  const [serviceFormOpen, setServiceFormOpen] = useState(false);
+  const [editingServiceId, setEditingServiceId] = useState<string | null>(null);
+  const [svcName, setSvcName] = useState("");
+  const [svcDesc, setSvcDesc] = useState("");
+  const [svcPrice, setSvcPrice] = useState("");
+  const [svcImage, setSvcImage] = useState<string | null>(null);
+  const [svcActive, setSvcActive] = useState(true);
+  const [svcSearch, setSvcSearch] = useState("");
+  const openServiceForm = (id?: string) => {
+    if (id) {
+      const s = services.find((x) => x.id === id);
+      if (!s) return;
+      setEditingServiceId(id);
+      setSvcName(s.name);
+      setSvcDesc(s.description);
+      setSvcPrice(s.price);
+      setSvcImage(s.image);
+      setSvcActive(s.active);
+    } else {
+      setEditingServiceId(null);
+      setSvcName("");
+      setSvcDesc("");
+      setSvcPrice("");
+      setSvcImage(null);
+      setSvcActive(true);
+    }
+    setServiceFormOpen(true);
+  };
+  const saveService = () => {
+    if (!svcName.trim()) return;
+    const payload: BookingService = {
+      id: editingServiceId ?? `svc_${Date.now()}`,
+      name: svcName.trim(),
+      description: svcDesc.trim(),
+      price: svcPrice.trim(),
+      image: svcImage,
+      active: svcActive,
+    };
+    setServices((prev) =>
+      editingServiceId
+        ? prev.map((s) => (s.id === editingServiceId ? payload : s))
+        : [payload, ...prev],
+    );
+    setServiceFormOpen(false);
+  };
+  const onServiceImagePick = (file: File | null) => {
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => setSvcImage(typeof reader.result === "string" ? reader.result : null);
+    reader.readAsDataURL(file);
+  };
   const [calView, setCalView] = useState<"month" | "week" | "day" | "list">("month");
   const [calCursor, setCalCursor] = useState(() => new Date());
   const [calSelected, setCalSelected] = useState<Date>(() => new Date());
