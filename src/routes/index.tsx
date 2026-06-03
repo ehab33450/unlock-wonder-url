@@ -157,24 +157,86 @@ function Index() {
     "عقود وبيانات الموظفين",
   ];
   const [isAdmin, setIsAdmin] = useState(true);
-  const [employeePerms, setEmployeePerms] = useState({ add: true, delete: false });
   const [permsOpen, setPermsOpen] = useState(false);
-  const canAdd = isAdmin || employeePerms.add;
-  const canDelete = isAdmin || employeePerms.delete;
 
-  // Current logged-in user (for non-admin filtering)
-  type Employee = { id: string; name: string; email: string; canEdit: boolean };
+  // ====== نظام الصلاحيات الكامل ======
+  type PermKey =
+    | "files_view" | "files_add" | "files_edit" | "files_delete"
+    | "projects_view" | "projects_create" | "projects_edit"
+    | "tasks_edit"
+    | "services_view" | "services_manage"
+    | "bookings_view" | "bookings_manage"
+    | "notes_view" | "notes_manage"
+    | "chat_view" | "chat_send"
+    | "calendar_view" | "calendar_edit"
+    | "members_view";
+  const PERMS: { key: PermKey; label: string; group: string }[] = [
+    { key: "files_view",      label: "عرض الملفات",         group: "الملفات" },
+    { key: "files_add",       label: "إضافة ملفات/مجلدات",  group: "الملفات" },
+    { key: "files_edit",      label: "تعديل الملفات",        group: "الملفات" },
+    { key: "files_delete",    label: "حذف الملفات",          group: "الملفات" },
+    { key: "projects_view",   label: "عرض المشاريع",         group: "المشاريع" },
+    { key: "projects_create", label: "إنشاء مشروع",          group: "المشاريع" },
+    { key: "projects_edit",   label: "تعديل المشاريع",       group: "المشاريع" },
+    { key: "tasks_edit",      label: "تعديل المهام",         group: "المهام" },
+    { key: "services_view",   label: "عرض خدمات الكتاب",     group: "الخدمات" },
+    { key: "services_manage", label: "إدارة خدمات الكتاب",   group: "الخدمات" },
+    { key: "bookings_view",   label: "عرض الحجوزات",         group: "الحجز" },
+    { key: "bookings_manage", label: "إدارة الحجوزات",       group: "الحجز" },
+    { key: "notes_view",      label: "عرض المذكرات",         group: "المذكرات" },
+    { key: "notes_manage",    label: "إدارة المذكرات",       group: "المذكرات" },
+    { key: "chat_view",       label: "عرض المحادثة",         group: "المحادثة" },
+    { key: "chat_send",       label: "إرسال رسائل",          group: "المحادثة" },
+    { key: "calendar_view",   label: "عرض التقويم",          group: "التقويم" },
+    { key: "calendar_edit",   label: "تعديل التقويم",        group: "التقويم" },
+    { key: "members_view",    label: "عرض الأعضاء",          group: "الأعضاء" },
+  ];
+  const defaultEmpPerms = (): Record<PermKey, boolean> => {
+    const o = {} as Record<PermKey, boolean>;
+    for (const p of PERMS) o[p.key] = false;
+    // افتراضي: يستطيع رؤية مهامه وملفاته ومحادثاته
+    o.files_view = true;
+    o.projects_view = true;
+    o.chat_view = true;
+    o.calendar_view = true;
+    return o;
+  };
+
+  type Employee = {
+    id: string; name: string; email: string;
+    username: string; password: string; role: string;
+    active: boolean;
+    perms: Record<PermKey, boolean>;
+  };
   const [employees, setEmployees] = useState<Employee[]>([
-    { id: "u1", name: "ايهاب فاتح", email: "ehab@example.com", canEdit: false },
+    {
+      id: "u1", name: "ايهاب فاتح", email: "ehab@example.com",
+      username: "ehab", password: "1234", role: "موظف",
+      active: true, perms: defaultEmpPerms(),
+    },
   ]);
   const [currentUser, setCurrentUser] = useState<string>("ايهاب فاتح");
-  const [newEmpName, setNewEmpName] = useState("");
-  const [newEmpEmail, setNewEmpEmail] = useState("");
   const currentEmployee = useMemo(
     () => employees.find((e) => e.name === currentUser) ?? null,
     [employees, currentUser]
   );
-  const employeeCanEdit = !!currentEmployee?.canEdit;
+  const hasPerm = (k: PermKey) =>
+    isAdmin ? true : !!currentEmployee?.perms?.[k];
+  const canAdd = hasPerm("files_add");
+  const canDelete = hasPerm("files_delete");
+  const employeeCanEdit = hasPerm("tasks_edit");
+
+  // فورم إضافة موظف (في خانة الأعضاء)
+  const [newEmp, setNewEmp] = useState({
+    name: "", email: "", username: "", password: "", role: "موظف",
+  });
+  const [newEmpPerms, setNewEmpPerms] = useState<Record<PermKey, boolean>>(defaultEmpPerms());
+
+  // شاشة تسجيل الدخول
+  const [loginOpen, setLoginOpen] = useState(false);
+  const [loginUser, setLoginUser] = useState("");
+  const [loginPass, setLoginPass] = useState("");
+  const [loginErr, setLoginErr] = useState("");
 
   // Contract info + Tasks per project
   type Payment = { id: string; amount: string; date: string; paid: boolean };
@@ -247,11 +309,19 @@ function Index() {
     // Extra employees
     setEmployees((prev) => {
       if (prev.length > 1) return prev;
+      const mk = (id: string, name: string, email: string, username: string, role: string, full = false): Employee => ({
+        id, name, email, username, password: "1234", role, active: true,
+        perms: (() => {
+          const p = defaultEmpPerms();
+          if (full) { for (const k of Object.keys(p) as PermKey[]) p[k] = true; }
+          return p;
+        })(),
+      });
       return [
         ...prev,
-        { id: "u2", name: "محمد علي", email: "mohamed@example.com", canEdit: true },
-        { id: "u3", name: "سارة أحمد", email: "sara@example.com", canEdit: false },
-        { id: "u4", name: "أ. أروى الجعدي", email: "arwa@example.com", canEdit: true },
+        mk("u2", "محمد علي", "mohamed@example.com", "mohamed", "مصمم", true),
+        mk("u3", "سارة أحمد", "sara@example.com", "sara", "محرر محتوى"),
+        mk("u4", "أ. أروى الجعدي", "arwa@example.com", "arwa", "مديرة حسابات", true),
       ];
     });
 
@@ -1282,6 +1352,7 @@ function Index() {
                   if (item.label === "الملفات") setFilesViewOpen(true);
                   if (item.label === "المحادثة") setChatViewOpen(true);
                   if (item.label === "قائمة المذكرات") setNotesViewOpen(true);
+                  if (item.label === "مستخدم") setMembersOpen(true);
                 }}
                 className={`group w-16 py-2.5 flex flex-col items-center gap-1 rounded-xl transition-all duration-200 hover:-translate-y-0.5 ${
                   isActive
@@ -2149,36 +2220,209 @@ function Index() {
             {/* Content */}
             <div className="p-6 min-h-[300px]">
               {membersTab === "all" && (
-                <div className="grid grid-cols-3 gap-4">
-                  {[
-                    { name: "أحمد الأحمدي", role: "مدير تنفيذي", email: "aahmadi@yaseersa.com", phone: "+966-557723348", last: "24 May, 2026  7:49 pm" },
-                    { name: "أروى أحمد", role: "مديرة حساب العملاء", email: "arwa48545@gmail.com", phone: "+966-533999707", last: "25 May, 2026  8:59 pm" },
-                    { name: "بدر عبدالله العامري", role: "مدير حساب عمي", email: "badr@yaseersa.com", phone: "+966-500000001", last: "25 May, 2026  8:24 pm" },
-                    { name: "ايهاب فاتح", role: "مطور", email: "ehab@yaseersa.com", phone: "+966-500000002", last: "31 May, 2026  11:10 am" },
-                    { name: "أروى الجعدي", role: "مديرة حسابات العملاء", email: "arwa.j@yaseersa.com", phone: "+966-500000003", last: "25 May, 2026  9:54 pm" },
-                  ]
-                    .filter((m) => m.name.includes(memberSearch.trim()) || memberSearch.trim() === "")
-                    .map((m) => (
-                      <div key={m.name} className="border border-slate-200 rounded-lg p-4 text-center">
-                        <div className="w-20 h-20 mx-auto rounded-full bg-slate-200 ring-2 ring-[color:var(--eyenak-green)] flex items-center justify-center text-slate-500 mb-2">
-                          <User className="w-10 h-10" />
-                        </div>
-                        <div className="font-bold text-slate-800">{m.name}</div>
-                        <div className="text-xs text-[color:var(--eyenak-dark)] mb-3">{m.role}</div>
-                        <div className="text-xs space-y-2 text-right">
-                          <div className="flex justify-between"><span className="text-slate-500">{m.last}</span><span className="text-slate-600">آخر تسجيل دخول</span></div>
-                          <div className="flex justify-between"><span className="text-slate-500">{m.email}</span><span className="text-slate-600">البريد الإلكتروني</span></div>
-                          <div className="flex justify-between"><span className="text-slate-500">{m.phone}</span><span className="text-slate-600">رقم الجوال</span></div>
-                        </div>
-                        <button className="mt-3 w-full border border-slate-200 rounded py-1.5 text-xs text-slate-400">Teams</button>
-                      </div>
-                    ))}
-                  <button className="border border-slate-200 rounded-lg p-4 bg-slate-100 flex flex-col items-center justify-center text-slate-500 hover:bg-slate-200">
-                    <div className="w-12 h-12 rounded-full border border-slate-300 flex items-center justify-center mb-2">
-                      <Plus className="w-5 h-5" />
+                <div className="space-y-6">
+                  {/* شريط الحالة + تسجيل خروج */}
+                  <div className="flex items-center justify-between bg-slate-50 border border-slate-200 rounded-lg p-3 text-sm">
+                    <div className="flex items-center gap-2">
+                      {!isAdmin && (
+                        <button
+                          onClick={() => { setIsAdmin(true); setCurrentUser("ايهاب فاتح"); }}
+                          className="px-3 py-1.5 rounded bg-[color:var(--eyenak-dark)] text-white text-xs"
+                        >
+                          العودة كمدير
+                        </button>
+                      )}
+                      <button
+                        onClick={() => setLoginOpen(true)}
+                        className="px-3 py-1.5 rounded border border-slate-300 text-xs text-slate-700 hover:bg-white"
+                      >
+                        تسجيل دخول كموظف
+                      </button>
                     </div>
-                    <span className="text-sm">إضافة مستخدم جديد</span>
-                  </button>
+                    <div className="text-right">
+                      <div className="text-xs text-slate-500">الحساب الحالي</div>
+                      <div className="font-bold text-slate-800">
+                        {isAdmin ? "المدير" : currentUser}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* فورم إضافة موظف — للمدير فقط */}
+                  {isAdmin && (
+                    <div className="border border-slate-200 rounded-lg p-4 bg-white">
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="text-xs text-slate-500">سيتم إنشاء حساب يدخل به الموظف للمنصة</div>
+                        <h3 className="font-bold text-slate-800">إضافة موظف جديد</h3>
+                      </div>
+                      <div className="grid grid-cols-2 gap-3 text-right">
+                        <input
+                          value={newEmp.name}
+                          onChange={(e) => setNewEmp({ ...newEmp, name: e.target.value })}
+                          placeholder="الاسم الكامل"
+                          className="h-10 border border-slate-300 rounded px-3 text-sm"
+                        />
+                        <input
+                          value={newEmp.role}
+                          onChange={(e) => setNewEmp({ ...newEmp, role: e.target.value })}
+                          placeholder="المسمى الوظيفي"
+                          className="h-10 border border-slate-300 rounded px-3 text-sm"
+                        />
+                        <input
+                          value={newEmp.email}
+                          onChange={(e) => setNewEmp({ ...newEmp, email: e.target.value })}
+                          placeholder="البريد الإلكتروني"
+                          type="email"
+                          className="h-10 border border-slate-300 rounded px-3 text-sm"
+                        />
+                        <input
+                          value={newEmp.username}
+                          onChange={(e) => setNewEmp({ ...newEmp, username: e.target.value })}
+                          placeholder="اسم المستخدم (يوزر الدخول)"
+                          className="h-10 border border-slate-300 rounded px-3 text-sm"
+                        />
+                        <input
+                          value={newEmp.password}
+                          onChange={(e) => setNewEmp({ ...newEmp, password: e.target.value })}
+                          placeholder="كلمة المرور"
+                          className="h-10 border border-slate-300 rounded px-3 text-sm col-span-2"
+                        />
+                      </div>
+
+                      {/* الصلاحيات */}
+                      <div className="mt-4">
+                        <div className="text-sm font-bold text-slate-700 mb-2 text-right">الصلاحيات الممنوحة</div>
+                        <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+                          {PERMS.map((p) => (
+                            <label key={p.key} className="flex items-center justify-end gap-2 text-xs cursor-pointer">
+                              <span className="text-slate-700">{p.label}</span>
+                              <input
+                                type="checkbox"
+                                checked={newEmpPerms[p.key]}
+                                onChange={(e) =>
+                                  setNewEmpPerms((o) => ({ ...o, [p.key]: e.target.checked }))
+                                }
+                              />
+                            </label>
+                          ))}
+                        </div>
+                      </div>
+
+                      <button
+                        onClick={() => {
+                          if (!newEmp.name.trim() || !newEmp.username.trim() || !newEmp.password.trim()) return;
+                          if (employees.some((e) => e.username === newEmp.username.trim())) return;
+                          setEmployees((arr) => [
+                            ...arr,
+                            {
+                              id: `u${Date.now()}`,
+                              name: newEmp.name.trim(),
+                              email: newEmp.email.trim(),
+                              username: newEmp.username.trim(),
+                              password: newEmp.password.trim(),
+                              role: newEmp.role.trim() || "موظف",
+                              active: true,
+                              perms: { ...newEmpPerms },
+                            },
+                          ]);
+                          setNewEmp({ name: "", email: "", username: "", password: "", role: "موظف" });
+                          setNewEmpPerms(defaultEmpPerms());
+                        }}
+                        className="mt-4 w-full h-10 rounded bg-[color:var(--eyenak-teal)] text-white text-sm hover:opacity-90"
+                      >
+                        + إضافة الموظف وتفعيل حسابه
+                      </button>
+                    </div>
+                  )}
+
+                  {/* قائمة الموظفين */}
+                  <div className="grid grid-cols-2 gap-4">
+                    {employees
+                      .filter((m) => m.name.includes(memberSearch.trim()) || memberSearch.trim() === "")
+                      .map((emp) => (
+                        <div key={emp.id} className="border border-slate-200 rounded-lg p-4 bg-white">
+                          <div className="flex items-start justify-between mb-3">
+                            <div className="flex items-center gap-1">
+                              {isAdmin && (
+                                <>
+                                  <button
+                                    onClick={() =>
+                                      setEmployees((arr) =>
+                                        arr.map((x) => (x.id === emp.id ? { ...x, active: !x.active } : x))
+                                      )
+                                    }
+                                    className={`text-[10px] px-2 py-1 rounded border ${
+                                      emp.active
+                                        ? "border-emerald-300 text-emerald-700 bg-emerald-50"
+                                        : "border-slate-300 text-slate-500 bg-slate-50"
+                                    }`}
+                                  >
+                                    {emp.active ? "مفعل" : "موقوف"}
+                                  </button>
+                                  <button
+                                    onClick={() => setEmployees((arr) => arr.filter((x) => x.id !== emp.id))}
+                                    className="text-slate-300 hover:text-red-500"
+                                    aria-label="حذف"
+                                  >
+                                    <Trash2 className="w-4 h-4" />
+                                  </button>
+                                </>
+                              )}
+                            </div>
+                            <div className="text-right">
+                              <div className="font-bold text-slate-800">{emp.name}</div>
+                              <div className="text-xs text-[color:var(--eyenak-dark)]">{emp.role}</div>
+                            </div>
+                          </div>
+                          <div className="text-xs space-y-1 text-right border-t border-slate-100 pt-2">
+                            <div className="flex justify-between"><span className="text-slate-500">{emp.email || "—"}</span><span className="text-slate-600">البريد</span></div>
+                            <div className="flex justify-between"><span className="text-slate-500 font-mono">{emp.username}</span><span className="text-slate-600">اسم المستخدم</span></div>
+                            <div className="flex justify-between"><span className="text-slate-500 font-mono">{emp.password}</span><span className="text-slate-600">الرمز</span></div>
+                          </div>
+
+                          {/* صلاحيات قابلة للتعديل من المدير */}
+                          {isAdmin && (
+                            <details className="mt-3 border border-slate-200 rounded">
+                              <summary className="cursor-pointer px-3 py-2 text-xs text-slate-700 bg-slate-50 rounded text-right">
+                                ⚙️ تعديل الصلاحيات ({Object.values(emp.perms).filter(Boolean).length}/{PERMS.length})
+                              </summary>
+                              <div className="p-3 grid grid-cols-1 gap-1.5 text-right max-h-60 overflow-y-auto">
+                                {PERMS.map((p) => (
+                                  <label key={p.key} className="flex items-center justify-end gap-2 text-[11px] cursor-pointer">
+                                    <span className="text-slate-600">{p.label}</span>
+                                    <input
+                                      type="checkbox"
+                                      checked={!!emp.perms[p.key]}
+                                      onChange={(e) =>
+                                        setEmployees((arr) =>
+                                          arr.map((x) =>
+                                            x.id === emp.id
+                                              ? { ...x, perms: { ...x.perms, [p.key]: e.target.checked } }
+                                              : x
+                                          )
+                                        )
+                                      }
+                                    />
+                                  </label>
+                                ))}
+                              </div>
+                            </details>
+                          )}
+
+                          {isAdmin && (
+                            <button
+                              onClick={() => {
+                                setCurrentUser(emp.name);
+                                setIsAdmin(false);
+                                setMembersOpen(false);
+                              }}
+                              className="mt-3 w-full border border-slate-200 rounded py-2 text-xs text-slate-600 hover:bg-slate-50"
+                            >
+                              معاينة كهذا الموظف
+                            </button>
+                          )}
+                        </div>
+                      ))}
+                  </div>
                 </div>
               )}
 
@@ -2335,115 +2579,31 @@ function Index() {
                     </button>
                     {permsOpen && (
                       <div className="absolute z-20 mt-1 right-0 w-80 bg-white border border-slate-200 rounded shadow-lg p-3 text-right text-xs space-y-2 max-h-[70vh] overflow-y-auto">
-                        <div className="font-bold text-slate-700">الصلاحيات</div>
-                        <label className="flex items-center justify-end gap-2 cursor-pointer">
-                          <span>تشغيل وضع المدير</span>
-                          <input type="checkbox" checked={isAdmin} onChange={(e) => setIsAdmin(e.target.checked)} />
-                        </label>
-                        <div className="border-t border-slate-200 pt-2">
-                          <div className="text-slate-500 mb-1">صلاحيات الموظف:</div>
-                          <label className="flex items-center justify-end gap-2 cursor-pointer">
-                            <span>إضافة ملفات/مجلدات</span>
-                            <input type="checkbox" checked={employeePerms.add} onChange={(e) => setEmployeePerms((p) => ({ ...p, add: e.target.checked }))} />
-                          </label>
-                          <label className="flex items-center justify-end gap-2 cursor-pointer mt-1">
-                            <span>حذف ملفات/مجلدات</span>
-                            <input type="checkbox" checked={employeePerms.delete} onChange={(e) => setEmployeePerms((p) => ({ ...p, delete: e.target.checked }))} />
-                          </label>
+                        <div className="font-bold text-slate-700">الحساب الحالي</div>
+                        <div className="text-slate-600">
+                          {isAdmin ? "وضع المدير (كامل الصلاحيات)" : `موظف: ${currentUser}`}
                         </div>
-                        <div className="text-[10px] text-slate-400 pt-1">المجلدات الأساسية الخمسة لا يمكن حذفها إلا من قبل المدير.</div>
-                        <div className="border-t border-slate-200 pt-2">
-                          <div className="font-bold text-slate-700 mb-1">الموظفون</div>
-                          {isAdmin && (
-                            <div className="space-y-1 mb-2">
-                              <input
-                                value={newEmpName}
-                                onChange={(e) => setNewEmpName(e.target.value)}
-                                placeholder="اسم الموظف"
-                                className="w-full h-8 border border-slate-300 rounded px-2 text-right"
-                              />
-                              <input
-                                value={newEmpEmail}
-                                onChange={(e) => setNewEmpEmail(e.target.value)}
-                                placeholder="البريد الإلكتروني"
-                                type="email"
-                                className="w-full h-8 border border-slate-300 rounded px-2 text-right"
-                              />
-                              <button
-                                onClick={() => {
-                                  const name = newEmpName.trim();
-                                  const email = newEmpEmail.trim();
-                                  if (!name || !email) return;
-                                  if (employees.some((e) => e.email === email)) return;
-                                  setEmployees((arr) => [
-                                    ...arr,
-                                    { id: `u${Date.now()}`, name, email, canEdit: false },
-                                  ]);
-                                  setNewEmpName("");
-                                  setNewEmpEmail("");
-                                }}
-                                className="w-full h-8 bg-[color:var(--eyenak-teal)] text-white rounded text-xs"
-                              >
-                                إضافة موظف
-                              </button>
-                            </div>
-                          )}
-                          <div className="space-y-1">
-                            {employees.map((emp) => (
-                              <div key={emp.id} className="border border-slate-200 rounded p-2">
-                                <div className="flex items-center justify-between">
-                                  <div className="flex items-center gap-1">
-                                    {isAdmin && (
-                                      <button
-                                        onClick={() => setEmployees((arr) => arr.filter((x) => x.id !== emp.id))}
-                                        className="text-slate-300 hover:text-red-500"
-                                        aria-label="حذف"
-                                      >
-                                        <Trash2 className="w-3 h-3" />
-                                      </button>
-                                    )}
-                                    <button
-                                      onClick={() => {
-                                        setCurrentUser(emp.name);
-                                        setIsAdmin(false);
-                                        setPermsOpen(false);
-                                      }}
-                                      className="text-[10px] px-2 py-0.5 border border-slate-300 rounded hover:bg-slate-50"
-                                    >
-                                      دخول كهذا الموظف
-                                    </button>
-                                  </div>
-                                  <div className="text-right">
-                                    <div className="font-bold text-slate-700">{emp.name}</div>
-                                    <div className="text-[10px] text-slate-500">{emp.email}</div>
-                                  </div>
-                                </div>
-                                {isAdmin && (
-                                  <label className="flex items-center justify-end gap-2 cursor-pointer mt-1 text-[11px]">
-                                    <span>السماح بالتعديل على المهام</span>
-                                    <input
-                                      type="checkbox"
-                                      checked={emp.canEdit}
-                                      onChange={(e) =>
-                                        setEmployees((arr) =>
-                                          arr.map((x) => (x.id === emp.id ? { ...x, canEdit: e.target.checked } : x))
-                                        )
-                                      }
-                                    />
-                                  </label>
-                                )}
-                              </div>
-                            ))}
-                          </div>
-                          {!isAdmin && (
-                            <button
-                              onClick={() => { setIsAdmin(true); setPermsOpen(false); }}
-                              className="w-full h-8 mt-2 border border-slate-300 rounded text-xs hover:bg-slate-50"
-                            >
-                              العودة كمدير
-                            </button>
-                          )}
-                        </div>
+                        <button
+                          onClick={() => { setPermsOpen(false); setMembersOpen(true); }}
+                          className="w-full h-8 bg-[color:var(--eyenak-teal)] text-white rounded text-xs"
+                        >
+                          إدارة المستخدمين والصلاحيات
+                        </button>
+                        {!isAdmin ? (
+                          <button
+                            onClick={() => { setIsAdmin(true); setPermsOpen(false); }}
+                            className="w-full h-8 border border-slate-300 rounded text-xs hover:bg-slate-50"
+                          >
+                            العودة كمدير
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => { setPermsOpen(false); setLoginOpen(true); }}
+                            className="w-full h-8 border border-slate-300 rounded text-xs hover:bg-slate-50"
+                          >
+                            تسجيل الدخول كموظف
+                          </button>
+                        )}
                       </div>
                     )}
                   </div>
@@ -4162,6 +4322,68 @@ function Index() {
           >
             <X className="w-4 h-4" />
           </button>
+        </div>
+      )}
+
+      {/* ====== شاشة تسجيل دخول الموظف ====== */}
+      {loginOpen && (
+        <div
+          className="fixed inset-0 z-[60] bg-slate-900/70 backdrop-blur-sm flex items-center justify-center p-4"
+          onClick={() => setLoginOpen(false)}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="bg-white rounded-xl shadow-2xl w-full max-w-md p-6"
+            dir="rtl"
+          >
+            <div className="text-center mb-6">
+              <div className="w-14 h-14 mx-auto rounded-full bg-[color:var(--eyenak-teal)] text-white flex items-center justify-center mb-2">
+                <User className="w-7 h-7" />
+              </div>
+              <h2 className="text-lg font-bold text-slate-800">تسجيل دخول الموظف</h2>
+              <p className="text-xs text-slate-500">أدخل اسم المستخدم وكلمة المرور التي زوّدك بها المدير</p>
+            </div>
+            <div className="space-y-3 text-right">
+              <input
+                value={loginUser}
+                onChange={(e) => setLoginUser(e.target.value)}
+                placeholder="اسم المستخدم"
+                className="w-full h-11 border border-slate-300 rounded px-3 text-sm focus:outline-none focus:border-[color:var(--eyenak-teal)]"
+              />
+              <input
+                value={loginPass}
+                onChange={(e) => setLoginPass(e.target.value)}
+                type="password"
+                placeholder="كلمة المرور"
+                className="w-full h-11 border border-slate-300 rounded px-3 text-sm focus:outline-none focus:border-[color:var(--eyenak-teal)]"
+              />
+              {loginErr && <div className="text-xs text-red-600 text-right">{loginErr}</div>}
+              <button
+                onClick={() => {
+                  const emp = employees.find(
+                    (e) => e.username === loginUser.trim() && e.password === loginPass
+                  );
+                  if (!emp) { setLoginErr("بيانات الدخول غير صحيحة"); return; }
+                  if (!emp.active) { setLoginErr("الحساب موقوف"); return; }
+                  setCurrentUser(emp.name);
+                  setIsAdmin(false);
+                  setLoginErr("");
+                  setLoginUser("");
+                  setLoginPass("");
+                  setLoginOpen(false);
+                }}
+                className="w-full h-11 rounded bg-[color:var(--eyenak-teal)] text-white text-sm font-bold hover:opacity-90"
+              >
+                دخول
+              </button>
+              <button
+                onClick={() => setLoginOpen(false)}
+                className="w-full h-9 rounded border border-slate-300 text-xs text-slate-600 hover:bg-slate-50"
+              >
+                إلغاء
+              </button>
+            </div>
+          </div>
         </div>
       )}
 
