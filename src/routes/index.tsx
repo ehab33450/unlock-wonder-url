@@ -697,6 +697,69 @@ function Index() {
     reader.onload = () => setSvcImage(typeof reader.result === "string" ? reader.result : null);
     reader.readAsDataURL(file);
   };
+  // Bookings
+  type Booking = {
+    id: string;
+    code: string;
+    customerName: string;
+    customerPhone: string;
+    customerEmail: string;
+    serviceIds: string[];
+    basePrice: number;
+    vat: number;
+    discount: number;
+    total: number;
+    status: "pending" | "today";
+    createdAt: number;
+  };
+  const [bookings, setBookings] = useState<Booking[]>([]);
+  const [bkSelected, setBkSelected] = useState<string[]>([]);
+  const [bkName, setBkName] = useState("");
+  const [bkPhone, setBkPhone] = useState("");
+  const [bkEmail, setBkEmail] = useState("");
+  const [bkBase, setBkBase] = useState("");
+  const [bkVat, setBkVat] = useState("");
+  const [bkDiscount, setBkDiscount] = useState("");
+  const bkComputedBase = useMemo(() => {
+    if (bkBase.trim()) return Number(bkBase) || 0;
+    return bkSelected.reduce((sum, id) => {
+      const s = services.find((x) => x.id === id);
+      return sum + (s?.price ? Number(s.price) || 0 : 0);
+    }, 0);
+  }, [bkBase, bkSelected, services]);
+  const bkTotal = useMemo(
+    () => Math.max(0, bkComputedBase + (Number(bkVat) || 0) - (Number(bkDiscount) || 0)),
+    [bkComputedBase, bkVat, bkDiscount],
+  );
+  const resetBookingForm = () => {
+    setBkSelected([]);
+    setBkName("");
+    setBkPhone("");
+    setBkEmail("");
+    setBkBase("");
+    setBkVat("");
+    setBkDiscount("");
+  };
+  const confirmBooking = () => {
+    if (!bkName.trim() || !bkEmail.trim() || bkSelected.length === 0) return;
+    const newBooking: Booking = {
+      id: `bk_${Date.now()}`,
+      code: `#${Math.floor(100000 + Math.random() * 900000)}`,
+      customerName: bkName.trim(),
+      customerPhone: bkPhone.trim(),
+      customerEmail: bkEmail.trim(),
+      serviceIds: [...bkSelected],
+      basePrice: bkComputedBase,
+      vat: Number(bkVat) || 0,
+      discount: Number(bkDiscount) || 0,
+      total: bkTotal,
+      status: "pending",
+      createdAt: Date.now(),
+    };
+    setBookings((p) => [newBooking, ...p]);
+    resetBookingForm();
+    setBookingTab("pending");
+  };
   const [calView, setCalView] = useState<"month" | "week" | "day" | "list">("month");
   const [calCursor, setCalCursor] = useState(() => new Date());
   const [calSelected, setCalSelected] = useState<Date>(() => new Date());
@@ -3095,21 +3158,210 @@ function Index() {
                   })()}
                 </div>
               ) : (
+              bookingTab === "book" ? (
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                  {/* Right column: customer + pricing */}
+                  <div className="space-y-4 order-2 lg:order-1">
+                    <div className="bg-white rounded-lg border border-slate-200 p-5">
+                      <h3 className="text-sm font-bold text-slate-700 mb-4">تفاصيل العميل</h3>
+                      <div className="space-y-3">
+                        <div>
+                          <label className="text-xs font-semibold text-slate-600 mb-1 block">
+                            الاسم <span className="text-red-500">*</span>
+                          </label>
+                          <input
+                            type="text"
+                            value={bkName}
+                            onChange={(e) => setBkName(e.target.value)}
+                            maxLength={100}
+                            placeholder="ادخل الاسم"
+                            className="w-full h-10 px-3 rounded border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-sky-200"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-xs font-semibold text-slate-600 mb-1 block">
+                            رقم الهاتف المحمول (اختياري)
+                          </label>
+                          <div className="flex gap-2">
+                            <span className="h-10 px-3 inline-flex items-center gap-1 rounded border border-slate-300 bg-slate-50 text-sm text-slate-700">
+                              <span>🇸🇦</span>
+                              <span>+966</span>
+                            </span>
+                            <input
+                              type="tel"
+                              value={bkPhone}
+                              onChange={(e) => setBkPhone(e.target.value.replace(/[^\d]/g, "").slice(0, 12))}
+                              placeholder="5XXXXXXXX"
+                              className="flex-1 h-10 px-3 rounded border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-sky-200"
+                            />
+                          </div>
+                        </div>
+                        <div>
+                          <label className="text-xs font-semibold text-slate-600 mb-1 block">
+                            البريد الالكتروني <span className="text-red-500">*</span>
+                          </label>
+                          <input
+                            type="email"
+                            value={bkEmail}
+                            onChange={(e) => setBkEmail(e.target.value)}
+                            maxLength={255}
+                            placeholder="ادخل البريد الالكتروني"
+                            className="w-full h-10 px-3 rounded border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-sky-200"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                    <div className="bg-white rounded-lg border border-slate-200 p-5">
+                      <h3 className="text-sm font-bold text-slate-700 mb-4">تفاصيل التسعير (اختياري)</h3>
+                      <div className="grid grid-cols-3 gap-3">
+                        <div>
+                          <label className="text-xs font-semibold text-slate-600 mb-1 block text-center">السعر الأساسي</label>
+                          <input
+                            type="number"
+                            value={bkBase}
+                            onChange={(e) => setBkBase(e.target.value)}
+                            placeholder={String(bkComputedBase || 0)}
+                            className="w-full h-10 px-3 rounded border border-slate-300 text-sm text-center focus:outline-none focus:ring-2 focus:ring-sky-200"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-xs font-semibold text-slate-600 mb-1 block text-center">VAT</label>
+                          <input
+                            type="number"
+                            value={bkVat}
+                            onChange={(e) => setBkVat(e.target.value)}
+                            placeholder="0"
+                            className="w-full h-10 px-3 rounded border border-slate-300 text-sm text-center focus:outline-none focus:ring-2 focus:ring-sky-200"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-xs font-semibold text-slate-600 mb-1 block text-center">الخصم</label>
+                          <input
+                            type="number"
+                            value={bkDiscount}
+                            onChange={(e) => setBkDiscount(e.target.value)}
+                            placeholder="0"
+                            className="w-full h-10 px-3 rounded border border-slate-300 text-sm text-center focus:outline-none focus:ring-2 focus:ring-sky-200"
+                          />
+                        </div>
+                      </div>
+                      <div className="mt-4 p-3 rounded bg-slate-50 flex items-center justify-between border border-slate-100">
+                        <span className="text-2xl font-bold text-sky-600">{bkTotal}</span>
+                        <span className="text-sm font-semibold text-slate-700">مجموع المستحق الدفع</span>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={confirmBooking}
+                        disabled={!bkName.trim() || !bkEmail.trim() || bkSelected.length === 0}
+                        className="h-10 px-6 rounded bg-[#0b1e3a] hover:bg-[#13294b] text-white text-sm font-bold disabled:opacity-40"
+                      >
+                        تأكيد
+                      </button>
+                      <button
+                        onClick={resetBookingForm}
+                        className="h-10 px-6 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-semibold"
+                      >
+                        إلغاء
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Left column: select services */}
+                  <div className="order-1 lg:order-2">
+                    <div className="bg-white rounded-lg border border-slate-200 p-4 min-h-[420px]">
+                      <h3 className="text-sm font-bold text-slate-700 mb-3">
+                        حدد الخدمات <span className="text-red-500">*</span>
+                      </h3>
+                      {services.filter((s) => s.active).length === 0 ? (
+                        <div className="h-full min-h-[340px] flex flex-col items-center justify-center text-slate-400">
+                          <LayoutTemplate className="w-12 h-12 mb-2 text-slate-300" />
+                          <div className="text-sm">لا توجد خدمات متاحة</div>
+                          <button
+                            onClick={() => setBookingTab("services")}
+                            className="mt-3 text-xs text-sky-600 hover:underline"
+                          >
+                            أضف خدمة الآن
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                          {services
+                            .filter((s) => s.active)
+                            .map((s) => {
+                              const sel = bkSelected.includes(s.id);
+                              return (
+                                <button
+                                  key={s.id}
+                                  type="button"
+                                  onClick={() =>
+                                    setBkSelected((prev) =>
+                                      sel ? prev.filter((x) => x !== s.id) : [...prev, s.id],
+                                    )
+                                  }
+                                  className={`relative text-right rounded-lg border-2 overflow-hidden transition ${
+                                    sel
+                                      ? "border-sky-500 ring-2 ring-sky-200"
+                                      : "border-slate-200 hover:border-slate-300"
+                                  }`}
+                                >
+                                  {sel && (
+                                    <span className="absolute top-1.5 left-1.5 z-10 w-5 h-5 rounded-full bg-sky-500 text-white flex items-center justify-center text-xs">
+                                      ✓
+                                    </span>
+                                  )}
+                                  <div className="aspect-square bg-slate-100 flex items-center justify-center overflow-hidden">
+                                    {s.image ? (
+                                      <img src={s.image} alt={s.name} className="w-full h-full object-cover" />
+                                    ) : (
+                                      <FileIcon className="w-8 h-8 text-slate-300" />
+                                    )}
+                                  </div>
+                                  <div className="p-2 bg-white">
+                                    <div className="text-xs font-bold text-slate-800 truncate">{s.name}</div>
+                                    <div className="text-xs text-sky-600 font-semibold">
+                                      {s.price ? `${s.price}.00` : "—"}
+                                    </div>
+                                  </div>
+                                </button>
+                              );
+                            })}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ) : (
               <>
               {/* Top summary row */}
               <div className="grid grid-cols-2 gap-4 mb-4">
                 <div className="bg-white rounded-lg border border-slate-200 p-4 min-h-[260px] flex flex-col">
                   <div className="text-sm font-semibold text-slate-700 mb-3">ملخص الحجوزات</div>
                   <div className="flex-1 flex items-center justify-center">
-                    <div className="w-40 h-40 rounded-full border-[14px] border-slate-200" />
+                    <div className="text-center">
+                      <div className="text-4xl font-bold text-sky-600">{bookings.length}</div>
+                      <div className="text-xs text-slate-500 mt-1">إجمالي الحجوزات</div>
+                    </div>
                   </div>
                 </div>
                 <div className="bg-white rounded-lg border border-slate-200 p-4 min-h-[260px] flex flex-col">
                   <div className="text-sm font-semibold text-slate-700 mb-3">آخر الحجوزات</div>
-                  <div className="flex-1 flex items-center justify-center text-slate-400 text-sm">
-                    لم يتم العثور على أي حجوزات
-                  </div>
-                  <button className="text-xs text-sky-600 hover:underline text-center">
+                  {bookings.length === 0 ? (
+                    <div className="flex-1 flex items-center justify-center text-slate-400 text-sm">
+                      لم يتم العثور على أي حجوزات
+                    </div>
+                  ) : (
+                    <ul className="flex-1 space-y-1.5 overflow-auto">
+                      {bookings.slice(0, 5).map((b) => (
+                        <li key={b.id} className="flex items-center justify-between text-xs px-2 py-1.5 rounded bg-slate-50">
+                          <span className="font-bold text-sky-600">{b.total} ر.س</span>
+                          <span className="text-slate-700">{b.customerName}</span>
+                          <span className="text-slate-400">{b.code}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                  <button onClick={() => setBookingTab("all")} className="text-xs text-sky-600 hover:underline text-center mt-2">
                     عرض الكل
                   </button>
                 </div>
@@ -3118,12 +3370,16 @@ function Index() {
               {/* Two tables */}
               <div className="grid grid-cols-2 gap-4">
                 {[
-                  { title: "حجز اليوم", empty: "لا يوجد حجوزات اليوم", cols: ["اسم", "معرف الحجز", "خدمات", "تأكيد في", "حالة", "الإجراءات"] },
-                  { title: "الحجز في انتظار", empty: "لا توجد حجوزات معلقة", cols: ["اسم", "معرف الحجز", "خدمات", "حالة", "الإجراءات"] },
-                ].map((tbl) => (
+                  { key: "today" as const, title: "حجز اليوم", empty: "لا يوجد حجوزات اليوم", cols: ["اسم", "معرف الحجز", "خدمات", "حالة", "الإجراءات"] },
+                  { key: "pending" as const, title: "الحجز في انتظار", empty: "لا توجد حجوزات معلقة", cols: ["اسم", "معرف الحجز", "خدمات", "حالة", "الإجراءات"] },
+                ].map((tbl) => {
+                  const rows = bookings.filter((b) =>
+                    bookingTab === "all" ? b.status === tbl.key : b.status === bookingTab && tbl.key === bookingTab,
+                  );
+                  return (
                   <div key={tbl.title} className="bg-white rounded-lg border border-slate-200">
                     <div className="flex items-center justify-between p-3 border-b border-slate-200">
-                      <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-indigo-50 text-indigo-600 text-xs">0</span>
+                      <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-indigo-50 text-indigo-600 text-xs">{rows.length}</span>
                       <h3 className="text-sm font-semibold text-slate-700">{tbl.title}</h3>
                     </div>
                     <div className="grid bg-slate-100 text-xs text-slate-600 font-medium" style={{ gridTemplateColumns: `repeat(${tbl.cols.length}, minmax(0, 1fr))` }}>
@@ -3131,17 +3387,77 @@ function Index() {
                         <div key={c} className="px-3 py-2 text-right">{c}</div>
                       ))}
                     </div>
-                    <div className="py-12 flex flex-col items-center justify-center text-slate-400">
-                      <CalendarDays className="w-12 h-12 mb-3 text-slate-300" />
-                      <div className="text-sm">{tbl.empty}</div>
-                    </div>
+                    {rows.length === 0 ? (
+                      <div className="py-12 flex flex-col items-center justify-center text-slate-400">
+                        <CalendarDays className="w-12 h-12 mb-3 text-slate-300" />
+                        <div className="text-sm">{tbl.empty}</div>
+                      </div>
+                    ) : (
+                      <ul className="divide-y divide-slate-100">
+                        {rows.map((b) => (
+                          <li
+                            key={b.id}
+                            className="grid text-xs text-slate-700"
+                            style={{ gridTemplateColumns: `repeat(${tbl.cols.length}, minmax(0, 1fr))` }}
+                          >
+                            <div className="px-3 py-2.5 font-semibold">{b.customerName}</div>
+                            <div className="px-3 py-2.5 text-slate-500">{b.code}</div>
+                            <div className="px-3 py-2.5 text-slate-600 truncate">
+                              {b.serviceIds
+                                .map((id) => services.find((s) => s.id === id)?.name)
+                                .filter(Boolean)
+                                .join("، ")}
+                            </div>
+                            <div className="px-3 py-2.5">
+                              <span
+                                className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                                  b.status === "today"
+                                    ? "bg-emerald-100 text-emerald-700"
+                                    : "bg-amber-100 text-amber-700"
+                                }`}
+                              >
+                                {b.status === "today" ? "اليوم" : "معلق"}
+                              </span>
+                            </div>
+                            <div className="px-3 py-2.5 flex items-center gap-1">
+                              {b.status === "pending" && (
+                                <button
+                                  onClick={() =>
+                                    setBookings((p) =>
+                                      p.map((x) => (x.id === b.id ? { ...x, status: "today" } : x)),
+                                    )
+                                  }
+                                  className="px-2 py-1 rounded bg-emerald-50 text-emerald-700 text-[10px] font-bold hover:bg-emerald-100"
+                                >
+                                  تأكيد
+                                </button>
+                              )}
+                              <button
+                                onClick={() => setBookings((p) => p.filter((x) => x.id !== b.id))}
+                                className="p-1 rounded hover:bg-red-50 text-red-500"
+                                aria-label="حذف"
+                              >
+                                <Trash2 className="w-3 h-3" />
+                              </button>
+                            </div>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
                     <div className="p-3 border-t border-slate-200 text-center">
-                      <button className="text-xs text-sky-600 hover:underline">عرض الكل</button>
+                      <button
+                        onClick={() => setBookingTab(tbl.key)}
+                        className="text-xs text-sky-600 hover:underline"
+                      >
+                        عرض الكل
+                      </button>
                     </div>
                   </div>
-                ))}
+                  );
+                })}
               </div>
               </>
+              )
               )}
             </div>
           </div>
