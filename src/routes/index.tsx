@@ -487,6 +487,47 @@ function Index() {
   useEffect(() => {
     setChatRoleView(isAdmin ? "admin" : "employee");
   }, [isAdmin]);
+  // Group members per project (مجموعة المحادثة)
+  const [chatMembers, setChatMembers] = useState<Record<string, string[]>>({});
+  const [membersModalOpen, setMembersModalOpen] = useState(false);
+  const [newMemberName, setNewMemberName] = useState("");
+  // Auto-seed members for each project: الأدمن + الموظف المُكلَّف + العميل
+  useEffect(() => {
+    setChatMembers((prev) => {
+      const next = { ...prev };
+      let changed = false;
+      for (const p of Object.keys(projectMeta)) {
+        if (!next[p]) {
+          const assignee = projectMeta[p].contract.assignee || "";
+          const client = projectMeta[p].contract.responsibleName || "";
+          const seed = ["الأدمن", assignee, client].filter(Boolean);
+          next[p] = Array.from(new Set(seed));
+          changed = true;
+        }
+      }
+      return changed ? next : prev;
+    });
+  }, [projectMeta]);
+  const isMemberOfProject = (project: string) => {
+    if (isAdmin) return true;
+    return (chatMembers[project] ?? []).includes(currentUser);
+  };
+  const addChatMember = (project: string, name: string) => {
+    const n = name.trim();
+    if (!n) return;
+    setChatMembers((m) => ({
+      ...m,
+      [project]: Array.from(new Set([...(m[project] ?? []), n])),
+    }));
+  };
+  const removeChatMember = (project: string, name: string) => {
+    // لا تسمح بإزالة الأدمن
+    if (name === "الأدمن") return;
+    setChatMembers((m) => ({
+      ...m,
+      [project]: (m[project] ?? []).filter((x) => x !== name),
+    }));
+  };
   const visibilityLabel = (v: ChatVisibility) =>
     v === "all" ? "للجميع" : v === "admin-employee" ? "الأدمن + الموظف" : "الأدمن + العميل";
   const canSeeMessage = (m: ChatMessage, role: ChatRole) => {
@@ -2928,8 +2969,8 @@ function Index() {
                 const groups: Record<string, string[]> = {};
                 for (const p of projectNames) {
                   const company = projectMeta[p].contract.responsibleName || "غير محدد";
-                  // Employee view: only show projects they own
-                  if (!isAdmin && projectMeta[p].contract.assignee !== currentUser) continue;
+                  // عرض المشاريع التي يكون المستخدم عضواً فيها فقط (الأدمن يرى الكل)
+                  if (!isMemberOfProject(p)) continue;
                   (groups[company] ||= []).push(p);
                 }
                 const entries = Object.entries(groups);
@@ -2999,11 +3040,21 @@ function Index() {
                       <option value="employee">موظف</option>
                       <option value="client">عميل</option>
                     </select>
+                    {isAdmin && (
+                      <button
+                        onClick={() => setMembersModalOpen(true)}
+                        className="ml-2 inline-flex items-center gap-1 border border-slate-200 rounded px-2 py-1 text-xs bg-white hover:bg-slate-50"
+                        title="إدارة أعضاء المجموعة"
+                      >
+                        <Users className="w-3 h-3 text-[color:var(--eyenak-teal)]" />
+                        <span>الأعضاء ({(chatMembers[chatProject] ?? []).length})</span>
+                      </button>
+                    )}
                   </div>
                   <div className="text-right">
                     <div className="text-sm font-bold text-slate-800">{chatProject}</div>
-                    <div className="text-[11px] text-slate-500">
-                      الموظف: {projectMeta[chatProject]?.contract.assignee || "—"} · العميل: {projectMeta[chatProject]?.contract.responsibleName || "—"}
+                    <div className="text-[11px] text-slate-500 truncate max-w-[420px]">
+                      المجموعة: {(chatMembers[chatProject] ?? []).join(" · ") || "—"}
                     </div>
                   </div>
                 </div>
@@ -3084,6 +3135,89 @@ function Index() {
               </>
             )}
           </section>
+        </div>
+      )}
+
+      {/* Members management modal */}
+      {membersModalOpen && chatProject && isAdmin && (
+        <div
+          dir="rtl"
+          className="fixed inset-0 z-[70] bg-black/40 flex items-center justify-center p-4"
+          onClick={() => setMembersModalOpen(false)}
+        >
+          <div
+            className="bg-white rounded-lg shadow-xl w-full max-w-md p-5"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-base font-bold text-slate-800 flex items-center gap-2">
+                <Users className="w-4 h-4 text-[color:var(--eyenak-teal)]" />
+                أعضاء مجموعة: {chatProject}
+              </h3>
+              <button
+                onClick={() => setMembersModalOpen(false)}
+                className="text-slate-400 hover:text-slate-700"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <ul className="space-y-2 mb-4 max-h-64 overflow-y-auto">
+              {(chatMembers[chatProject] ?? []).map((m) => (
+                <li
+                  key={m}
+                  className="flex items-center justify-between bg-slate-50 border border-slate-200 rounded px-3 py-2 text-sm"
+                >
+                  <span className="text-slate-700">{m}</span>
+                  {m !== "الأدمن" && (
+                    <button
+                      onClick={() => removeChatMember(chatProject, m)}
+                      className="text-rose-500 hover:text-rose-700 text-xs"
+                    >
+                      إزالة
+                    </button>
+                  )}
+                </li>
+              ))}
+            </ul>
+            <div className="border-t border-slate-200 pt-4">
+              <div className="text-xs text-slate-500 mb-2">إضافة من الموظفين:</div>
+              <div className="flex flex-wrap gap-1 mb-3">
+                {employees
+                  .filter((e) => !(chatMembers[chatProject] ?? []).includes(e.name))
+                  .map((e) => (
+                    <button
+                      key={e.id}
+                      onClick={() => addChatMember(chatProject, e.name)}
+                      className="text-xs px-2 py-1 rounded border border-slate-200 hover:bg-slate-100"
+                    >
+                      + {e.name}
+                    </button>
+                  ))}
+                {employees.filter((e) => !(chatMembers[chatProject] ?? []).includes(e.name)).length === 0 && (
+                  <span className="text-xs text-slate-400">تمت إضافة جميع الموظفين.</span>
+                )}
+              </div>
+              <div className="text-xs text-slate-500 mb-2">أو أدخل اسماً يدوياً:</div>
+              <div className="flex items-center gap-2">
+                <input
+                  value={newMemberName}
+                  onChange={(e) => setNewMemberName(e.target.value)}
+                  placeholder="اسم العضو"
+                  className="flex-1 h-9 px-3 border border-slate-200 rounded text-sm text-right"
+                />
+                <button
+                  onClick={() => {
+                    addChatMember(chatProject, newMemberName);
+                    setNewMemberName("");
+                  }}
+                  disabled={!newMemberName.trim()}
+                  className="h-9 px-3 rounded bg-[color:var(--eyenak-teal)] text-white text-sm disabled:opacity-40"
+                >
+                  إضافة
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       )}
 
