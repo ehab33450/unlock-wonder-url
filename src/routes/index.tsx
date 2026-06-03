@@ -2,6 +2,12 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { askAssistant } from "@/lib/ai-assistant.functions";
+import guideDashboardImg from "@/assets/guide-dashboard.png";
+import guideProjectsImg from "@/assets/guide-projects.png";
+import guideFinanceImg from "@/assets/guide-finance.png";
+import guideMeetingsImg from "@/assets/guide-meetings.png";
+import guideUsersImg from "@/assets/guide-users.png";
+import guideAssistantImg from "@/assets/guide-assistant.png";
 import {
   Calendar,
   FileText,
@@ -335,6 +341,7 @@ function Index() {
   // ============ الإرشادات ============
   const [guidesOpen, setGuidesOpen] = useState(false);
   const [guideVideos, setGuideVideos] = useState<Record<string, string>>({});
+  const [guideImages, setGuideImages] = useState<Record<string, string>>({});
   const [activeGuide, setActiveGuide] = useState<string>("dashboard");
 
   // New-project contract form fields
@@ -5063,6 +5070,8 @@ function Index() {
           setActive={setActiveGuide}
           videos={guideVideos}
           setVideo={(id, url) => setGuideVideos((v) => ({ ...v, [id]: url }))}
+          images={guideImages}
+          setImage={(id, url) => setGuideImages((v) => ({ ...v, [id]: url }))}
           onClose={() => setGuidesOpen(false)}
         />
       )}
@@ -5728,6 +5737,7 @@ type GuideTopic = {
   color: string;
   steps: { title: string; body: string }[];
   tips?: string[];
+  image?: string;
 };
 
 const GUIDE_TOPICS: GuideTopic[] = [
@@ -5737,6 +5747,7 @@ const GUIDE_TOPICS: GuideTopic[] = [
     subtitle: "تعرّف على واجهة المنصة والشريط الجانبي والإشعارات",
     icon: Home,
     color: "#0ea5e9",
+    image: guideDashboardImg,
     steps: [
       { title: "1. الشريط الجانبي الأيمن", body: "يحتوي على الاختصارات الرئيسية: التقويم، الملفات، المحادثة، الاجتماعات، المالية، المستخدمين، الإرشادات، الحجز. اضغط على أي أيقونة لفتحها مباشرة." },
       { title: "2. الهيدر العلوي", body: "يحتوي على البحث، الإشعارات (الجرس)، تغيير اللغة عربي/إنجليزي، ومعلومات حسابك." },
@@ -5751,6 +5762,7 @@ const GUIDE_TOPICS: GuideTopic[] = [
     subtitle: "كيف تنشئ مشروعًا جديدًا وتربطه بعقد وموظف",
     icon: Folder,
     color: "#8b5cf6",
+    image: guideProjectsImg,
     steps: [
       { title: "1. إنشاء مشروع جديد", body: "اضغط على زر «+ مشروع جديد» من الشريط الجانبي للمشاريع. أدخل اسم المشروع، الوصف، تاريخ البداية والنهاية." },
       { title: "2. بيانات العقد", body: "في الخطوة الثانية، أدخل قيمة العقد، اسم المسؤول من الشركة ورقم جواله، واختر الموظف المُكلَّف من القائمة." },
@@ -5764,6 +5776,7 @@ const GUIDE_TOPICS: GuideTopic[] = [
     subtitle: "إضافة مهام، تحديد الحالة، نسبة الإنجاز، والمرفقات",
     icon: ClipboardList,
     color: "#f59e0b",
+    image: guideProjectsImg,
     steps: [
       { title: "1. إضافة مهمة", body: "داخل المشروع، اضغط على زر «إضافة مهمة». ستظهر صف جديد قابل للتعديل في الجدول." },
       { title: "2. تعبئة بيانات المهمة", body: "اكتب اسم المهمة، اسم المنصة، المستفيد، رقم المستند، تاريخ البداية والانتهاء." },
@@ -5780,6 +5793,7 @@ const GUIDE_TOPICS: GuideTopic[] = [
     subtitle: "تقسيم العقد إلى أقساط، رفع الإيصالات، ومتابعة الاستحقاق",
     icon: Wallet,
     color: "#16a34a",
+    image: guideFinanceImg,
     steps: [
       { title: "1. تقسيم العقد", body: "افتح المشروع واضغط زر «تقسيم العقد إلى أقساط» في شريط بيانات العقد. اختر عدد الأقساط (2/3/4/6/8/12 أو مخصص)." },
       { title: "2. التقسيم التلقائي", body: "يتم توزيع قيمة العقد بالتساوي على عدد الأقساط، وتُحدَّد التواريخ تلقائيًا بين بداية ونهاية العقد." },
@@ -5796,6 +5810,7 @@ const GUIDE_TOPICS: GuideTopic[] = [
     subtitle: "جدولة اجتماع وإرسال دعوات عبر واتساب أو البريد",
     icon: Video,
     color: "#ef4444",
+    image: guideMeetingsImg,
     steps: [
       { title: "1. فتح الاجتماعات", body: "اضغط على «الاجتماعات» في الشريط الجانبي لفتح شاشة الاجتماعات." },
       { title: "2. اجتماع جديد", body: "املأ العنوان، التاريخ والوقت، اختر المنظم من قائمة الموظفين، المدعوين، المكان أو رابط الاجتماع، والملاحظات." },
@@ -5810,6 +5825,7 @@ const GUIDE_TOPICS: GuideTopic[] = [
     subtitle: "تنظيم ملفات كل مشروع وتعديل المستندات",
     icon: FileText,
     color: "#8b5cf6",
+    image: guideDashboardImg,
     steps: [
       { title: "1. فتح ملفات المشروع", body: "من داخل المشروع اضغط «ملفات المشروع» أو افتح «الملفات» من الشريط الجانبي للوصول لكل الملفات." },
       { title: "2. المجلدات الافتراضية", body: "كل مشروع له مجلدات افتراضية جاهزة. يمكنك إضافة مجلدات جديدة بزر «+ مجلد»." },
@@ -5823,6 +5839,7 @@ const GUIDE_TOPICS: GuideTopic[] = [
     subtitle: "التواصل بين الأدمن والموظفين والعملاء",
     icon: MessageSquare,
     color: "#10b981",
+    image: guideDashboardImg,
     steps: [
       { title: "1. محادثة المشروع", body: "كل مشروع له غرفة محادثة خاصة. افتحها من داخل المشروع أو من «المحادثة» في الشريط الجانبي." },
       { title: "2. مستويات الرؤية", body: "الأدمن يمكنه إرسال رسائل عامة (الجميع) أو رسائل داخلية (الأدمن والموظف فقط) لا يراها العميل." },
@@ -5835,6 +5852,7 @@ const GUIDE_TOPICS: GuideTopic[] = [
     subtitle: "إضافة موظفين وتحديد ما يستطيع كل واحد رؤيته",
     icon: User,
     color: "#6366f1",
+    image: guideUsersImg,
     steps: [
       { title: "1. فتح إدارة المستخدمين", body: "اضغط «مستخدم» في الشريط الجانبي. ستفتح شاشة الموظفين والعملاء." },
       { title: "2. إضافة موظف", body: "اضغط «+ موظف جديد». أدخل الاسم، البريد، اسم المستخدم، كلمة السر، والمسمى الوظيفي." },
@@ -5849,6 +5867,7 @@ const GUIDE_TOPICS: GuideTopic[] = [
     subtitle: "اسأل المساعد أي سؤال عن المنصة أو مهامك",
     icon: Bot,
     color: "#0ea5e9",
+    image: guideAssistantImg,
     steps: [
       { title: "1. فتح المساعد", body: "اضغط على زر الروبوت العائم في أسفل الشاشة لفتح المحادثة مع المساعد الذكي." },
       { title: "2. اسأل بحرية", body: "اكتب أسئلة مثل: «ما المهام الواجب إنجازها قبل نهاية الأسبوع؟»، «ما أفضل أولوية لهذه المهمة؟»، «كيف أرفع إيصال قسط؟»" },
@@ -5863,6 +5882,8 @@ function GuidesModal({
   setActive,
   videos,
   setVideo,
+  images,
+  setImage,
   onClose,
 }: {
   isAdmin: boolean;
@@ -5870,6 +5891,8 @@ function GuidesModal({
   setActive: (id: string) => void;
   videos: Record<string, string>;
   setVideo: (id: string, url: string) => void;
+  images: Record<string, string>;
+  setImage: (id: string, url: string) => void;
   onClose: () => void;
 }) {
   const topic = GUIDE_TOPICS.find((t) => t.id === active) ?? GUIDE_TOPICS[0];
@@ -5877,6 +5900,10 @@ function GuidesModal({
   const videoUrl = videos[topic.id] || "";
   const [draftUrl, setDraftUrl] = useState(videoUrl);
   useEffect(() => setDraftUrl(videoUrl), [videoUrl, topic.id]);
+  const customImage = images[topic.id] || "";
+  const [draftImg, setDraftImg] = useState(customImage);
+  useEffect(() => setDraftImg(customImage), [customImage, topic.id]);
+  const displayImage = customImage || topic.image;
 
   const embed = (url: string) => {
     if (!url) return null;
@@ -6003,6 +6030,48 @@ function GuidesModal({
                     className="h-9 px-3 rounded border border-slate-300 text-xs text-slate-600 hover:bg-white"
                   >
                     حذف
+                  </button>
+                )}
+              </div>
+            )}
+
+            {/* Illustrative screenshot */}
+            {displayImage && (
+              <figure className="rounded-xl overflow-hidden border border-slate-200 bg-slate-50">
+                <img
+                  src={displayImage}
+                  alt={`صورة توضيحية: ${topic.title}`}
+                  className="w-full h-auto block"
+                  loading="lazy"
+                />
+                <figcaption className="px-3 py-2 text-[11px] text-slate-500 border-t border-slate-200 bg-white">
+                  📸 صورة توضيحية من الموقع — {topic.title}
+                </figcaption>
+              </figure>
+            )}
+
+            {/* Admin image URL input */}
+            {isAdmin && (
+              <div className="flex gap-2 bg-slate-50 border border-slate-200 rounded-lg p-3">
+                <input
+                  value={draftImg}
+                  onChange={(e) => setDraftImg(e.target.value)}
+                  placeholder="رابط صورة توضيحية مخصصة (لتجاوز الصورة الافتراضية)"
+                  className="flex-1 h-9 border border-slate-300 rounded px-3 text-sm"
+                  dir="ltr"
+                />
+                <button
+                  onClick={() => setImage(topic.id, draftImg.trim())}
+                  className="h-9 px-4 rounded bg-slate-700 hover:bg-slate-800 text-white text-xs font-bold"
+                >
+                  حفظ الصورة
+                </button>
+                {customImage && (
+                  <button
+                    onClick={() => { setImage(topic.id, ""); setDraftImg(""); }}
+                    className="h-9 px-3 rounded border border-slate-300 text-xs text-slate-600 hover:bg-white"
+                  >
+                    استرجاع الافتراضي
                   </button>
                 )}
               </div>
