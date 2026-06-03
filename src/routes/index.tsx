@@ -4742,6 +4742,38 @@ function Index() {
       >
         <Bot className="w-7 h-7" />
       </button>
+
+      {/* مركز الأدوات — Widgets Center */}
+      {widgetsOpen && (
+        <div className="fixed inset-0 z-[60] bg-black/40 flex items-center justify-center p-4" onClick={() => setWidgetsOpen(false)}>
+          <div className="bg-white rounded-xl w-full max-w-5xl max-h-[85vh] overflow-hidden flex flex-col" onClick={(e) => e.stopPropagation()} dir="rtl">
+            <div className="flex items-center justify-between px-5 py-3 border-b border-slate-200">
+              <button onClick={() => setWidgetsOpen(false)} className="p-1 text-slate-400 hover:text-slate-700"><X className="w-5 h-5" /></button>
+              <h2 className="text-lg font-bold text-slate-800">مركز الأدوات</h2>
+            </div>
+            <div className="p-5 overflow-auto">
+              <p className="text-xs text-slate-500 mb-4 text-center">اختر الأدوات التي تريد إظهارها على لوحة التحكم</p>
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                {ALL_WIDGETS.map((w) => {
+                  const on = !!enabledWidgets[w.key];
+                  return (
+                    <div key={w.key} className={`border rounded-lg p-3 transition ${on ? "border-[color:var(--eyenak-teal)] bg-emerald-50/40" : "border-slate-200 bg-white"}`}>
+                      <div className="text-sm font-bold text-slate-800 mb-1">{w.label}</div>
+                      <div className="text-[11px] text-slate-500 mb-2 line-clamp-2 min-h-[28px]">{w.desc}</div>
+                      <button
+                        onClick={() => toggleWidget(w.key)}
+                        className={`w-full text-xs py-1.5 rounded ${on ? "bg-slate-100 text-slate-700 hover:bg-slate-200" : "bg-[color:var(--eyenak-teal)] text-white hover:opacity-90"}`}
+                      >
+                        {on ? "إزالة" : "+ إضافة"}
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
       {aiOpen && (
         <div
           dir="rtl"
