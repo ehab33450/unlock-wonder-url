@@ -45,6 +45,9 @@ import {
   Trash2,
   Send,
   Eye,
+  AlarmClock,
+  BellRing,
+  StickyNote,
 } from "lucide-react";
 
 export const Route = createFileRoute("/")({
