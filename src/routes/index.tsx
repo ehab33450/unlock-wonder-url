@@ -1483,7 +1483,10 @@ function Index() {
           <div className="flex items-center justify-between mb-3">
             <div />
             <div className="flex items-center gap-3">
-              <button className="flex items-center gap-1 text-sm text-slate-500 hover:text-slate-700">
+              <button
+                onClick={() => setWidgetsOpen(true)}
+                className="flex items-center gap-1 text-sm text-slate-500 hover:text-slate-700"
+              >
                 <Pencil className="w-4 h-4" />
                 <span>تخصيص لوحة التحكم</span>
               </button>
@@ -1622,6 +1625,128 @@ function Index() {
               <Stat color="var(--eyenak-pink)" value={pending} label="معلقة" />
             </div>
           </section>
+          )}
+
+          {/* Selected widgets grid */}
+          {activeTab === "لوحة التحكم" && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 mt-4">
+              {ALL_WIDGETS.filter((w) => enabledWidgets[w.key]).map((w) => (
+                <div
+                  key={w.key}
+                  className="bg-white border border-slate-200 rounded-lg shadow-sm p-4 relative group"
+                >
+                  <button
+                    onClick={() => toggleWidget(w.key)}
+                    title="إزالة من اللوحة"
+                    className="absolute top-2 left-2 opacity-0 group-hover:opacity-100 transition text-slate-400 hover:text-red-500"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-xs text-slate-400">{w.desc}</span>
+                    <h3 className="font-bold text-slate-700 text-sm">{w.label}</h3>
+                  </div>
+                  <div className="text-sm text-slate-600">
+                    {w.key === "tasksStatus" && (
+                      <div className="grid grid-cols-3 gap-2 text-center">
+                        <div><div className="text-lg font-bold text-emerald-600">{completed}</div><div className="text-[10px] text-slate-500">مكتملة</div></div>
+                        <div><div className="text-lg font-bold text-orange-500">{inProgress}</div><div className="text-[10px] text-slate-500">جارية</div></div>
+                        <div><div className="text-lg font-bold text-pink-500">{pending}</div><div className="text-[10px] text-slate-500">معلقة</div></div>
+                      </div>
+                    )}
+                    {w.key === "projectStatus" && (
+                      <ul className="space-y-1.5 text-xs">
+                        {Object.entries(projectMeta).slice(0, 4).map(([p, meta]) => {
+                          const done = meta.tasks.filter((t) => t.status === "تم").length;
+                          const pct = meta.tasks.length ? Math.round((done / meta.tasks.length) * 100) : 0;
+                          return (
+                            <li key={p}>
+                              <div className="flex justify-between mb-0.5"><span className="text-slate-500">{pct}%</span><span className="truncate">{p}</span></div>
+                              <div className="h-1.5 bg-slate-100 rounded"><div className="h-full bg-emerald-500 rounded" style={{ width: `${pct}%` }} /></div>
+                            </li>
+                          );
+                        })}
+                        {Object.keys(projectMeta).length === 0 && <li className="text-slate-400">لا توجد مشاريع</li>}
+                      </ul>
+                    )}
+                    {w.key === "notes" && (
+                      <div className="space-y-2">
+                        {notes.slice(0, 3).map((n) => (
+                          <div key={n.id} className="text-xs p-2 rounded" style={{ background: n.color }}>{n.text}</div>
+                        ))}
+                        {notes.length === 0 && <div className="text-slate-400 text-xs">لا توجد مذكرات</div>}
+                      </div>
+                    )}
+                    {w.key === "pendingTasks" && (
+                      <ul className="space-y-1.5 text-xs">
+                        {visibleTasks.filter((t) => t.status === "معلق").slice(0, 4).map((t) => (
+                          <li key={t.id} className="flex justify-between border-b border-slate-100 pb-1"><span className="text-slate-400">{t.assignee}</span><span className="truncate font-medium">{t.name}</span></li>
+                        ))}
+                      </ul>
+                    )}
+                    {w.key === "newTasks" && (
+                      <ul className="space-y-1.5 text-xs">
+                        {visibleTasks.filter((t) => t.status === "جديد").slice(0, 4).map((t) => (
+                          <li key={t.id} className="flex justify-between border-b border-slate-100 pb-1"><span className="text-slate-400">{t.assignee}</span><span className="truncate font-medium">{t.name}</span></li>
+                        ))}
+                      </ul>
+                    )}
+                    {w.key === "articles" && (
+                      <ul className="space-y-1 text-xs list-disc pr-4">
+                        <li>دليل إدارة المهام</li>
+                        <li>أفضل ممارسات العقود</li>
+                        <li>استخدام التقويم</li>
+                      </ul>
+                    )}
+                    {w.key === "calendar" && (
+                      <div className="grid grid-cols-7 gap-1 text-center text-[10px] text-slate-500">
+                        {Array.from({ length: 28 }, (_, i) => i + 1).map((d) => (
+                          <div key={d} className={`py-1 rounded ${d === new Date().getDate() ? "bg-pink-500 text-white" : "hover:bg-slate-100"}`}>{d}</div>
+                        ))}
+                      </div>
+                    )}
+                    {w.key === "projectPlan" && (
+                      <div className="text-xs text-slate-600">
+                        <div className="font-bold text-slate-800 mb-1">{Object.keys(projectMeta)[0] ?? "—"}</div>
+                        <div className="text-slate-500">{Object.keys(projectMeta).length} مشاريع نشطة</div>
+                        <div className="mt-2 grid grid-cols-2 gap-2 text-center">
+                          <div className="border-l border-slate-100"><div className="text-emerald-600 font-bold">{completed}</div><div className="text-[10px]">منتهية</div></div>
+                          <div><div className="text-pink-500 font-bold">{pending}</div><div className="text-[10px]">معلقة</div></div>
+                        </div>
+                      </div>
+                    )}
+                    {w.key === "topPerformer" && (
+                      <div className="text-center">
+                        <div className="w-12 h-12 mx-auto rounded-full bg-[color:var(--eyenak-teal)] text-white flex items-center justify-center font-bold">{(currentUser || "؟").slice(0,2)}</div>
+                        <div className="mt-2 font-bold text-slate-800">{currentUser}</div>
+                        <div className="text-[10px] text-emerald-600">95% مكتمل</div>
+                      </div>
+                    )}
+                    {w.key === "projectTimeline" && (
+                      <div className="flex items-center gap-1 text-xs">
+                        <div className="flex-1 h-6 rounded bg-pink-300" />
+                        <div className="flex-1 h-6 rounded bg-emerald-400" />
+                      </div>
+                    )}
+                    {w.key === "upcomingMeetings" && (
+                      <ul className="space-y-2 text-xs">
+                        <li className="border border-slate-100 rounded p-2"><div className="text-slate-400">12:59 PM</div><div className="font-semibold">Daily Standup</div></li>
+                        <li className="border border-slate-100 rounded p-2"><div className="text-slate-400">2:30 PM</div><div className="font-semibold">Scrum Meeting</div></li>
+                      </ul>
+                    )}
+                    {w.key === "latestUpdates" && (
+                      <ul className="space-y-1.5 text-xs">
+                        <li className="border-b border-slate-100 pb-1">تم تحديث النظام — منذ يوم</li>
+                        <li>إضافة واجهات جديدة — منذ يومين</li>
+                      </ul>
+                    )}
+                    {w.key === "latestPosts" && (
+                      <div className="text-xs text-slate-600 leading-relaxed">آخر التهاني من فريق العمل بمناسبة الإنجازات الأخيرة.</div>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
           )}
 
           {activeTab !== "لوحة التحكم" && (
