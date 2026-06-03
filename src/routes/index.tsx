@@ -1390,6 +1390,11 @@ function Index() {
   const toggleWidget = (k: WidgetKey) =>
     setEnabledWidgets((w) => ({ ...w, [k]: !w[k] }));
 
+  const myMeetingNotifs = useMemo(
+    () => meetingNotifs.filter((n) => isAdmin || n.target === currentUser),
+    [meetingNotifs, isAdmin, currentUser]
+  );
+
   return (
     <div dir="rtl" className="min-h-screen bg-slate-50 text-slate-800 font-[Cairo]">
       {/* Top header */}
