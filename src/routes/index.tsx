@@ -5306,6 +5306,98 @@ function Index() {
         </div>
       )}
 
+      {/* قائمة المزيد */}
+      {moreMenuOpen && (
+        <div className="fixed inset-0 z-[60] bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setMoreMenuOpen(false)}>
+          <div dir="rtl" onClick={(e) => e.stopPropagation()} className="bg-white rounded-xl shadow-2xl w-full max-w-md p-5">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-bold text-slate-800">{t("المزيد من الأدوات","More tools")}</h3>
+              <button onClick={() => setMoreMenuOpen(false)} className="p-1 hover:bg-slate-100 rounded"><X className="w-4 h-4" /></button>
+            </div>
+            <div className="grid grid-cols-3 gap-3">
+              {[
+                { icon: Bot, label: t("المساعد الذكي","AI"), action: () => { setMoreMenuOpen(false); setAiOpen(true); } },
+                { icon: Printer, label: t("طباعة","Print"), action: () => { setMoreMenuOpen(false); window.print(); } },
+                { icon: Globe, label: t("تبديل اللغة","Language"), action: () => { setLang((l) => l === "ar" ? "en" : "ar"); setMoreMenuOpen(false); } },
+                { icon: User, label: t("الأعضاء","Members"), action: () => { setMoreMenuOpen(false); setMembersOpen(true); } },
+                { icon: HelpCircle, label: t("الإرشادات","Guides"), action: () => { setMoreMenuOpen(false); setGuidesOpen(true); } },
+                { icon: Wallet, label: t("المالية","Finance"), action: () => { setMoreMenuOpen(false); setFinanceOpen(true); } },
+              ].map((it) => {
+                const I = it.icon;
+                return (
+                  <button key={it.label} onClick={it.action} className="flex flex-col items-center gap-1.5 p-3 rounded-lg border border-slate-200 hover:border-[color:var(--eyenak-teal)] hover:bg-teal-50 transition">
+                    <I className="w-5 h-5 text-[color:var(--eyenak-teal)]" />
+                    <span className="text-xs font-semibold text-slate-700">{it.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* حسابي */}
+      {accountOpen && (
+        <div className="fixed inset-0 z-[60] bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setAccountOpen(false)}>
+          <div dir="rtl" onClick={(e) => e.stopPropagation()} className="bg-white rounded-xl shadow-2xl w-full max-w-md p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-bold text-slate-800">{t("حسابي","My account")}</h3>
+              <button onClick={() => setAccountOpen(false)} className="p-1 hover:bg-slate-100 rounded"><X className="w-4 h-4" /></button>
+            </div>
+            <div className="flex items-center gap-3 mb-4 p-3 rounded-lg bg-gradient-to-l from-teal-50 to-white border border-slate-200">
+              <div className="w-14 h-14 rounded-full bg-gradient-to-br from-[color:var(--eyenak-teal)] to-[color:var(--eyenak-dark)] text-white flex items-center justify-center font-bold text-xl">{currentUser.charAt(0)}</div>
+              <div>
+                <div className="font-bold text-slate-800">{currentUser}</div>
+                <div className="text-xs text-slate-500">{isAdmin ? t("مدير النظام","Admin") : t("موظف","Employee")}</div>
+              </div>
+            </div>
+            <div className="space-y-2 text-sm">
+              <div className="flex justify-between p-2 border-b border-slate-100"><span className="text-slate-500">{t("البريد الإلكتروني","Email")}</span><span className="text-slate-800">{currentEmployee?.email ?? "ehab@example.com"}</span></div>
+              <div className="flex justify-between p-2 border-b border-slate-100"><span className="text-slate-500">{t("الهاتف","Phone")}</span><span className="text-slate-800">{currentEmployee?.phone ?? "—"}</span></div>
+              <div className="flex justify-between p-2 border-b border-slate-100"><span className="text-slate-500">{t("الدور","Role")}</span><span className="text-slate-800">{isAdmin ? "Admin" : "Employee"}</span></div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* إعدادات الموقع */}
+      {settingsOpen && (
+        <div className="fixed inset-0 z-[60] bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setSettingsOpen(false)}>
+          <div dir="rtl" onClick={(e) => e.stopPropagation()} className="bg-white rounded-xl shadow-2xl w-full max-w-md p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-bold text-slate-800">{t("إعدادات الموقع","Site settings")}</h3>
+              <button onClick={() => setSettingsOpen(false)} className="p-1 hover:bg-slate-100 rounded"><X className="w-4 h-4" /></button>
+            </div>
+            <div className="space-y-3 text-sm">
+              <div className="flex items-center justify-between p-3 border border-slate-200 rounded-lg">
+                <span className="text-slate-700">{t("اللغة","Language")}</span>
+                <button onClick={() => setLang((l) => l === "ar" ? "en" : "ar")} className="px-3 py-1 rounded bg-[color:var(--eyenak-teal)] text-white text-xs font-semibold">{isEn ? "English" : "العربية"}</button>
+              </div>
+              <div className="flex items-center justify-between p-3 border border-slate-200 rounded-lg">
+                <span className="text-slate-700">{t("الإشعارات","Notifications")}</span>
+                <span className="text-xs text-emerald-600 font-semibold">{t("مفعّلة","Enabled")}</span>
+              </div>
+              <div className="flex items-center justify-between p-3 border border-slate-200 rounded-lg">
+                <span className="text-slate-700">{t("وضع المدير","Admin mode")}</span>
+                <button onClick={() => setIsAdmin((v) => !v)} className={`px-3 py-1 rounded text-xs font-semibold ${isAdmin ? "bg-emerald-500 text-white" : "bg-slate-200 text-slate-600"}`}>{isAdmin ? "ON" : "OFF"}</button>
+              </div>
+              <div className="p-3 border border-dashed border-slate-300 rounded-lg text-xs text-slate-500 text-center">
+                {t("مزيد من الإعدادات قريباً","More settings coming soon")}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* تذييل الصفحة - حقوق التطوير */}
+      <footer className="mt-8 border-t border-slate-200 bg-white py-4 px-4">
+        <div className="text-center text-xs text-slate-500">
+          <span className="font-semibold text-slate-600">برمجة وتطوير</span>
+          <span className="mx-1.5 text-[color:var(--eyenak-teal)] font-bold">ايهاب المزلم</span>
+          <span className="opacity-60">© {new Date().getFullYear()} EYENAK</span>
+        </div>
+      </footer>
+
     </div>
   );
 }
