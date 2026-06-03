@@ -763,6 +763,87 @@ function Index() {
   };
   const [services, setServices] = useState<BookingService[]>([]);
   const [serviceFormOpen, setServiceFormOpen] = useState(false);
+
+  // ============ الاجتماعات ============
+  type Meeting = {
+    id: string;
+    title: string;
+    date: string; // ISO datetime-local
+    organizer: string;
+    attendees: string[];
+    location: string;
+    notes: string;
+    channels: { inApp: boolean; email: boolean; whatsapp: boolean };
+    createdAt: number;
+  };
+  const [meetingsOpen, setMeetingsOpen] = useState(false);
+  const [meetings, setMeetings] = useState<Meeting[]>([]);
+  const [meetingForm, setMeetingForm] = useState({
+    title: "",
+    date: "",
+    organizer: "",
+    attendees: "",
+    location: "",
+    notes: "",
+    notifyInApp: true,
+    notifyEmail: false,
+    notifyWhatsapp: false,
+    phone: "",
+    email: "",
+  });
+  const [meetingNotifs, setMeetingNotifs] = useState<{
+    id: string; title: string; date: string; organizer: string; target: string;
+  }[]>([]);
+  const [meetingMsg, setMeetingMsg] = useState<{ type: "ok" | "err"; text: string } | null>(null);
+  const submitMeeting = () => {
+    const t = meetingForm.title.trim();
+    if (!t) { setMeetingMsg({ type: "err", text: "أدخل عنوان الاجتماع" }); return; }
+    if (!meetingForm.date) { setMeetingMsg({ type: "err", text: "حدد التاريخ والوقت" }); return; }
+    const att = meetingForm.attendees.split(",").map((s) => s.trim()).filter(Boolean);
+    const m: Meeting = {
+      id: `mt-${Date.now()}`,
+      title: t,
+      date: meetingForm.date,
+      organizer: meetingForm.organizer.trim() || (isAdmin ? "الأدمن" : currentUser),
+      attendees: att,
+      location: meetingForm.location.trim(),
+      notes: meetingForm.notes.trim(),
+      channels: {
+        inApp: meetingForm.notifyInApp,
+        email: meetingForm.notifyEmail,
+        whatsapp: meetingForm.notifyWhatsapp,
+      },
+      createdAt: Date.now(),
+    };
+    setMeetings((prev) => [m, ...prev]);
+    if (m.channels.inApp) {
+      const targets = att.length > 0 ? att : [currentUser];
+      setMeetingNotifs((prev) => [
+        ...targets.map((tg) => ({
+          id: `${m.id}-${tg}`,
+          title: m.title,
+          date: m.date,
+          organizer: m.organizer,
+          target: tg,
+        })),
+        ...prev,
+      ]);
+    }
+    setMeetingMsg({ type: "ok", text: "تم إنشاء الاجتماع وإرسال الإشعارات" });
+    setMeetingForm({
+      title: "", date: "", organizer: "", attendees: "", location: "", notes: "",
+      notifyInApp: true, notifyEmail: false, notifyWhatsapp: false, phone: "", email: "",
+    });
+    setTimeout(() => setMeetingMsg(null), 2500);
+  };
+  const meetingShareLinks = (m: Meeting) => {
+    const when = new Date(m.date).toLocaleString("ar-EG");
+    const body = `دعوة لاجتماع: ${m.title}%0Aالتاريخ: ${when}%0Aالمنظم: ${m.organizer}${m.location ? `%0Aالمكان: ${m.location}` : ""}${m.notes ? `%0Aملاحظات: ${m.notes}` : ""}`;
+    return {
+      wa: `https://wa.me/?text=${body}`,
+      mail: `mailto:?subject=${encodeURIComponent("دعوة اجتماع: " + m.title)}&body=${body.replace(/%0A/g, "%0D%0A")}`,
+    };
+  };
   const [editingServiceId, setEditingServiceId] = useState<string | null>(null);
   const [svcName, setSvcName] = useState("");
   const [svcDesc, setSvcDesc] = useState("");
