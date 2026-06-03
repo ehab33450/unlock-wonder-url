@@ -1609,7 +1609,7 @@ function Index() {
                 >
                   <Icon className="w-5 h-5" />
                 </span>
-                <span className="text-[10px] font-semibold">{item.label}</span>
+                <span className="text-[10px] font-semibold">{isEn ? item.en : item.label}</span>
               </button>
             );
           })}
