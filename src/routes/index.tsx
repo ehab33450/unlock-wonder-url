@@ -1657,6 +1657,7 @@ function Index() {
               <button
                 key={item.label}
                 onClick={() => {
+                  closeAllPanels();
                   if (item.label === "التقويم") setCalendarOpen(true);
                   if (item.label === "الحجز") setBookingOpen(true);
                   if (item.label === "الملفات") setFilesViewOpen(true);
@@ -1666,6 +1667,7 @@ function Index() {
                   if (item.label === "مستخدم") setMembersOpen(true);
                   if (item.label === "المالية") setFinanceOpen(true);
                   if (item.label === "الإرشادات") setGuidesOpen(true);
+                  if (item.label === "المزيد") setMoreMenuOpen(true);
                 }}
                 className={`group w-16 py-2.5 flex flex-col items-center gap-1 rounded-xl transition-all duration-200 hover:-translate-y-0.5 ${
                   isActive
