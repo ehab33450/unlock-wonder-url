@@ -2229,6 +2229,15 @@ function Index() {
                       onClick={() => {
                         setCreateOpen(false);
                         if (o.label === "مشروع جديد") setNewProjectOpen(true);
+                        else if (o.label === "مجلد جديد") { setNewFolderName(""); setNewFolderOpen(true); }
+                        else if (o.label === "إنشاء مهمة") {
+                          const first = Object.keys(projectMeta)[0] ?? "";
+                          setNewTaskProject(first);
+                          setNewTaskName("");
+                          setNewTaskEnd("");
+                          setNewTaskOpen(true);
+                        }
+                        else if (o.label === "اختيار قالب") setTemplatesOpen(true);
                       }}
                       className="w-full flex items-center justify-between gap-2 px-4 py-2.5 text-sm hover:bg-white/10"
                     >
