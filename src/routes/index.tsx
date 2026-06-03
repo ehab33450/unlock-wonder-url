@@ -5428,6 +5428,7 @@ function ProjectDetailOverlay({
                       <th className="px-2 py-2 text-right font-semibold">عد تنازلي</th>
                       <th className="px-2 py-2 text-right font-semibold">تاريخ الإنجاز</th>
                       <th className="px-2 py-2 text-right font-semibold">الحالة</th>
+                      <th className="px-2 py-2 text-right font-semibold">نسبة الإنجاز</th>
                       <th className="px-2 py-2 text-right font-semibold">الأهمية</th>
                       <th className="px-2 py-2 text-right font-semibold">المرفق</th>
                       {canEditOwn && <th className="px-2 py-2"></th>}
@@ -5436,7 +5437,7 @@ function ProjectDetailOverlay({
                   <tbody>
                     {data.tasks.length === 0 ? (
                       <tr>
-                        <td colSpan={12} className="py-12 text-center text-slate-400">
+                        <td colSpan={13} className="py-12 text-center text-slate-400">
                           لا توجد مهام بعد. اضغط "إضافة مهمة" للبدء.
                         </td>
                       </tr>
