@@ -5353,7 +5353,7 @@ function Index() {
             </div>
             <div className="space-y-2 text-sm">
               <div className="flex justify-between p-2 border-b border-slate-100"><span className="text-slate-500">{t("البريد الإلكتروني","Email")}</span><span className="text-slate-800">{currentEmployee?.email ?? "ehab@example.com"}</span></div>
-              <div className="flex justify-between p-2 border-b border-slate-100"><span className="text-slate-500">{t("الهاتف","Phone")}</span><span className="text-slate-800">{currentEmployee?.phone ?? "—"}</span></div>
+              <div className="flex justify-between p-2 border-b border-slate-100"><span className="text-slate-500">{t("اسم المستخدم","Username")}</span><span className="text-slate-800">{currentEmployee?.username ?? "—"}</span></div>
               <div className="flex justify-between p-2 border-b border-slate-100"><span className="text-slate-500">{t("الدور","Role")}</span><span className="text-slate-800">{isAdmin ? "Admin" : "Employee"}</span></div>
             </div>
           </div>
