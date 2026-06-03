@@ -763,6 +763,87 @@ function Index() {
   };
   const [services, setServices] = useState<BookingService[]>([]);
   const [serviceFormOpen, setServiceFormOpen] = useState(false);
+
+  // ============ الاجتماعات ============
+  type Meeting = {
+    id: string;
+    title: string;
+    date: string; // ISO datetime-local
+    organizer: string;
+    attendees: string[];
+    location: string;
+    notes: string;
+    channels: { inApp: boolean; email: boolean; whatsapp: boolean };
+    createdAt: number;
+  };
+  const [meetingsOpen, setMeetingsOpen] = useState(false);
+  const [meetings, setMeetings] = useState<Meeting[]>([]);
+  const [meetingForm, setMeetingForm] = useState({
+    title: "",
+    date: "",
+    organizer: "",
+    attendees: "",
+    location: "",
+    notes: "",
+    notifyInApp: true,
+    notifyEmail: false,
+    notifyWhatsapp: false,
+    phone: "",
+    email: "",
+  });
+  const [meetingNotifs, setMeetingNotifs] = useState<{
+    id: string; title: string; date: string; organizer: string; target: string;
+  }[]>([]);
+  const [meetingMsg, setMeetingMsg] = useState<{ type: "ok" | "err"; text: string } | null>(null);
+  const submitMeeting = () => {
+    const t = meetingForm.title.trim();
+    if (!t) { setMeetingMsg({ type: "err", text: "أدخل عنوان الاجتماع" }); return; }
+    if (!meetingForm.date) { setMeetingMsg({ type: "err", text: "حدد التاريخ والوقت" }); return; }
+    const att = meetingForm.attendees.split(",").map((s) => s.trim()).filter(Boolean);
+    const m: Meeting = {
+      id: `mt-${Date.now()}`,
+      title: t,
+      date: meetingForm.date,
+      organizer: meetingForm.organizer.trim() || (isAdmin ? "الأدمن" : currentUser),
+      attendees: att,
+      location: meetingForm.location.trim(),
+      notes: meetingForm.notes.trim(),
+      channels: {
+        inApp: meetingForm.notifyInApp,
+        email: meetingForm.notifyEmail,
+        whatsapp: meetingForm.notifyWhatsapp,
+      },
+      createdAt: Date.now(),
+    };
+    setMeetings((prev) => [m, ...prev]);
+    if (m.channels.inApp) {
+      const targets = att.length > 0 ? att : [currentUser];
+      setMeetingNotifs((prev) => [
+        ...targets.map((tg) => ({
+          id: `${m.id}-${tg}`,
+          title: m.title,
+          date: m.date,
+          organizer: m.organizer,
+          target: tg,
+        })),
+        ...prev,
+      ]);
+    }
+    setMeetingMsg({ type: "ok", text: "تم إنشاء الاجتماع وإرسال الإشعارات" });
+    setMeetingForm({
+      title: "", date: "", organizer: "", attendees: "", location: "", notes: "",
+      notifyInApp: true, notifyEmail: false, notifyWhatsapp: false, phone: "", email: "",
+    });
+    setTimeout(() => setMeetingMsg(null), 2500);
+  };
+  const meetingShareLinks = (m: Meeting) => {
+    const when = new Date(m.date).toLocaleString("ar-EG");
+    const body = `دعوة لاجتماع: ${m.title}%0Aالتاريخ: ${when}%0Aالمنظم: ${m.organizer}${m.location ? `%0Aالمكان: ${m.location}` : ""}${m.notes ? `%0Aملاحظات: ${m.notes}` : ""}`;
+    return {
+      wa: `https://wa.me/?text=${body}`,
+      mail: `mailto:?subject=${encodeURIComponent("دعوة اجتماع: " + m.title)}&body=${body.replace(/%0A/g, "%0D%0A")}`,
+    };
+  };
   const [editingServiceId, setEditingServiceId] = useState<string | null>(null);
   const [svcName, setSvcName] = useState("");
   const [svcDesc, setSvcDesc] = useState("");
@@ -1309,6 +1390,11 @@ function Index() {
   const toggleWidget = (k: WidgetKey) =>
     setEnabledWidgets((w) => ({ ...w, [k]: !w[k] }));
 
+  const myMeetingNotifs = useMemo(
+    () => meetingNotifs.filter((n) => isAdmin || n.target === currentUser),
+    [meetingNotifs, isAdmin, currentUser]
+  );
+
   return (
     <div dir="rtl" className="min-h-screen bg-slate-50 text-slate-800 font-[Cairo]">
       {/* Top header */}
@@ -1340,9 +1426,9 @@ function Index() {
               className="relative p-2 rounded hover:bg-slate-100 text-slate-600"
             >
               <Bell className="w-5 h-5" />
-              {notifications.length > 0 && (
+              {(notifications.length + myMeetingNotifs.length) > 0 && (
                 <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center">
-                  {notifications.length}
+                  {notifications.length + myMeetingNotifs.length}
                 </span>
               )}
             </button>
@@ -1357,10 +1443,33 @@ function Index() {
                     إغلاق
                   </button>
                 </div>
-                {notifications.length === 0 ? (
+                {notifications.length === 0 && myMeetingNotifs.length === 0 ? (
                   <div className="p-6 text-center text-sm text-slate-500">لا توجد إشعارات</div>
                 ) : (
                   <ul className="divide-y divide-slate-100">
+                    {myMeetingNotifs.map((n) => (
+                      <li key={n.id} className="px-3 py-2 hover:bg-slate-50 bg-emerald-50/40">
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-1">
+                              <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700">دعوة اجتماع</span>
+                              <span className="text-xs text-slate-500">{new Date(n.date).toLocaleString("ar-EG")}</span>
+                            </div>
+                            <div className="text-sm font-semibold text-slate-800 truncate">{n.title}</div>
+                            <div className="text-xs text-slate-500 truncate">المنظم: {n.organizer}</div>
+                            <button
+                              onClick={() => { setMeetingsOpen(true); setNotifOpen(false); }}
+                              className="mt-1 text-xs text-[color:var(--eyenak-teal)] hover:underline"
+                            >فتح الاجتماعات</button>
+                          </div>
+                          <button
+                            onClick={() => setMeetingNotifs((d) => d.filter((x) => x.id !== n.id))}
+                            className="text-xs text-slate-400 hover:text-slate-600"
+                            title="تجاهل"
+                          >✕</button>
+                        </div>
+                      </li>
+                    ))}
                     {notifications.map((n) => {
                       const badge =
                         n.level === "late"
@@ -1440,6 +1549,7 @@ function Index() {
               (item.label === "الملفات" && filesViewOpen) ||
               (item.label === "المحادثة" && chatViewOpen) ||
               (item.label === "الحجز" && bookingOpen) ||
+              (item.label === "الاجتماعات" && meetingsOpen) ||
               (item.label === "قائمة المذكرات" && notesViewOpen);
             return (
               <button
@@ -1450,6 +1560,7 @@ function Index() {
                   if (item.label === "الملفات") setFilesViewOpen(true);
                   if (item.label === "المحادثة") setChatViewOpen(true);
                   if (item.label === "قائمة المذكرات") setNotesViewOpen(true);
+                  if (item.label === "الاجتماعات") setMeetingsOpen(true);
                   if (item.label === "مستخدم") setMembersOpen(true);
                 }}
                 className={`group w-16 py-2.5 flex flex-col items-center gap-1 rounded-xl transition-all duration-200 hover:-translate-y-0.5 ${
@@ -1730,8 +1841,14 @@ function Index() {
                     )}
                     {w.key === "upcomingMeetings" && (
                       <ul className="space-y-2 text-xs">
-                        <li className="border border-slate-100 rounded p-2"><div className="text-slate-400">12:59 PM</div><div className="font-semibold">Daily Standup</div></li>
-                        <li className="border border-slate-100 rounded p-2"><div className="text-slate-400">2:30 PM</div><div className="font-semibold">Scrum Meeting</div></li>
+                        {meetings.length === 0 && <li className="text-slate-400 text-center">لا توجد اجتماعات</li>}
+                        {meetings.slice(0, 3).map((m) => (
+                          <li key={m.id} className="border border-slate-100 rounded p-2">
+                            <div className="text-slate-400">{new Date(m.date).toLocaleString("ar-EG", { dateStyle: "short", timeStyle: "short" })}</div>
+                            <div className="font-semibold">{m.title}</div>
+                          </li>
+                        ))}
+                        <li><button onClick={() => setMeetingsOpen(true)} className="text-[10px] text-[color:var(--eyenak-teal)] hover:underline">+ اجتماع جديد</button></li>
                       </ul>
                     )}
                     {w.key === "latestUpdates" && (
@@ -4744,6 +4861,98 @@ function Index() {
       </button>
 
       {/* مركز الأدوات — Widgets Center */}
+      {meetingsOpen && (
+        <div className="fixed inset-0 z-[60] bg-black/40 flex items-center justify-center p-4" onClick={() => setMeetingsOpen(false)}>
+          <div className="bg-white rounded-xl w-full max-w-4xl max-h-[88vh] overflow-hidden flex flex-col" onClick={(e) => e.stopPropagation()} dir="rtl">
+            <div className="flex items-center justify-between px-5 py-3 border-b border-slate-200">
+              <button onClick={() => setMeetingsOpen(false)} className="p-1 text-slate-400 hover:text-slate-700"><X className="w-5 h-5" /></button>
+              <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2"><Video className="w-5 h-5 text-red-500" /> الاجتماعات</h2>
+            </div>
+            <div className="grid md:grid-cols-2 gap-4 p-5 overflow-auto">
+              {/* Create form */}
+              <div className="border border-slate-200 rounded-lg p-4 space-y-3">
+                <h3 className="font-bold text-slate-800 text-sm">+ اجتماع جديد</h3>
+                <input value={meetingForm.title} onChange={(e) => setMeetingForm({ ...meetingForm, title: e.target.value })} placeholder="عنوان الاجتماع" className="w-full h-10 border border-slate-300 rounded px-3 text-sm" />
+                <input type="datetime-local" value={meetingForm.date} onChange={(e) => setMeetingForm({ ...meetingForm, date: e.target.value })} className="w-full h-10 border border-slate-300 rounded px-3 text-sm" />
+                <select value={meetingForm.organizer} onChange={(e) => setMeetingForm({ ...meetingForm, organizer: e.target.value })} className="w-full h-10 border border-slate-300 rounded px-3 text-sm">
+                  <option value="">المنظم (اختر)</option>
+                  <option value="الأدمن">الأدمن</option>
+                  {employees.map((e) => <option key={e.id} value={e.name}>{e.name}</option>)}
+                </select>
+                <input value={meetingForm.attendees} onChange={(e) => setMeetingForm({ ...meetingForm, attendees: e.target.value })} placeholder="المدعوون (موظفين/عملاء — مفصولين بفاصلة)" className="w-full h-10 border border-slate-300 rounded px-3 text-sm" list="meeting-attendees" />
+                <datalist id="meeting-attendees">
+                  {employees.map((e) => <option key={e.id} value={e.name} />)}
+                </datalist>
+                <input value={meetingForm.location} onChange={(e) => setMeetingForm({ ...meetingForm, location: e.target.value })} placeholder="المكان أو رابط الاجتماع" className="w-full h-10 border border-slate-300 rounded px-3 text-sm" />
+                <textarea value={meetingForm.notes} onChange={(e) => setMeetingForm({ ...meetingForm, notes: e.target.value })} placeholder="ملاحظات / جدول الأعمال" className="w-full h-20 border border-slate-300 rounded px-3 py-2 text-sm resize-none" />
+                <div className="space-y-1.5">
+                  <div className="text-xs font-bold text-slate-700">طريقة الإشعار</div>
+                  <label className="flex items-center gap-2 text-xs"><input type="checkbox" checked={meetingForm.notifyInApp} onChange={(e) => setMeetingForm({ ...meetingForm, notifyInApp: e.target.checked })} /> داخل المنصة (واجهة المستخدم)</label>
+                  <label className="flex items-center gap-2 text-xs"><input type="checkbox" checked={meetingForm.notifyEmail} onChange={(e) => setMeetingForm({ ...meetingForm, notifyEmail: e.target.checked })} /> بريد إلكتروني</label>
+                  <label className="flex items-center gap-2 text-xs"><input type="checkbox" checked={meetingForm.notifyWhatsapp} onChange={(e) => setMeetingForm({ ...meetingForm, notifyWhatsapp: e.target.checked })} /> واتساب</label>
+                  {meetingForm.notifyEmail && (
+                    <input value={meetingForm.email} onChange={(e) => setMeetingForm({ ...meetingForm, email: e.target.value })} placeholder="بريد المستلم (اختياري)" className="w-full h-9 border border-slate-300 rounded px-3 text-xs" />
+                  )}
+                  {meetingForm.notifyWhatsapp && (
+                    <input value={meetingForm.phone} onChange={(e) => setMeetingForm({ ...meetingForm, phone: e.target.value })} placeholder="رقم واتساب (مع رمز الدولة)" className="w-full h-9 border border-slate-300 rounded px-3 text-xs" />
+                  )}
+                </div>
+                {meetingMsg && (
+                  <div className={`text-xs ${meetingMsg.type === "ok" ? "text-emerald-600" : "text-red-600"}`}>{meetingMsg.text}</div>
+                )}
+                <button onClick={submitMeeting} className="w-full h-10 rounded bg-[color:var(--eyenak-teal)] text-white text-sm font-bold hover:opacity-90">إنشاء وإرسال</button>
+              </div>
+
+              {/* List */}
+              <div className="border border-slate-200 rounded-lg p-4">
+                <h3 className="font-bold text-slate-800 text-sm mb-3">الاجتماعات القادمة ({meetings.length})</h3>
+                {meetings.length === 0 ? (
+                  <div className="text-center text-xs text-slate-400 py-8">لا توجد اجتماعات بعد</div>
+                ) : (
+                  <ul className="space-y-3 max-h-[55vh] overflow-auto">
+                    {meetings.map((m) => {
+                      const links = meetingShareLinks(m);
+                      const waUrl = meetingForm.phone
+                        ? links.wa.replace("wa.me/?", `wa.me/${meetingForm.phone.replace(/\D/g, "")}?`)
+                        : links.wa;
+                      const mailUrl = meetingForm.email
+                        ? links.mail.replace("mailto:?", `mailto:${meetingForm.email}?`)
+                        : links.mail;
+                      return (
+                        <li key={m.id} className="border border-slate-100 rounded-lg p-3">
+                          <div className="flex items-start justify-between gap-2 mb-1">
+                            <span className="text-[10px] text-slate-500">{new Date(m.date).toLocaleString("ar-EG")}</span>
+                            <span className="font-bold text-slate-800 text-sm">{m.title}</span>
+                          </div>
+                          <div className="text-xs text-slate-500">المنظم: {m.organizer}</div>
+                          {m.location && <div className="text-xs text-slate-500">المكان: {m.location}</div>}
+                          {m.attendees.length > 0 && (
+                            <div className="text-xs text-slate-500 mt-1">المدعوون: {m.attendees.join("، ")}</div>
+                          )}
+                          {m.notes && <div className="text-xs text-slate-600 mt-1 bg-slate-50 p-2 rounded">{m.notes}</div>}
+                          <div className="flex items-center gap-2 mt-2">
+                            {m.channels.whatsapp && (
+                              <a href={waUrl} target="_blank" rel="noreferrer" className="text-[10px] px-2 py-1 rounded bg-emerald-100 text-emerald-700 hover:bg-emerald-200">واتساب</a>
+                            )}
+                            {m.channels.email && (
+                              <a href={mailUrl} className="text-[10px] px-2 py-1 rounded bg-blue-100 text-blue-700 hover:bg-blue-200">بريد إلكتروني</a>
+                            )}
+                            {m.channels.inApp && (
+                              <span className="text-[10px] px-2 py-1 rounded bg-amber-100 text-amber-700">إشعار داخل المنصة</span>
+                            )}
+                            <button onClick={() => setMeetings((p) => p.filter((x) => x.id !== m.id))} className="text-[10px] mr-auto text-red-500 hover:underline">حذف</button>
+                          </div>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {widgetsOpen && (
         <div className="fixed inset-0 z-[60] bg-black/40 flex items-center justify-center p-4" onClick={() => setWidgetsOpen(false)}>
           <div className="bg-white rounded-xl w-full max-w-5xl max-h-[85vh] overflow-hidden flex flex-col" onClick={(e) => e.stopPropagation()} dir="rtl">
