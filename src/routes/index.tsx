@@ -4325,6 +4325,68 @@ function Index() {
         </div>
       )}
 
+      {/* ====== شاشة تسجيل دخول الموظف ====== */}
+      {loginOpen && (
+        <div
+          className="fixed inset-0 z-[60] bg-slate-900/70 backdrop-blur-sm flex items-center justify-center p-4"
+          onClick={() => setLoginOpen(false)}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="bg-white rounded-xl shadow-2xl w-full max-w-md p-6"
+            dir="rtl"
+          >
+            <div className="text-center mb-6">
+              <div className="w-14 h-14 mx-auto rounded-full bg-[color:var(--eyenak-teal)] text-white flex items-center justify-center mb-2">
+                <User className="w-7 h-7" />
+              </div>
+              <h2 className="text-lg font-bold text-slate-800">تسجيل دخول الموظف</h2>
+              <p className="text-xs text-slate-500">أدخل اسم المستخدم وكلمة المرور التي زوّدك بها المدير</p>
+            </div>
+            <div className="space-y-3 text-right">
+              <input
+                value={loginUser}
+                onChange={(e) => setLoginUser(e.target.value)}
+                placeholder="اسم المستخدم"
+                className="w-full h-11 border border-slate-300 rounded px-3 text-sm focus:outline-none focus:border-[color:var(--eyenak-teal)]"
+              />
+              <input
+                value={loginPass}
+                onChange={(e) => setLoginPass(e.target.value)}
+                type="password"
+                placeholder="كلمة المرور"
+                className="w-full h-11 border border-slate-300 rounded px-3 text-sm focus:outline-none focus:border-[color:var(--eyenak-teal)]"
+              />
+              {loginErr && <div className="text-xs text-red-600 text-right">{loginErr}</div>}
+              <button
+                onClick={() => {
+                  const emp = employees.find(
+                    (e) => e.username === loginUser.trim() && e.password === loginPass
+                  );
+                  if (!emp) { setLoginErr("بيانات الدخول غير صحيحة"); return; }
+                  if (!emp.active) { setLoginErr("الحساب موقوف"); return; }
+                  setCurrentUser(emp.name);
+                  setIsAdmin(false);
+                  setLoginErr("");
+                  setLoginUser("");
+                  setLoginPass("");
+                  setLoginOpen(false);
+                }}
+                className="w-full h-11 rounded bg-[color:var(--eyenak-teal)] text-white text-sm font-bold hover:opacity-90"
+              >
+                دخول
+              </button>
+              <button
+                onClick={() => setLoginOpen(false)}
+                className="w-full h-9 rounded border border-slate-300 text-xs text-slate-600 hover:bg-slate-50"
+              >
+                إلغاء
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }
