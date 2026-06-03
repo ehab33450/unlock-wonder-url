@@ -2,6 +2,12 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { askAssistant } from "@/lib/ai-assistant.functions";
+import guideDashboardImg from "@/assets/guide-dashboard.png";
+import guideProjectsImg from "@/assets/guide-projects.png";
+import guideFinanceImg from "@/assets/guide-finance.png";
+import guideMeetingsImg from "@/assets/guide-meetings.png";
+import guideUsersImg from "@/assets/guide-users.png";
+import guideAssistantImg from "@/assets/guide-assistant.png";
 import {
   Calendar,
   FileText,
