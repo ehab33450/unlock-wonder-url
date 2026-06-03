@@ -2969,8 +2969,8 @@ function Index() {
                 const groups: Record<string, string[]> = {};
                 for (const p of projectNames) {
                   const company = projectMeta[p].contract.responsibleName || "غير محدد";
-                  // Employee view: only show projects they own
-                  if (!isAdmin && projectMeta[p].contract.assignee !== currentUser) continue;
+                  // عرض المشاريع التي يكون المستخدم عضواً فيها فقط (الأدمن يرى الكل)
+                  if (!isMemberOfProject(p)) continue;
                   (groups[company] ||= []).push(p);
                 }
                 const entries = Object.entries(groups);
