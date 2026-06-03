@@ -287,7 +287,14 @@ function Index() {
   const callAssistant = useServerFn(askAssistant);
 
   // Contract info + Tasks per project
-  type Payment = { id: string; amount: string; date: string; paid: boolean };
+  type Payment = {
+    id: string;
+    amount: string;
+    date: string;
+    paid: boolean;
+    receiptName?: string;
+    receiptData?: string;
+  };
   type ContractInfo = {
     startDate: string;
     endDate: string;
@@ -310,11 +317,15 @@ function Index() {
     doneDate: string;
     status: TaskStatus;
     priority: Priority;
+    progress: number;
     attachmentName?: string;
     attachmentData?: string;
   };
   type ProjectMeta = { contract: ContractInfo; tasks: TaskRow[] };
   const [projectMeta, setProjectMeta] = useState<Record<string, ProjectMeta>>({});
+
+  // ============ المالية ============
+  const [financeOpen, setFinanceOpen] = useState(false);
 
   // New-project contract form fields
   const [npValue, setNpValue] = useState("");
