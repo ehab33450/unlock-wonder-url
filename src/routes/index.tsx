@@ -53,6 +53,8 @@ import {
   Bot,
   Copy,
   Link as LinkIcon,
+  Wallet,
+  Receipt,
 } from "lucide-react";
 
 export const Route = createFileRoute("/")({
@@ -75,6 +77,7 @@ const sidebarItems = [
   { icon: Pin, label: "قائمة المذكرات", color: "#f59e0b" },
   { icon: MessageSquare, label: "المحادثة", color: "#10b981" },
   { icon: Video, label: "الاجتماعات", color: "#ef4444" },
+  { icon: Wallet, label: "المالية", color: "#16a34a" },
   { icon: User, label: "مستخدم", color: "#6366f1" },
   { icon: HelpCircle, label: "الإرشادات", color: "#14b8a6" },
   { icon: CheckSquare, label: "الحجز", color: "#ec4899" },
@@ -284,7 +287,14 @@ function Index() {
   const callAssistant = useServerFn(askAssistant);
 
   // Contract info + Tasks per project
-  type Payment = { id: string; amount: string; date: string; paid: boolean };
+  type Payment = {
+    id: string;
+    amount: string;
+    date: string;
+    paid: boolean;
+    receiptName?: string;
+    receiptData?: string;
+  };
   type ContractInfo = {
     startDate: string;
     endDate: string;
@@ -307,11 +317,15 @@ function Index() {
     doneDate: string;
     status: TaskStatus;
     priority: Priority;
+    progress: number;
     attachmentName?: string;
     attachmentData?: string;
   };
   type ProjectMeta = { contract: ContractInfo; tasks: TaskRow[] };
   const [projectMeta, setProjectMeta] = useState<Record<string, ProjectMeta>>({});
+
+  // ============ المالية ============
+  const [financeOpen, setFinanceOpen] = useState(false);
 
   // New-project contract form fields
   const [npValue, setNpValue] = useState("");
@@ -413,6 +427,7 @@ function Index() {
               doneDate: "",
               status: statuses[1],
               priority: priorities[1],
+              progress: 60,
             },
             {
               id: `t2-${idx}`,
@@ -425,6 +440,7 @@ function Index() {
               doneDate: "",
               status: statuses[0],
               priority: priorities[0],
+              progress: 20,
             },
             {
               id: `t3-${idx}`,
@@ -437,6 +453,7 @@ function Index() {
               doneDate: iso(-2),
               status: statuses[2],
               priority: priorities[2],
+              progress: 100,
             },
           ],
         };
@@ -1550,6 +1567,7 @@ function Index() {
               (item.label === "المحادثة" && chatViewOpen) ||
               (item.label === "الحجز" && bookingOpen) ||
               (item.label === "الاجتماعات" && meetingsOpen) ||
+              (item.label === "المالية" && financeOpen) ||
               (item.label === "قائمة المذكرات" && notesViewOpen);
             return (
               <button
@@ -1562,6 +1580,7 @@ function Index() {
                   if (item.label === "قائمة المذكرات") setNotesViewOpen(true);
                   if (item.label === "الاجتماعات") setMeetingsOpen(true);
                   if (item.label === "مستخدم") setMembersOpen(true);
+                  if (item.label === "المالية") setFinanceOpen(true);
                 }}
                 className={`group w-16 py-2.5 flex flex-col items-center gap-1 rounded-xl transition-all duration-200 hover:-translate-y-0.5 ${
                   isActive
@@ -4953,6 +4972,73 @@ function Index() {
         </div>
       )}
 
+      {financeOpen && (
+        <FinanceModal
+          isAdmin={isAdmin}
+          currentUser={currentUser}
+          projectMeta={projectMeta}
+          onClose={() => setFinanceOpen(false)}
+          onUpdatePayment={(project, paymentId, patch) => {
+            setProjectMeta((m) => {
+              const cur = m[project];
+              if (!cur) return m;
+              return {
+                ...m,
+                [project]: {
+                  ...cur,
+                  contract: {
+                    ...cur.contract,
+                    payments: cur.contract.payments.map((p) =>
+                      p.id === paymentId ? { ...p, ...patch } : p,
+                    ),
+                  },
+                },
+              };
+            });
+          }}
+          onAddPayment={(project) => {
+            setProjectMeta((m) => {
+              const cur = m[project];
+              if (!cur) return m;
+              return {
+                ...m,
+                [project]: {
+                  ...cur,
+                  contract: {
+                    ...cur.contract,
+                    payments: [
+                      ...cur.contract.payments,
+                      {
+                        id: `pay-${Date.now()}`,
+                        amount: "",
+                        date: new Date().toISOString().slice(0, 10),
+                        paid: false,
+                      },
+                    ],
+                  },
+                },
+              };
+            });
+          }}
+          onRemovePayment={(project, paymentId) => {
+            setProjectMeta((m) => {
+              const cur = m[project];
+              if (!cur) return m;
+              return {
+                ...m,
+                [project]: {
+                  ...cur,
+                  contract: {
+                    ...cur.contract,
+                    payments: cur.contract.payments.filter((p) => p.id !== paymentId),
+                  },
+                },
+              };
+            });
+          }}
+        />
+      )}
+
       {widgetsOpen && (
         <div className="fixed inset-0 z-[60] bg-black/40 flex items-center justify-center p-4" onClick={() => setWidgetsOpen(false)}>
           <div className="bg-white rounded-xl w-full max-w-5xl max-h-[85vh] overflow-hidden flex flex-col" onClick={(e) => e.stopPropagation()} dir="rtl">
@@ -5092,7 +5178,14 @@ function Stat({ color, value, label }: { color: string; value: number; label: st
   );
 }
 
-type DPayment = { id: string; amount: string; date: string; paid: boolean };
+type DPayment = {
+  id: string;
+  amount: string;
+  date: string;
+  paid: boolean;
+  receiptName?: string;
+  receiptData?: string;
+};
 type DContract = {
   startDate: string;
   endDate: string;
@@ -5115,6 +5208,7 @@ type DTask = {
   doneDate: string;
   status: DStatus;
   priority: DPriority;
+  progress: number;
   attachmentName?: string;
   attachmentData?: string;
 };
@@ -5204,6 +5298,7 @@ function ProjectDetailOverlay({
           doneDate: "",
           status: "جديد",
           priority: "لاشيء",
+          progress: 0,
         },
       ],
     }));
@@ -5291,7 +5386,19 @@ function ProjectDetailOverlay({
           <>
             {/* Contract bar */}
             <div className="px-6 py-4 bg-white border-b border-slate-200">
-              <h3 className="text-sm font-bold text-slate-700 mb-3 text-right">بيانات العقد</h3>
+              <div className="flex items-center justify-between mb-3">
+                {canEditAll && (
+                  <SplitContractButton
+                    value={data.contract.value}
+                    startDate={data.contract.startDate}
+                    endDate={data.contract.endDate}
+                    onSplit={(payments) =>
+                      onUpdate((c) => ({ ...c, contract: { ...c.contract, payments } }))
+                    }
+                  />
+                )}
+                <h3 className="text-sm font-bold text-slate-700 text-right">بيانات العقد</h3>
+              </div>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-right">
                 <InfoCell
                   label="بداية العقد"
@@ -5388,6 +5495,7 @@ function ProjectDetailOverlay({
                       <th className="px-2 py-2 text-right font-semibold">عد تنازلي</th>
                       <th className="px-2 py-2 text-right font-semibold">تاريخ الإنجاز</th>
                       <th className="px-2 py-2 text-right font-semibold">الحالة</th>
+                      <th className="px-2 py-2 text-right font-semibold">نسبة الإنجاز</th>
                       <th className="px-2 py-2 text-right font-semibold">الأهمية</th>
                       <th className="px-2 py-2 text-right font-semibold">المرفق</th>
                       {canEditOwn && <th className="px-2 py-2"></th>}
@@ -5396,7 +5504,7 @@ function ProjectDetailOverlay({
                   <tbody>
                     {data.tasks.length === 0 ? (
                       <tr>
-                        <td colSpan={12} className="py-12 text-center text-slate-400">
+                        <td colSpan={13} className="py-12 text-center text-slate-400">
                           لا توجد مهام بعد. اضغط "إضافة مهمة" للبدء.
                         </td>
                       </tr>
@@ -5481,6 +5589,32 @@ function ProjectDetailOverlay({
                             </select>
                           </td>
                           <td className="px-1 py-1">
+                            <div className="flex items-center gap-1.5">
+                              <select
+                                value={t.progress}
+                                disabled={!canEditOwn}
+                                onChange={(e) => {
+                                  const v = Number(e.target.value);
+                                  updateTask(t.id, {
+                                    progress: v,
+                                    ...(v === 100 && t.status !== "تم" ? { status: "تم" as DStatus } : {}),
+                                  });
+                                }}
+                                className="text-xs font-semibold rounded px-1 py-1 bg-slate-50 border border-slate-200 focus:outline-none"
+                              >
+                                {[0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100].map((n) => (
+                                  <option key={n} value={n}>{n}%</option>
+                                ))}
+                              </select>
+                              <div className="w-12 h-1.5 bg-slate-200 rounded-full overflow-hidden">
+                                <div
+                                  className={`h-full ${t.progress === 100 ? "bg-emerald-500" : t.progress >= 50 ? "bg-amber-500" : "bg-sky-500"}`}
+                                  style={{ width: `${t.progress}%` }}
+                                />
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-1 py-1">
                             <select
                               value={t.priority}
                               disabled={!canEditOwn}
@@ -5554,6 +5688,92 @@ function ProjectDetailOverlay({
           </>
         )}
       </div>
+    </div>
+  );
+}
+
+function SplitContractButton({
+  value,
+  startDate,
+  endDate,
+  onSplit,
+}: {
+  value: string;
+  startDate: string;
+  endDate: string;
+  onSplit: (payments: DPayment[]) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [count, setCount] = useState<number>(4);
+  const total = Number(value || 0);
+  const apply = () => {
+    const n = Math.max(1, Math.min(24, Math.floor(count) || 1));
+    const per = total > 0 ? Math.round((total / n) * 100) / 100 : 0;
+    const start = startDate ? new Date(startDate).getTime() : Date.now();
+    const end = endDate ? new Date(endDate).getTime() : start + n * 30 * 86_400_000;
+    const step = (end - start) / n;
+    const payments: DPayment[] = Array.from({ length: n }, (_, i) => ({
+      id: `pay-${Date.now()}-${i}`,
+      amount: String(per),
+      date: new Date(start + step * (i + 1)).toISOString().slice(0, 10),
+      paid: false,
+    }));
+    onSplit(payments);
+    setOpen(false);
+  };
+  return (
+    <div className="relative">
+      <button
+        onClick={() => setOpen((v) => !v)}
+        className="h-8 px-3 rounded-md bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-xs font-bold flex items-center gap-1.5 border border-emerald-200"
+      >
+        <Wallet className="w-3.5 h-3.5" />
+        <span>تقسيم العقد إلى أقساط</span>
+      </button>
+      {open && (
+        <div className="absolute top-10 right-0 z-30 bg-white border border-slate-200 shadow-xl rounded-lg p-4 w-72 space-y-3" dir="rtl">
+          <div className="text-xs font-bold text-slate-700">عدد الأقساط</div>
+          <div className="flex gap-1.5 flex-wrap">
+            {[2, 3, 4, 6, 8, 12].map((n) => (
+              <button
+                key={n}
+                onClick={() => setCount(n)}
+                className={`px-3 py-1 rounded text-xs font-bold border ${count === n ? "bg-emerald-600 text-white border-emerald-600" : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50"}`}
+              >
+                {n}
+              </button>
+            ))}
+          </div>
+          <div>
+            <label className="text-xs text-slate-500">أو حدد عدد مخصص</label>
+            <input
+              type="number"
+              min={1}
+              max={24}
+              value={count}
+              onChange={(e) => setCount(Number(e.target.value))}
+              className="w-full h-9 border border-slate-300 rounded px-2 text-sm mt-1"
+            />
+          </div>
+          <div className="text-xs text-slate-500 bg-slate-50 p-2 rounded">
+            {total > 0 ? (
+              <>
+                <div>إجمالي العقد: <span className="font-bold text-slate-800">{total.toLocaleString()} ر.س</span></div>
+                <div>قيمة كل قسط: <span className="font-bold text-emerald-700">{Math.round((total / Math.max(1, count)) * 100) / 100} ر.س</span></div>
+              </>
+            ) : (
+              <span className="text-amber-600">أدخل قيمة العقد أولاً</span>
+            )}
+          </div>
+          <div className="flex gap-2">
+            <button onClick={apply} className="flex-1 h-9 rounded bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-700">إنشاء الأقساط</button>
+            <button onClick={() => setOpen(false)} className="h-9 px-3 rounded border border-slate-200 text-xs">إلغاء</button>
+          </div>
+          <div className="text-[10px] text-slate-400 leading-relaxed">
+            سيتم استبدال الأقساط الحالية. يمكنك تعديل التواريخ والمبالغ من شاشة المالية لاحقًا.
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -5660,6 +5880,291 @@ function ExcelEditor({
             ))}
           </tbody>
         </table>
+      </div>
+    </div>
+  );
+}
+
+function PaymentCountdown({ date, paid }: { date: string; paid: boolean }) {
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const id = setInterval(() => setNow(Date.now()), 60_000);
+    return () => clearInterval(id);
+  }, []);
+  if (paid) return <span className="text-[10px] text-emerald-600 font-bold">مدفوع ✓</span>;
+  if (!date) return <span className="text-[10px] text-slate-400">—</span>;
+  const diff = new Date(date + "T23:59:59").getTime() - now;
+  if (diff <= 0) {
+    const overdueDays = Math.ceil(-diff / 86_400_000);
+    return <span className="text-[10px] text-red-600 font-bold">متأخر {overdueDays}ي</span>;
+  }
+  const days = Math.floor(diff / 86_400_000);
+  const hours = Math.floor((diff % 86_400_000) / 3_600_000);
+  const urgent = days < 3;
+  return (
+    <span className={`text-[10px] font-bold font-mono ${urgent ? "text-amber-600" : "text-sky-700"}`}>
+      باقي {days > 0 ? `${days}ي ${hours}س` : `${hours}س`}
+    </span>
+  );
+}
+
+type FinancePayment = DPayment & { project: string; assignee: string };
+
+function FinanceModal({
+  isAdmin,
+  currentUser,
+  projectMeta,
+  onClose,
+  onUpdatePayment,
+  onAddPayment,
+  onRemovePayment,
+}: {
+  isAdmin: boolean;
+  currentUser: string;
+  projectMeta: Record<string, { contract: DContract; tasks: DTask[] }>;
+  onClose: () => void;
+  onUpdatePayment: (project: string, paymentId: string, patch: Partial<DPayment>) => void;
+  onAddPayment: (project: string) => void;
+  onRemovePayment: (project: string, paymentId: string) => void;
+}) {
+  const [filter, setFilter] = useState<"all" | "due" | "paid" | "overdue">("all");
+  const visibleProjects = Object.entries(projectMeta).filter(
+    ([, meta]) => isAdmin || meta.contract.assignee === currentUser,
+  );
+
+  const allPayments: FinancePayment[] = visibleProjects.flatMap(([project, meta]) =>
+    meta.contract.payments.map((p) => ({ ...p, project, assignee: meta.contract.assignee })),
+  );
+  const now = Date.now();
+  const filtered = allPayments.filter((p) => {
+    if (filter === "paid") return p.paid;
+    if (filter === "due") return !p.paid;
+    if (filter === "overdue") return !p.paid && p.date && new Date(p.date).getTime() < now;
+    return true;
+  });
+  filtered.sort((a, b) => {
+    if (a.paid !== b.paid) return a.paid ? 1 : -1;
+    return (a.date || "").localeCompare(b.date || "");
+  });
+
+  const totalDue = allPayments.filter((p) => !p.paid).reduce((s, p) => s + Number(p.amount || 0), 0);
+  const totalPaid = allPayments.filter((p) => p.paid).reduce((s, p) => s + Number(p.amount || 0), 0);
+  const nextDue = allPayments
+    .filter((p) => !p.paid && p.date)
+    .sort((a, b) => a.date.localeCompare(b.date))[0];
+
+  const onUploadReceipt = (project: string, paymentId: string, file: File) => {
+    const reader = new FileReader();
+    reader.onload = () =>
+      onUpdatePayment(project, paymentId, {
+        receiptName: file.name,
+        receiptData: typeof reader.result === "string" ? reader.result : "",
+        paid: true,
+      });
+    reader.readAsDataURL(file);
+  };
+
+  return (
+    <div
+      className="fixed inset-0 z-[60] bg-black/40 flex items-center justify-center p-4"
+      onClick={onClose}
+    >
+      <div
+        className="bg-white rounded-xl w-full max-w-6xl max-h-[90vh] overflow-hidden flex flex-col"
+        onClick={(e) => e.stopPropagation()}
+        dir="rtl"
+      >
+        <div className="flex items-center justify-between px-5 py-3 border-b border-slate-200">
+          <button onClick={onClose} className="p-1 text-slate-400 hover:text-slate-700">
+            <X className="w-5 h-5" />
+          </button>
+          <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2">
+            <Wallet className="w-5 h-5 text-emerald-600" /> المالية وأقساط العقود
+          </h2>
+        </div>
+
+        {/* Summary */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 p-4 bg-slate-50 border-b border-slate-200">
+          <div className="bg-white rounded-lg p-3 border border-slate-200">
+            <div className="text-[10px] text-slate-500">المستحق</div>
+            <div className="text-lg font-bold text-amber-600">{totalDue.toLocaleString()} ر.س</div>
+          </div>
+          <div className="bg-white rounded-lg p-3 border border-slate-200">
+            <div className="text-[10px] text-slate-500">المدفوع</div>
+            <div className="text-lg font-bold text-emerald-600">{totalPaid.toLocaleString()} ر.س</div>
+          </div>
+          <div className="bg-white rounded-lg p-3 border border-slate-200">
+            <div className="text-[10px] text-slate-500">إجمالي العقود</div>
+            <div className="text-lg font-bold text-slate-800">
+              {(totalDue + totalPaid).toLocaleString()} ر.س
+            </div>
+          </div>
+          <div className="bg-white rounded-lg p-3 border border-slate-200">
+            <div className="text-[10px] text-slate-500">أقرب قسط</div>
+            {nextDue ? (
+              <div className="mt-0.5">
+                <PaymentCountdown date={nextDue.date} paid={false} />
+                <div className="text-[10px] text-slate-500 truncate">{nextDue.project}</div>
+              </div>
+            ) : (
+              <div className="text-sm text-slate-400">—</div>
+            )}
+          </div>
+        </div>
+
+        {/* Filters */}
+        <div className="flex gap-2 px-5 py-3 border-b border-slate-200">
+          {([
+            ["all", "الكل"],
+            ["due", "المستحقة"],
+            ["overdue", "المتأخرة"],
+            ["paid", "المدفوعة"],
+          ] as const).map(([k, label]) => (
+            <button
+              key={k}
+              onClick={() => setFilter(k)}
+              className={`px-3 py-1 rounded text-xs font-bold border ${filter === k ? "bg-emerald-600 text-white border-emerald-600" : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50"}`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+
+        {/* Table */}
+        <div className="overflow-auto flex-1">
+          {filtered.length === 0 ? (
+            <div className="py-16 text-center text-slate-400 text-sm">
+              لا توجد أقساط. افتح أي مشروع واستخدم زر "تقسيم العقد إلى أقساط".
+            </div>
+          ) : (
+            <table className="w-full text-sm">
+              <thead className="bg-slate-100 text-slate-600 text-xs sticky top-0">
+                <tr>
+                  <th className="px-3 py-2 text-right font-bold">المشروع</th>
+                  <th className="px-3 py-2 text-right font-bold">الموظف</th>
+                  <th className="px-3 py-2 text-right font-bold">المبلغ</th>
+                  <th className="px-3 py-2 text-right font-bold">تاريخ الاستحقاق</th>
+                  <th className="px-3 py-2 text-right font-bold">العد التنازلي</th>
+                  <th className="px-3 py-2 text-right font-bold">الإيصال</th>
+                  <th className="px-3 py-2 text-right font-bold">الحالة</th>
+                  {isAdmin && <th className="px-3 py-2"></th>}
+                </tr>
+              </thead>
+              <tbody>
+                {filtered.map((p) => (
+                  <tr key={`${p.project}-${p.id}`} className="border-t border-slate-100 hover:bg-slate-50">
+                    <td className="px-3 py-2 font-semibold text-slate-800">{p.project}</td>
+                    <td className="px-3 py-2 text-slate-600 text-xs">{p.assignee || "—"}</td>
+                    <td className="px-3 py-2">
+                      <input
+                        type="number"
+                        value={p.amount}
+                        disabled={!isAdmin}
+                        onChange={(e) =>
+                          onUpdatePayment(p.project, p.id, { amount: e.target.value })
+                        }
+                        className="w-24 h-8 border border-slate-200 rounded px-2 text-sm text-right"
+                      />
+                      <span className="text-[10px] text-slate-500 mr-1">ر.س</span>
+                    </td>
+                    <td className="px-3 py-2">
+                      <input
+                        type="date"
+                        value={p.date}
+                        disabled={!isAdmin}
+                        onChange={(e) =>
+                          onUpdatePayment(p.project, p.id, { date: e.target.value })
+                        }
+                        className="h-8 border border-slate-200 rounded px-2 text-xs"
+                      />
+                    </td>
+                    <td className="px-3 py-2">
+                      <PaymentCountdown date={p.date} paid={p.paid} />
+                    </td>
+                    <td className="px-3 py-2">
+                      <div className="flex items-center gap-1.5">
+                        {p.receiptName ? (
+                          <a
+                            href={p.receiptData}
+                            download={p.receiptName}
+                            className="text-xs text-emerald-700 hover:underline truncate max-w-[120px] flex items-center gap-1"
+                          >
+                            <Receipt className="w-3 h-3" />
+                            {p.receiptName}
+                          </a>
+                        ) : (
+                          <span className="text-[10px] text-slate-400">لا يوجد</span>
+                        )}
+                        {isAdmin && (
+                          <>
+                            <input
+                              type="file"
+                              className="hidden"
+                              id={`receipt-${p.project}-${p.id}`}
+                              accept="image/*,.pdf"
+                              onChange={(e) => {
+                                const f = e.target.files?.[0];
+                                if (f) onUploadReceipt(p.project, p.id, f);
+                              }}
+                            />
+                            <label
+                              htmlFor={`receipt-${p.project}-${p.id}`}
+                              className="cursor-pointer p-1 rounded hover:bg-slate-100 text-slate-500"
+                              title="رفع إيصال"
+                            >
+                              <Upload className="w-3.5 h-3.5" />
+                            </label>
+                          </>
+                        )}
+                      </div>
+                    </td>
+                    <td className="px-3 py-2">
+                      <button
+                        disabled={!isAdmin}
+                        onClick={() => onUpdatePayment(p.project, p.id, { paid: !p.paid })}
+                        className={`text-[10px] font-bold px-2 py-1 rounded ${p.paid ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"} ${isAdmin ? "hover:opacity-80" : ""}`}
+                      >
+                        {p.paid ? "مدفوع" : "غير مدفوع"}
+                      </button>
+                    </td>
+                    {isAdmin && (
+                      <td className="px-3 py-2">
+                        <button
+                          onClick={() => onRemovePayment(p.project, p.id)}
+                          className="p-1 rounded hover:bg-red-50 text-slate-400 hover:text-red-500"
+                          title="حذف القسط"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </td>
+                    )}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
+
+        {isAdmin && (
+          <div className="border-t border-slate-200 p-3 flex items-center gap-2 justify-end bg-slate-50">
+            <span className="text-xs text-slate-500">إضافة قسط يدوي إلى مشروع:</span>
+            <select
+              onChange={(e) => {
+                if (e.target.value) {
+                  onAddPayment(e.target.value);
+                  e.target.value = "";
+                }
+              }}
+              defaultValue=""
+              className="h-9 border border-slate-300 rounded px-2 text-xs"
+            >
+              <option value="">— اختر المشروع —</option>
+              {visibleProjects.map(([p]) => (
+                <option key={p} value={p}>{p}</option>
+              ))}
+            </select>
+          </div>
+        )}
       </div>
     </div>
   );
