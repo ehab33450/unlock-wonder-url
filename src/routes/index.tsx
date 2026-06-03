@@ -2277,6 +2277,10 @@ function Index() {
                   merged.push({ name: folder, children: list });
                 }
               }
+              // User-created empty folders
+              for (const f of customFolders) {
+                if (!merged.some((m) => m.name === f)) merged.push({ name: f, children: [] });
+              }
               // Projects with no folder mapping
               const orphans = Object.keys(projectMeta).filter(
                 (p) => !projectFolders[p],
