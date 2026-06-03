@@ -4972,6 +4972,73 @@ function Index() {
         </div>
       )}
 
+      {financeOpen && (
+        <FinanceModal
+          isAdmin={isAdmin}
+          currentUser={currentUser}
+          projectMeta={projectMeta}
+          onClose={() => setFinanceOpen(false)}
+          onUpdatePayment={(project, paymentId, patch) => {
+            setProjectMeta((m) => {
+              const cur = m[project];
+              if (!cur) return m;
+              return {
+                ...m,
+                [project]: {
+                  ...cur,
+                  contract: {
+                    ...cur.contract,
+                    payments: cur.contract.payments.map((p) =>
+                      p.id === paymentId ? { ...p, ...patch } : p,
+                    ),
+                  },
+                },
+              };
+            });
+          }}
+          onAddPayment={(project) => {
+            setProjectMeta((m) => {
+              const cur = m[project];
+              if (!cur) return m;
+              return {
+                ...m,
+                [project]: {
+                  ...cur,
+                  contract: {
+                    ...cur.contract,
+                    payments: [
+                      ...cur.contract.payments,
+                      {
+                        id: `pay-${Date.now()}`,
+                        amount: "",
+                        date: new Date().toISOString().slice(0, 10),
+                        paid: false,
+                      },
+                    ],
+                  },
+                },
+              };
+            });
+          }}
+          onRemovePayment={(project, paymentId) => {
+            setProjectMeta((m) => {
+              const cur = m[project];
+              if (!cur) return m;
+              return {
+                ...m,
+                [project]: {
+                  ...cur,
+                  contract: {
+                    ...cur.contract,
+                    payments: cur.contract.payments.filter((p) => p.id !== paymentId),
+                  },
+                },
+              };
+            });
+          }}
+        />
+      )}
+
       {widgetsOpen && (
         <div className="fixed inset-0 z-[60] bg-black/40 flex items-center justify-center p-4" onClick={() => setWidgetsOpen(false)}>
           <div className="bg-white rounded-xl w-full max-w-5xl max-h-[85vh] overflow-hidden flex flex-col" onClick={(e) => e.stopPropagation()} dir="rtl">
