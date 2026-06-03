@@ -72,29 +72,29 @@ export const Route = createFileRoute("/")({
 });
 
 const sidebarItems = [
-  { icon: Calendar, label: "التقويم", color: "#0ea5e9" },
-  { icon: FileText, label: "الملفات", color: "#8b5cf6" },
-  { icon: Pin, label: "قائمة المذكرات", color: "#f59e0b" },
-  { icon: MessageSquare, label: "المحادثة", color: "#10b981" },
-  { icon: Video, label: "الاجتماعات", color: "#ef4444" },
-  { icon: Wallet, label: "المالية", color: "#16a34a" },
-  { icon: User, label: "مستخدم", color: "#6366f1" },
-  { icon: HelpCircle, label: "الإرشادات", color: "#14b8a6" },
-  { icon: CheckSquare, label: "الحجز", color: "#ec4899" },
-  { icon: MoreHorizontal, label: "المزيد", color: "#64748b" },
+  { icon: Calendar, label: "التقويم", en: "Calendar", color: "#0ea5e9" },
+  { icon: FileText, label: "الملفات", en: "Files", color: "#8b5cf6" },
+  { icon: Pin, label: "قائمة المذكرات", en: "Notes", color: "#f59e0b" },
+  { icon: MessageSquare, label: "المحادثة", en: "Chat", color: "#10b981" },
+  { icon: Video, label: "الاجتماعات", en: "Meetings", color: "#ef4444" },
+  { icon: Wallet, label: "المالية", en: "Finance", color: "#16a34a" },
+  { icon: User, label: "مستخدم", en: "Users", color: "#6366f1" },
+  { icon: HelpCircle, label: "الإرشادات", en: "Guides", color: "#14b8a6" },
+  { icon: CheckSquare, label: "الحجز", en: "Booking", color: "#ec4899" },
+  { icon: MoreHorizontal, label: "المزيد", en: "More", color: "#64748b" },
 ];
 
 const topTabs = [
-  { icon: Home, label: "لوحة التحكم", active: true },
-  { icon: FileCheck, label: "جديد المهام", badge: 16 },
-  { icon: FileText, label: "المقالات" },
-  { icon: Star, label: "المفضلة" },
-  { icon: ClipboardList, label: "المهام الجديدة" },
-  { icon: ClipboardList, label: "المهام المعلقة" },
-  { icon: ClipboardList, label: "المهام المنتهية" },
-  { icon: Clock, label: "المؤقتات النشطة" },
-  { icon: Activity, label: "النشاط" },
-  { icon: MapPin, label: "تقرير التتبع" },
+  { icon: Home, label: "لوحة التحكم", en: "Dashboard", active: true },
+  { icon: FileCheck, label: "جديد المهام", en: "New Tasks", badge: 16 },
+  { icon: FileText, label: "المقالات", en: "Articles" },
+  { icon: Star, label: "المفضلة", en: "Favorites" },
+  { icon: ClipboardList, label: "المهام الجديدة", en: "New" },
+  { icon: ClipboardList, label: "المهام المعلقة", en: "Pending" },
+  { icon: ClipboardList, label: "المهام المنتهية", en: "Completed" },
+  { icon: Clock, label: "المؤقتات النشطة", en: "Active Timers" },
+  { icon: Activity, label: "النشاط", en: "Activity" },
+  { icon: MapPin, label: "تقرير التتبع", en: "Tracking" },
 ];
 
 type Project = { name: string; children: string[] };
@@ -118,6 +118,9 @@ const employeeTasks: Record<string, string[]> = {
 };
 
 function Index() {
+  const [lang, setLang] = useState<"ar" | "en">("ar");
+  const isEn = lang === "en";
+  const t = (ar: string, en: string) => (isEn ? en : ar);
   const [openProjects, setOpenProjects] = useState<Record<string, boolean>>({
     "المدير التنفيذي": true,
     "عملاء أ.أروى الجعدي": true,
@@ -1413,7 +1416,7 @@ function Index() {
   );
 
   return (
-    <div dir="rtl" className="min-h-screen bg-slate-50 text-slate-800 font-[Cairo]">
+    <div dir={isEn ? "ltr" : "rtl"} className="min-h-screen bg-slate-50 text-slate-800 font-[Cairo]">
       {/* Top header */}
       <header className="h-14 bg-white border-b border-slate-200 flex items-center justify-between px-4">
         {/* Right: logo */}
@@ -1539,14 +1542,19 @@ function Index() {
               </div>
             )}
           </div>
-          <button aria-label="تغيير اللغة" className="flex items-center gap-1 px-2 py-1 rounded hover:bg-slate-100 text-slate-600 text-sm">
+          <button
+            onClick={() => setLang((l) => (l === "ar" ? "en" : "ar"))}
+            aria-label={t("تغيير اللغة", "Change language")}
+            title={t("تغيير اللغة", "Change language")}
+            className="flex items-center gap-1 px-2 py-1 rounded hover:bg-slate-100 text-slate-600 text-sm font-bold"
+          >
             <Globe className="w-4 h-4" />
-            <span>AR</span>
+            <span>{isEn ? "EN" : "AR"}</span>
           </button>
           <div className="flex items-center gap-2 pr-2 border-r border-slate-200">
             <div className="text-right leading-tight">
-              <div className="text-sm font-semibold text-slate-800">ايهاب فاتح</div>
-              <div className="text-xs text-slate-500">مطور</div>
+              <div className="text-sm font-semibold text-slate-800">{t("ايهاب فاتح", "Ehab Fateh")}</div>
+              <div className="text-xs text-slate-500">{t("مطور", "Developer")}</div>
             </div>
             <div className="w-10 h-10 rounded-full bg-[color:var(--eyenak-teal)] text-white flex items-center justify-center font-bold ring-2 ring-white shadow">
               EA
@@ -1601,7 +1609,7 @@ function Index() {
                 >
                   <Icon className="w-5 h-5" />
                 </span>
-                <span className="text-[10px] font-semibold">{item.label}</span>
+                <span className="text-[10px] font-semibold">{isEn ? item.en : item.label}</span>
               </button>
             );
           })}
