@@ -855,11 +855,11 @@ function Index() {
 
   // Live stats derived from real tasks across all projects (filtered by role)
   const visibleTasks = useMemo(() => {
-    const list: { status: string; endDate: string; project: string }[] = [];
+    const list: (TaskRow & { project: string; assignee: string })[] = [];
     for (const [proj, meta] of Object.entries(projectMeta)) {
       if (!isAdmin && meta.contract.assignee !== currentUser) continue;
       for (const t of meta.tasks) {
-        list.push({ status: t.status, endDate: t.endDate, project: proj });
+        list.push({ ...t, project: proj, assignee: meta.contract.assignee });
       }
     }
     return list;
@@ -877,6 +877,45 @@ function Index() {
   const segGreen = (completed / total) * c;
   const segOrange = (inProgress / total) * c;
   const segPink = (pending / total) * c;
+
+  // Dashboard tabs
+  type DashTab =
+    | "لوحة التحكم"
+    | "جديد المهام"
+    | "المقالات"
+    | "المفضلة"
+    | "المهام الجديدة"
+    | "المهام المعلقة"
+    | "المهام المنتهية"
+    | "المؤقتات النشطة"
+    | "النشاط"
+    | "تقرير التتبع";
+  const [activeTab, setActiveTab] = useState<DashTab>("لوحة التحكم");
+  const [favorites, setFavorites] = useState<Record<string, true>>({});
+  const toggleFav = (id: string) =>
+    setFavorites((f) => {
+      const n = { ...f };
+      if (n[id]) delete n[id];
+      else n[id] = true;
+      return n;
+    });
+  const tabFilteredTasks = useMemo(() => {
+    switch (activeTab) {
+      case "جديد المهام":
+      case "المهام الجديدة":
+        return visibleTasks.filter((t) => t.status === "جديد");
+      case "المهام المعلقة":
+        return visibleTasks.filter((t) => t.status === "معلق");
+      case "المهام المنتهية":
+        return visibleTasks.filter((t) => t.status === "تم");
+      case "المؤقتات النشطة":
+        return visibleTasks.filter((t) => t.status === "جاري العمل");
+      case "المفضلة":
+        return visibleTasks.filter((t) => favorites[t.id]);
+      default:
+        return visibleTasks;
+    }
+  }, [activeTab, visibleTasks, favorites]);
 
   return (
     <div dir="rtl" className="min-h-screen bg-slate-50 text-slate-800 font-[Cairo]">
@@ -1039,23 +1078,25 @@ function Index() {
           {/* Tabs row */}
           <div className="flex items-center justify-end gap-2 flex-wrap mb-4">
             {[
-              { icon: Home, label: "لوحة التحكم", active: true },
-              { icon: FileCheck, label: "جديد المهام", badge: newCount },
-              { icon: FileText, label: "المقالات" },
-              { icon: Star, label: "المفضلة" },
-              { icon: ClipboardList, label: "المهام الجديدة", badge: newCount },
-              { icon: ClipboardList, label: "المهام المعلقة", badge: pending },
-              { icon: ClipboardList, label: "المهام المنتهية", badge: completed },
-              { icon: Clock, label: "المؤقتات النشطة", badge: inProgress },
-              { icon: Activity, label: "النشاط" },
-              { icon: MapPin, label: "تقرير التتبع" },
+              { icon: Home, label: "لوحة التحكم" as DashTab },
+              { icon: FileCheck, label: "جديد المهام" as DashTab, badge: newCount },
+              { icon: FileText, label: "المقالات" as DashTab },
+              { icon: Star, label: "المفضلة" as DashTab, badge: Object.keys(favorites).length },
+              { icon: ClipboardList, label: "المهام الجديدة" as DashTab, badge: newCount },
+              { icon: ClipboardList, label: "المهام المعلقة" as DashTab, badge: pending },
+              { icon: ClipboardList, label: "المهام المنتهية" as DashTab, badge: completed },
+              { icon: Clock, label: "المؤقتات النشطة" as DashTab, badge: inProgress },
+              { icon: Activity, label: "النشاط" as DashTab },
+              { icon: MapPin, label: "تقرير التتبع" as DashTab },
             ].map((t) => {
               const Icon = t.icon;
+              const active = activeTab === t.label;
               return (
                 <button
                   key={t.label}
+                  onClick={() => setActiveTab(t.label)}
                   className={`relative flex items-center gap-2 px-3 py-2 rounded-md text-sm border transition ${
-                    t.active
+                    active
                       ? "bg-[color:var(--eyenak-dark)] text-white border-transparent"
                       : "bg-white text-slate-600 border-slate-200 hover:border-slate-300"
                   }`}
@@ -1073,6 +1114,7 @@ function Index() {
           </div>
 
           {/* Card */}
+          {activeTab === "لوحة التحكم" && (
           <section className="bg-white rounded-lg border border-slate-200 shadow-sm p-5">
             {/* Card header */}
             <div className="flex items-center justify-between mb-4">
@@ -1164,6 +1206,113 @@ function Index() {
               <Stat color="var(--eyenak-pink)" value={pending} label="معلقة" />
             </div>
           </section>
+          )}
+
+          {activeTab !== "لوحة التحكم" && (
+            <section className="bg-white rounded-lg border border-slate-200 shadow-sm p-5">
+              <div className="flex items-center justify-between mb-4">
+                <span className="text-xs text-slate-500">
+                  {activeTab === "النشاط"
+                    ? "آخر التحديثات على المهام"
+                    : activeTab === "تقرير التتبع"
+                    ? "ملخص التتبع حسب المشروع"
+                    : activeTab === "المقالات"
+                    ? "مقالات ومراجع داخلية"
+                    : `${tabFilteredTasks.length} عنصر`}
+                </span>
+                <h2 className="font-bold text-slate-700">{activeTab}</h2>
+              </div>
+
+              {activeTab === "المقالات" ? (
+                <div className="space-y-3">
+                  {[
+                    { t: "دليل إدارة المهام في EYENAK", d: "كيف تنظم فريقك وتوزع المهام بكفاءة." },
+                    { t: "أفضل ممارسات متابعة العقود", d: "نصائح لمتابعة الدفعات والمواعيد." },
+                    { t: "استخدام التقويم والاجتماعات", d: "جدولة الأحداث ودعوة الأعضاء." },
+                    { t: "صلاحيات الأدمن والموظف", d: "فهم نظام الأدوار والمحادثات." },
+                  ].map((a, i) => (
+                    <div key={i} className="p-3 border border-slate-200 rounded-md hover:bg-slate-50">
+                      <div className="font-semibold text-slate-800">{a.t}</div>
+                      <div className="text-sm text-slate-500 mt-1">{a.d}</div>
+                    </div>
+                  ))}
+                </div>
+              ) : activeTab === "النشاط" ? (
+                <ul className="divide-y divide-slate-100">
+                  {visibleTasks.slice(0, 10).map((t, i) => (
+                    <li key={i} className="py-2.5 flex items-center justify-between">
+                      <span className="text-xs text-slate-500">{t.endDate || "—"}</span>
+                      <div className="text-sm text-slate-700">
+                        <span className="font-medium">{t.assignee || "—"}</span>
+                        <span className="text-slate-400 mx-2">·</span>
+                        <span>{t.name}</span>
+                        <span className="text-slate-400 mx-2">·</span>
+                        <span className="text-slate-500">{t.project}</span>
+                      </div>
+                    </li>
+                  ))}
+                  {visibleTasks.length === 0 && (
+                    <li className="py-6 text-center text-slate-400 text-sm">لا يوجد نشاط بعد</li>
+                  )}
+                </ul>
+              ) : activeTab === "تقرير التتبع" ? (
+                <div className="space-y-2">
+                  {Object.entries(projectMeta).map(([proj, meta]) => {
+                    const ts = meta.tasks;
+                    const done = ts.filter((t) => t.status === "تم").length;
+                    const pct = ts.length ? Math.round((done / ts.length) * 100) : 0;
+                    return (
+                      <div key={proj} className="p-3 border border-slate-200 rounded-md">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-xs text-slate-500">{done}/{ts.length} مكتملة · {meta.contract.assignee}</span>
+                          <span className="font-semibold text-slate-800">{proj}</span>
+                        </div>
+                        <div className="h-2 rounded bg-slate-100 overflow-hidden">
+                          <div className="h-full bg-[color:var(--eyenak-teal)]" style={{ width: `${pct}%` }} />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="text-slate-500 border-b border-slate-200">
+                        <th className="text-right py-2 px-2 font-medium">المفضلة</th>
+                        <th className="text-right py-2 px-2 font-medium">الحالة</th>
+                        <th className="text-right py-2 px-2 font-medium">المنفذ</th>
+                        <th className="text-right py-2 px-2 font-medium">تاريخ الانتهاء</th>
+                        <th className="text-right py-2 px-2 font-medium">المشروع</th>
+                        <th className="text-right py-2 px-2 font-medium">المهمة</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {tabFilteredTasks.map((t) => (
+                        <tr key={`${t.project}-${t.id}`} className="border-b border-slate-100 hover:bg-slate-50">
+                          <td className="py-2 px-2">
+                            <button onClick={() => toggleFav(t.id)}>
+                              <Star className={`w-4 h-4 ${favorites[t.id] ? "fill-yellow-400 text-yellow-400" : "text-slate-300"}`} />
+                            </button>
+                          </td>
+                          <td className="py-2 px-2">{t.status}</td>
+                          <td className="py-2 px-2">{t.assignee || "—"}</td>
+                          <td className="py-2 px-2">{t.endDate || "—"}</td>
+                          <td className="py-2 px-2 text-slate-600">{t.project}</td>
+                          <td className="py-2 px-2 font-medium text-slate-800">{t.name}</td>
+                        </tr>
+                      ))}
+                      {tabFilteredTasks.length === 0 && (
+                        <tr>
+                          <td colSpan={6} className="py-6 text-center text-slate-400">لا توجد عناصر</td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </section>
+          )}
         </main>
 
         {/* Right projects panel */}
