@@ -5056,6 +5056,17 @@ function Index() {
         />
       )}
 
+      {guidesOpen && (
+        <GuidesModal
+          isAdmin={isAdmin}
+          active={activeGuide}
+          setActive={setActiveGuide}
+          videos={guideVideos}
+          setVideo={(id, url) => setGuideVideos((v) => ({ ...v, [id]: url }))}
+          onClose={() => setGuidesOpen(false)}
+        />
+      )}
+
       {widgetsOpen && (
         <div className="fixed inset-0 z-[60] bg-black/40 flex items-center justify-center p-4" onClick={() => setWidgetsOpen(false)}>
           <div className="bg-white rounded-xl w-full max-w-5xl max-h-[85vh] overflow-hidden flex flex-col" onClick={(e) => e.stopPropagation()} dir="rtl">
