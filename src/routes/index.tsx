@@ -2354,28 +2354,51 @@ function Index() {
 
                       <button
                         onClick={() => {
-                          if (!newEmp.name.trim() || !newEmp.username.trim() || !newEmp.password.trim()) return;
-                          if (employees.some((e) => e.username === newEmp.username.trim())) return;
-                          setEmployees((arr) => [
-                            ...arr,
-                            {
-                              id: `u${Date.now()}`,
-                              name: newEmp.name.trim(),
-                              email: newEmp.email.trim(),
-                              username: newEmp.username.trim(),
-                              password: newEmp.password.trim(),
-                              role: newEmp.role.trim() || "موظف",
-                              active: true,
-                              perms: { ...newEmpPerms },
-                            },
-                          ]);
+                          const name = newEmp.name.trim();
+                          let username = newEmp.username.trim();
+                          let password = newEmp.password.trim();
+                          if (!name) {
+                            setAddEmpMsg({ type: "err", text: "الاسم الكامل مطلوب" });
+                            return;
+                          }
+                          // توليد تلقائي إذا تُرك فارغاً
+                          if (!username) username = "u" + Math.random().toString(36).slice(2, 7);
+                          if (!password) password = Math.random().toString(36).slice(2, 8);
+                          if (employees.some((e) => e.username === username)) {
+                            setAddEmpMsg({ type: "err", text: "اسم المستخدم موجود مسبقاً، اختر اسماً آخر" });
+                            return;
+                          }
+                          const created: Employee = {
+                            id: `u${Date.now()}`,
+                            name,
+                            email: newEmp.email.trim(),
+                            username,
+                            password,
+                            role: newEmp.role.trim() || "موظف",
+                            active: true,
+                            perms: { ...newEmpPerms },
+                          };
+                          setEmployees((arr) => [...arr, created]);
                           setNewEmp({ name: "", email: "", username: "", password: "", role: "موظف" });
                           setNewEmpPerms(defaultEmpPerms());
+                          setAddEmpMsg({ type: "ok", text: `تم إنشاء حساب ${name} — افتح رابط الدخول لمشاركته` });
+                          setLinkEmp(created);
                         }}
                         className="mt-4 w-full h-10 rounded bg-[color:var(--eyenak-teal)] text-white text-sm hover:opacity-90"
                       >
                         + إضافة الموظف وتفعيل حسابه
                       </button>
+                      {addEmpMsg && (
+                        <div
+                          className={`mt-2 text-xs text-right px-3 py-2 rounded ${
+                            addEmpMsg.type === "ok"
+                              ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                              : "bg-red-50 text-red-700 border border-red-200"
+                          }`}
+                        >
+                          {addEmpMsg.text}
+                        </div>
+                      )}
                     </div>
                   )}
 
