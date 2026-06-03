@@ -62,15 +62,15 @@ export const Route = createFileRoute("/")({
 });
 
 const sidebarItems = [
-  { icon: Calendar, label: "التقويم" },
-  { icon: FileText, label: "الملفات" },
-  { icon: Pin, label: "قائمة المذكرات" },
-  { icon: MessageSquare, label: "المحادثة" },
-  { icon: Video, label: "الاجتماعات" },
-  { icon: User, label: "مستخدم" },
-  { icon: HelpCircle, label: "الإرشادات" },
-  { icon: CheckSquare, label: "الحجز" },
-  { icon: MoreHorizontal, label: "المزيد" },
+  { icon: Calendar, label: "التقويم", color: "#0ea5e9" },
+  { icon: FileText, label: "الملفات", color: "#8b5cf6" },
+  { icon: Pin, label: "قائمة المذكرات", color: "#f59e0b" },
+  { icon: MessageSquare, label: "المحادثة", color: "#10b981" },
+  { icon: Video, label: "الاجتماعات", color: "#ef4444" },
+  { icon: User, label: "مستخدم", color: "#6366f1" },
+  { icon: HelpCircle, label: "الإرشادات", color: "#14b8a6" },
+  { icon: CheckSquare, label: "الحجز", color: "#ec4899" },
+  { icon: MoreHorizontal, label: "المزيد", color: "#64748b" },
 ];
 
 const topTabs = [
