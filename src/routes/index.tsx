@@ -1553,8 +1553,8 @@ function Index() {
           </button>
           <div className="flex items-center gap-2 pr-2 border-r border-slate-200">
             <div className="text-right leading-tight">
-              <div className="text-sm font-semibold text-slate-800">ايهاب فاتح</div>
-              <div className="text-xs text-slate-500">مطور</div>
+              <div className="text-sm font-semibold text-slate-800">{t("ايهاب فاتح", "Ehab Fateh")}</div>
+              <div className="text-xs text-slate-500">{t("مطور", "Developer")}</div>
             </div>
             <div className="w-10 h-10 rounded-full bg-[color:var(--eyenak-teal)] text-white flex items-center justify-center font-bold ring-2 ring-white shadow">
               EA
