@@ -3040,11 +3040,21 @@ function Index() {
                       <option value="employee">موظف</option>
                       <option value="client">عميل</option>
                     </select>
+                    {isAdmin && (
+                      <button
+                        onClick={() => setMembersModalOpen(true)}
+                        className="ml-2 inline-flex items-center gap-1 border border-slate-200 rounded px-2 py-1 text-xs bg-white hover:bg-slate-50"
+                        title="إدارة أعضاء المجموعة"
+                      >
+                        <Users className="w-3 h-3 text-[color:var(--eyenak-teal)]" />
+                        <span>الأعضاء ({(chatMembers[chatProject] ?? []).length})</span>
+                      </button>
+                    )}
                   </div>
                   <div className="text-right">
                     <div className="text-sm font-bold text-slate-800">{chatProject}</div>
-                    <div className="text-[11px] text-slate-500">
-                      الموظف: {projectMeta[chatProject]?.contract.assignee || "—"} · العميل: {projectMeta[chatProject]?.contract.responsibleName || "—"}
+                    <div className="text-[11px] text-slate-500 truncate max-w-[420px]">
+                      المجموعة: {(chatMembers[chatProject] ?? []).join(" · ") || "—"}
                     </div>
                   </div>
                 </div>
