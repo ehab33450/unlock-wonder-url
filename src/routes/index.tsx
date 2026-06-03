@@ -5109,7 +5109,14 @@ function Stat({ color, value, label }: { color: string; value: number; label: st
   );
 }
 
-type DPayment = { id: string; amount: string; date: string; paid: boolean };
+type DPayment = {
+  id: string;
+  amount: string;
+  date: string;
+  paid: boolean;
+  receiptName?: string;
+  receiptData?: string;
+};
 type DContract = {
   startDate: string;
   endDate: string;
@@ -5132,6 +5139,7 @@ type DTask = {
   doneDate: string;
   status: DStatus;
   priority: DPriority;
+  progress: number;
   attachmentName?: string;
   attachmentData?: string;
 };
