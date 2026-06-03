@@ -77,6 +77,7 @@ const sidebarItems = [
   { icon: Pin, label: "قائمة المذكرات", color: "#f59e0b" },
   { icon: MessageSquare, label: "المحادثة", color: "#10b981" },
   { icon: Video, label: "الاجتماعات", color: "#ef4444" },
+  { icon: Wallet, label: "المالية", color: "#16a34a" },
   { icon: User, label: "مستخدم", color: "#6366f1" },
   { icon: HelpCircle, label: "الإرشادات", color: "#14b8a6" },
   { icon: CheckSquare, label: "الحجز", color: "#ec4899" },
