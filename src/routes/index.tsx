@@ -3301,6 +3301,210 @@ function Index() {
         </div>
       )}
 
+      {/* Sticky Notes / Reminders overlay */}
+      {notesViewOpen && (
+        <div
+          dir="rtl"
+          className="fixed top-14 left-0 right-20 bottom-0 z-40 overflow-hidden shadow-2xl rounded-tl-2xl"
+          style={{
+            background:
+              "radial-gradient(circle at 20% 10%, #fef3c7 0%, transparent 40%), radial-gradient(circle at 80% 90%, #fce7f3 0%, transparent 40%), linear-gradient(135deg, #fffbeb, #fef9c3)",
+          }}
+        >
+          {/* Header */}
+          <div className="flex items-center justify-between px-6 py-3 bg-white/70 backdrop-blur border-b border-amber-200">
+            <div className="flex items-center gap-3">
+              <span className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 text-white flex items-center justify-center shadow-md">
+                <StickyNote className="w-5 h-5" />
+              </span>
+              <div>
+                <h2 className="text-lg font-bold text-slate-800">قائمة المذكرات</h2>
+                <p className="text-xs text-slate-500">ملاحظات سريعة ومنبهات للموظف أو الأدمن أو أي شخص</p>
+              </div>
+            </div>
+            <button
+              onClick={() => setNotesViewOpen(false)}
+              className="p-2 rounded-lg hover:bg-white/80 text-slate-500"
+              aria-label="إغلاق"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+
+          <div className="flex h-[calc(100%-65px)]">
+            {/* Compose panel */}
+            <aside className="w-80 bg-white/60 backdrop-blur border-l border-amber-200 p-4 overflow-y-auto">
+              <h3 className="text-sm font-bold text-slate-700 mb-3 flex items-center gap-2">
+                <Plus className="w-4 h-4 text-amber-600" /> إضافة مذكرة جديدة
+              </h3>
+              <textarea
+                value={noteText}
+                onChange={(e) => setNoteText(e.target.value)}
+                placeholder="اكتب مذكرة أو تذكير..."
+                rows={4}
+                className="w-full p-3 rounded-lg border border-amber-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-amber-300 resize-none"
+              />
+              <div className="mt-3">
+                <label className="text-xs font-semibold text-slate-600 mb-1 block">اللون</label>
+                <div className="flex gap-2">
+                  {["#fde68a", "#bae6fd", "#bbf7d0", "#fbcfe8", "#ddd6fe", "#fecaca"].map((c) => (
+                    <button
+                      key={c}
+                      onClick={() => setNoteColor(c)}
+                      className={`w-7 h-7 rounded-full border-2 transition ${
+                        noteColor === c ? "border-slate-800 scale-110" : "border-white"
+                      } shadow`}
+                      style={{ backgroundColor: c }}
+                      aria-label={c}
+                    />
+                  ))}
+                </div>
+              </div>
+              <div className="mt-3">
+                <label className="text-xs font-semibold text-slate-600 mb-1 block">للموجَّه إلى</label>
+                <select
+                  value={noteTarget}
+                  onChange={(e) => setNoteTarget(e.target.value)}
+                  className="w-full h-9 px-2 rounded-lg border border-amber-200 bg-white text-sm"
+                >
+                  <option>الجميع</option>
+                  <option>الأدمن</option>
+                  {employees.map((emp) => (
+                    <option key={emp.name} value={emp.name}>{emp.name}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="mt-3">
+                <label className="text-xs font-semibold text-slate-600 mb-1 flex items-center gap-1">
+                  <AlarmClock className="w-3.5 h-3.5 text-amber-600" /> منبه (اختياري)
+                </label>
+                <input
+                  type="datetime-local"
+                  value={noteReminder}
+                  onChange={(e) => setNoteReminder(e.target.value)}
+                  className="w-full h-9 px-2 rounded-lg border border-amber-200 bg-white text-sm"
+                />
+              </div>
+              <button
+                onClick={() => {
+                  if (!noteText.trim()) return;
+                  setNotes((prev) => [
+                    {
+                      id: `n_${Date.now()}`,
+                      text: noteText.trim(),
+                      color: noteColor,
+                      author: currentUser,
+                      target: noteTarget,
+                      reminder: noteReminder ? new Date(noteReminder).toISOString() : null,
+                      createdAt: Date.now(),
+                    },
+                    ...prev,
+                  ]);
+                  setNoteText("");
+                  setNoteReminder("");
+                }}
+                disabled={!noteText.trim()}
+                className="mt-4 w-full h-10 rounded-lg bg-gradient-to-r from-amber-500 to-orange-500 text-white text-sm font-bold shadow-md hover:shadow-lg transition disabled:opacity-40 flex items-center justify-center gap-2"
+              >
+                <Pin className="w-4 h-4" /> تعليق المذكرة
+              </button>
+            </aside>
+
+            {/* Notes board */}
+            <div className="flex-1 p-6 overflow-y-auto">
+              {notes.length === 0 ? (
+                <div className="h-full flex flex-col items-center justify-center text-slate-400">
+                  <StickyNote className="w-16 h-16 mb-3 opacity-40" />
+                  <p className="text-sm">لا توجد مذكرات بعد — أضف أول مذكرة من اليمين</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-5">
+                  {notes.map((n, i) => {
+                    const rotations = ["-rotate-2", "rotate-1", "-rotate-1", "rotate-2"];
+                    const rot = rotations[i % rotations.length];
+                    const hasReminder = !!n.reminder;
+                    const reminderDate = hasReminder ? new Date(n.reminder!) : null;
+                    const isPast = reminderDate ? reminderDate.getTime() <= Date.now() : false;
+                    return (
+                      <div
+                        key={n.id}
+                        className={`relative ${rot} hover:rotate-0 hover:scale-105 transition-transform duration-200 rounded-md shadow-lg p-4 pt-7 min-h-[180px] flex flex-col`}
+                        style={{
+                          backgroundColor: n.color,
+                          boxShadow: "0 10px 20px -8px rgba(0,0,0,0.25), 0 4px 6px -2px rgba(0,0,0,0.1)",
+                        }}
+                      >
+                        {/* Pin */}
+                        <div className="absolute -top-2 left-1/2 -translate-x-1/2 w-6 h-6 rounded-full bg-red-500 ring-2 ring-red-700 shadow-md flex items-center justify-center">
+                          <div className="w-1.5 h-1.5 rounded-full bg-red-200" />
+                        </div>
+                        {/* Delete */}
+                        <button
+                          onClick={() => setNotes((p) => p.filter((x) => x.id !== n.id))}
+                          className="absolute top-1.5 right-1.5 p-1 rounded text-slate-600/60 hover:text-red-600 hover:bg-white/40"
+                          aria-label="حذف"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                        <p className="text-sm text-slate-800 leading-relaxed flex-1 whitespace-pre-wrap font-medium">
+                          {n.text}
+                        </p>
+                        <div className="mt-3 pt-2 border-t border-black/10 text-[10px] text-slate-700 space-y-1">
+                          <div className="flex items-center justify-between">
+                            <span className="font-bold">↪ {n.target}</span>
+                            <span className="opacity-70">{n.author}</span>
+                          </div>
+                          {hasReminder && (
+                            <div
+                              className={`flex items-center gap-1 font-semibold ${
+                                isPast ? "text-red-700" : "text-slate-700"
+                              }`}
+                            >
+                              {isPast ? <BellRing className="w-3 h-3 animate-pulse" /> : <AlarmClock className="w-3 h-3" />}
+                              <span>
+                                {reminderDate!.toLocaleString("ar", {
+                                  dateStyle: "short",
+                                  timeStyle: "short",
+                                })}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Reminder fired notification */}
+      {firedReminder && (
+        <div
+          dir="rtl"
+          className="fixed top-20 left-1/2 -translate-x-1/2 z-[80] bg-white rounded-xl shadow-2xl border border-amber-300 p-4 w-96 flex items-start gap-3 animate-in"
+          style={{ animation: "fadeIn 0.3s ease-out" }}
+        >
+          <span className="w-10 h-10 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 text-white flex items-center justify-center shrink-0">
+            <BellRing className="w-5 h-5 animate-pulse" />
+          </span>
+          <div className="flex-1">
+            <div className="text-sm font-bold text-slate-800 mb-1">حان وقت التذكير!</div>
+            <p className="text-xs text-slate-600 line-clamp-3">{firedReminder.text}</p>
+            <div className="text-[10px] text-slate-500 mt-1">↪ {firedReminder.target}</div>
+          </div>
+          <button
+            onClick={() => setFiredReminder(null)}
+            className="p-1 rounded text-slate-400 hover:text-slate-700"
+            aria-label="إغلاق"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      )}
+
     </div>
   );
 }
