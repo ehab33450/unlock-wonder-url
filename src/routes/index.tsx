@@ -1542,9 +1542,14 @@ function Index() {
               </div>
             )}
           </div>
-          <button aria-label="تغيير اللغة" className="flex items-center gap-1 px-2 py-1 rounded hover:bg-slate-100 text-slate-600 text-sm">
+          <button
+            onClick={() => setLang((l) => (l === "ar" ? "en" : "ar"))}
+            aria-label={t("تغيير اللغة", "Change language")}
+            title={t("تغيير اللغة", "Change language")}
+            className="flex items-center gap-1 px-2 py-1 rounded hover:bg-slate-100 text-slate-600 text-sm font-bold"
+          >
             <Globe className="w-4 h-4" />
-            <span>AR</span>
+            <span>{isEn ? "EN" : "AR"}</span>
           </button>
           <div className="flex items-center gap-2 pr-2 border-r border-slate-200">
             <div className="text-right leading-tight">
