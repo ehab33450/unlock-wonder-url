@@ -580,6 +580,61 @@ function Index() {
   };
   const [calendarOpen, setCalendarOpen] = useState(false);
   const [bookingOpen, setBookingOpen] = useState(false);
+  // Sticky notes / reminders
+  type StickyNoteItem = {
+    id: string;
+    text: string;
+    color: string;
+    author: string;
+    target: string;
+    reminder: string | null;
+    createdAt: number;
+    triggered?: boolean;
+  };
+  const [notesViewOpen, setNotesViewOpen] = useState(false);
+  const [notes, setNotes] = useState<StickyNoteItem[]>([
+    {
+      id: "n1",
+      text: "مراجعة عقد العميل قبل اجتماع الغد",
+      color: "#fde68a",
+      author: "الأدمن",
+      target: "ايهاب فاتح",
+      reminder: null,
+      createdAt: Date.now(),
+    },
+    {
+      id: "n2",
+      text: "تذكير: تسليم تقرير المهام الأسبوعي",
+      color: "#bae6fd",
+      author: "الأدمن",
+      target: "الجميع",
+      reminder: null,
+      createdAt: Date.now(),
+    },
+  ]);
+  const [noteText, setNoteText] = useState("");
+  const [noteColor, setNoteColor] = useState("#fde68a");
+  const [noteTarget, setNoteTarget] = useState("الجميع");
+  const [noteReminder, setNoteReminder] = useState("");
+  const [firedReminder, setFiredReminder] = useState<StickyNoteItem | null>(null);
+  useEffect(() => {
+    const t = setInterval(() => {
+      const now = Date.now();
+      setNotes((prev) => {
+        let changed = false;
+        const next = prev.map((n) => {
+          if (n.reminder && !n.triggered && new Date(n.reminder).getTime() <= now) {
+            changed = true;
+            setFiredReminder(n);
+            return { ...n, triggered: true };
+          }
+          return n;
+        });
+        return changed ? next : prev;
+      });
+    }, 15000);
+    return () => clearInterval(t);
+  }, []);
   const [bookingTab, setBookingTab] = useState<"services" | "all" | "today" | "pending" | "book">("all");
   const [calView, setCalView] = useState<"month" | "week" | "day" | "list">("month");
   const [calCursor, setCalCursor] = useState(() => new Date());
