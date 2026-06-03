@@ -5882,6 +5882,8 @@ function GuidesModal({
   setActive,
   videos,
   setVideo,
+  images,
+  setImage,
   onClose,
 }: {
   isAdmin: boolean;
@@ -5889,6 +5891,8 @@ function GuidesModal({
   setActive: (id: string) => void;
   videos: Record<string, string>;
   setVideo: (id: string, url: string) => void;
+  images: Record<string, string>;
+  setImage: (id: string, url: string) => void;
   onClose: () => void;
 }) {
   const topic = GUIDE_TOPICS.find((t) => t.id === active) ?? GUIDE_TOPICS[0];
@@ -5896,6 +5900,10 @@ function GuidesModal({
   const videoUrl = videos[topic.id] || "";
   const [draftUrl, setDraftUrl] = useState(videoUrl);
   useEffect(() => setDraftUrl(videoUrl), [videoUrl, topic.id]);
+  const customImage = images[topic.id] || "";
+  const [draftImg, setDraftImg] = useState(customImage);
+  useEffect(() => setDraftImg(customImage), [customImage, topic.id]);
+  const displayImage = customImage || topic.image;
 
   const embed = (url: string) => {
     if (!url) return null;
