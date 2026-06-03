@@ -1257,6 +1257,10 @@ function Index() {
   }, [activeTab, visibleTasks, favorites]);
 
   return (
+    // placeholder marker — will be removed by following edits
+    /* eslint-disable-next-line */
+    null as any
+  );
     <div dir="rtl" className="min-h-screen bg-slate-50 text-slate-800 font-[Cairo]">
       {/* Top header */}
       <header className="h-14 bg-white border-b border-slate-200 flex items-center justify-between px-4">
