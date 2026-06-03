@@ -5625,6 +5625,92 @@ function ProjectDetailOverlay({
   );
 }
 
+function SplitContractButton({
+  value,
+  startDate,
+  endDate,
+  onSplit,
+}: {
+  value: string;
+  startDate: string;
+  endDate: string;
+  onSplit: (payments: DPayment[]) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [count, setCount] = useState<number>(4);
+  const total = Number(value || 0);
+  const apply = () => {
+    const n = Math.max(1, Math.min(24, Math.floor(count) || 1));
+    const per = total > 0 ? Math.round((total / n) * 100) / 100 : 0;
+    const start = startDate ? new Date(startDate).getTime() : Date.now();
+    const end = endDate ? new Date(endDate).getTime() : start + n * 30 * 86_400_000;
+    const step = (end - start) / n;
+    const payments: DPayment[] = Array.from({ length: n }, (_, i) => ({
+      id: `pay-${Date.now()}-${i}`,
+      amount: String(per),
+      date: new Date(start + step * (i + 1)).toISOString().slice(0, 10),
+      paid: false,
+    }));
+    onSplit(payments);
+    setOpen(false);
+  };
+  return (
+    <div className="relative">
+      <button
+        onClick={() => setOpen((v) => !v)}
+        className="h-8 px-3 rounded-md bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-xs font-bold flex items-center gap-1.5 border border-emerald-200"
+      >
+        <Wallet className="w-3.5 h-3.5" />
+        <span>تقسيم العقد إلى أقساط</span>
+      </button>
+      {open && (
+        <div className="absolute top-10 right-0 z-30 bg-white border border-slate-200 shadow-xl rounded-lg p-4 w-72 space-y-3" dir="rtl">
+          <div className="text-xs font-bold text-slate-700">عدد الأقساط</div>
+          <div className="flex gap-1.5 flex-wrap">
+            {[2, 3, 4, 6, 8, 12].map((n) => (
+              <button
+                key={n}
+                onClick={() => setCount(n)}
+                className={`px-3 py-1 rounded text-xs font-bold border ${count === n ? "bg-emerald-600 text-white border-emerald-600" : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50"}`}
+              >
+                {n}
+              </button>
+            ))}
+          </div>
+          <div>
+            <label className="text-xs text-slate-500">أو حدد عدد مخصص</label>
+            <input
+              type="number"
+              min={1}
+              max={24}
+              value={count}
+              onChange={(e) => setCount(Number(e.target.value))}
+              className="w-full h-9 border border-slate-300 rounded px-2 text-sm mt-1"
+            />
+          </div>
+          <div className="text-xs text-slate-500 bg-slate-50 p-2 rounded">
+            {total > 0 ? (
+              <>
+                <div>إجمالي العقد: <span className="font-bold text-slate-800">{total.toLocaleString()} ر.س</span></div>
+                <div>قيمة كل قسط: <span className="font-bold text-emerald-700">{Math.round((total / Math.max(1, count)) * 100) / 100} ر.س</span></div>
+              </>
+            ) : (
+              <span className="text-amber-600">أدخل قيمة العقد أولاً</span>
+            )}
+          </div>
+          <div className="flex gap-2">
+            <button onClick={apply} className="flex-1 h-9 rounded bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-700">إنشاء الأقساط</button>
+            <button onClick={() => setOpen(false)} className="h-9 px-3 rounded border border-slate-200 text-xs">إلغاء</button>
+          </div>
+          <div className="text-[10px] text-slate-400 leading-relaxed">
+            سيتم استبدال الأقساط الحالية. يمكنك تعديل التواريخ والمبالغ من شاشة المالية لاحقًا.
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function InfoCell({
   label,
   value,
