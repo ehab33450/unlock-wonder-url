@@ -55,6 +55,8 @@ import {
   Link as LinkIcon,
   Wallet,
   Receipt,
+  PlayCircle,
+  BookOpen,
 } from "lucide-react";
 
 export const Route = createFileRoute("/")({
