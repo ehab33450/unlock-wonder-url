@@ -1567,6 +1567,7 @@ function Index() {
               (item.label === "المحادثة" && chatViewOpen) ||
               (item.label === "الحجز" && bookingOpen) ||
               (item.label === "الاجتماعات" && meetingsOpen) ||
+              (item.label === "المالية" && financeOpen) ||
               (item.label === "قائمة المذكرات" && notesViewOpen);
             return (
               <button
