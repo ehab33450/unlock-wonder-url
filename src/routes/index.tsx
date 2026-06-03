@@ -1764,6 +1764,30 @@ function Index() {
                 <h2 className="font-bold text-slate-700">{activeTab}</h2>
               </div>
 
+              {/* Scope filter: mine / shared / all */}
+              {activeTab !== "النشاط" && activeTab !== "تقرير التتبع" && activeTab !== "المقالات" && (
+                <div className="flex items-center justify-end gap-1 mb-3">
+                  {([
+                    { k: "mine" as TaskScope, label: "مهامي فقط", icon: User },
+                    { k: "shared" as TaskScope, label: "مشترك بها", icon: Users },
+                    { k: "all" as TaskScope, label: "الجميع", icon: List },
+                  ]).map((o) => {
+                    const Icon = o.icon;
+                    const a = taskScope === o.k;
+                    return (
+                      <button
+                        key={o.k}
+                        onClick={() => setTaskScope(o.k)}
+                        className={`flex items-center gap-1 px-2.5 py-1 rounded text-xs border ${a ? "bg-[color:var(--eyenak-dark)] text-white border-transparent" : "bg-white text-slate-600 border-slate-200 hover:border-slate-300"}`}
+                      >
+                        <span>{o.label}</span>
+                        <Icon className="w-3.5 h-3.5" />
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+
               {activeTab === "المقالات" ? (
                 <div className="space-y-3">
                   {[
