@@ -1081,9 +1081,14 @@ function Index() {
 
       <div className="flex">
         {/* Left icon rail */}
-        <aside className="w-20 bg-white border-l border-slate-200 min-h-[calc(100vh-3.5rem)] flex flex-col items-center py-4 gap-1">
+        <aside className="w-20 bg-white border-l border-slate-200 min-h-[calc(100vh-3.5rem)] flex flex-col items-center py-4 gap-2">
           {sidebarItems.map((item) => {
             const Icon = item.icon;
+            const isActive =
+              (item.label === "التقويم" && calendarOpen) ||
+              (item.label === "الملفات" && filesViewOpen) ||
+              (item.label === "المحادثة" && chatViewOpen) ||
+              (item.label === "الحجز" && bookingOpen);
             return (
               <button
                 key={item.label}
@@ -1093,10 +1098,26 @@ function Index() {
                   if (item.label === "الملفات") setFilesViewOpen(true);
                   if (item.label === "المحادثة") setChatViewOpen(true);
                 }}
-                className="w-16 py-3 flex flex-col items-center gap-1 rounded-lg hover:bg-slate-100 text-slate-600 transition"
+                className={`group w-16 py-2.5 flex flex-col items-center gap-1 rounded-xl transition-all duration-200 hover:-translate-y-0.5 ${
+                  isActive
+                    ? "text-white shadow-lg"
+                    : "text-slate-600 hover:bg-slate-50"
+                }`}
+                style={
+                  isActive
+                    ? { background: `linear-gradient(135deg, ${item.color}, ${item.color}cc)` }
+                    : undefined
+                }
               >
-                <Icon className="w-5 h-5" />
-                <span className="text-[10px] font-medium">{item.label}</span>
+                <span
+                  className={`w-9 h-9 rounded-lg flex items-center justify-center transition ${
+                    isActive ? "bg-white/20" : "group-hover:scale-110"
+                  }`}
+                  style={!isActive ? { color: item.color, backgroundColor: `${item.color}15` } : undefined}
+                >
+                  <Icon className="w-5 h-5" />
+                </span>
+                <span className="text-[10px] font-semibold">{item.label}</span>
               </button>
             );
           })}
