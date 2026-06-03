@@ -4855,6 +4855,98 @@ function Index() {
       </button>
 
       {/* مركز الأدوات — Widgets Center */}
+      {meetingsOpen && (
+        <div className="fixed inset-0 z-[60] bg-black/40 flex items-center justify-center p-4" onClick={() => setMeetingsOpen(false)}>
+          <div className="bg-white rounded-xl w-full max-w-4xl max-h-[88vh] overflow-hidden flex flex-col" onClick={(e) => e.stopPropagation()} dir="rtl">
+            <div className="flex items-center justify-between px-5 py-3 border-b border-slate-200">
+              <button onClick={() => setMeetingsOpen(false)} className="p-1 text-slate-400 hover:text-slate-700"><X className="w-5 h-5" /></button>
+              <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2"><Video className="w-5 h-5 text-red-500" /> الاجتماعات</h2>
+            </div>
+            <div className="grid md:grid-cols-2 gap-4 p-5 overflow-auto">
+              {/* Create form */}
+              <div className="border border-slate-200 rounded-lg p-4 space-y-3">
+                <h3 className="font-bold text-slate-800 text-sm">+ اجتماع جديد</h3>
+                <input value={meetingForm.title} onChange={(e) => setMeetingForm({ ...meetingForm, title: e.target.value })} placeholder="عنوان الاجتماع" className="w-full h-10 border border-slate-300 rounded px-3 text-sm" />
+                <input type="datetime-local" value={meetingForm.date} onChange={(e) => setMeetingForm({ ...meetingForm, date: e.target.value })} className="w-full h-10 border border-slate-300 rounded px-3 text-sm" />
+                <select value={meetingForm.organizer} onChange={(e) => setMeetingForm({ ...meetingForm, organizer: e.target.value })} className="w-full h-10 border border-slate-300 rounded px-3 text-sm">
+                  <option value="">المنظم (اختر)</option>
+                  <option value="الأدمن">الأدمن</option>
+                  {employees.map((e) => <option key={e.id} value={e.name}>{e.name}</option>)}
+                </select>
+                <input value={meetingForm.attendees} onChange={(e) => setMeetingForm({ ...meetingForm, attendees: e.target.value })} placeholder="المدعوون (موظفين/عملاء — مفصولين بفاصلة)" className="w-full h-10 border border-slate-300 rounded px-3 text-sm" list="meeting-attendees" />
+                <datalist id="meeting-attendees">
+                  {employees.map((e) => <option key={e.id} value={e.name} />)}
+                </datalist>
+                <input value={meetingForm.location} onChange={(e) => setMeetingForm({ ...meetingForm, location: e.target.value })} placeholder="المكان أو رابط الاجتماع" className="w-full h-10 border border-slate-300 rounded px-3 text-sm" />
+                <textarea value={meetingForm.notes} onChange={(e) => setMeetingForm({ ...meetingForm, notes: e.target.value })} placeholder="ملاحظات / جدول الأعمال" className="w-full h-20 border border-slate-300 rounded px-3 py-2 text-sm resize-none" />
+                <div className="space-y-1.5">
+                  <div className="text-xs font-bold text-slate-700">طريقة الإشعار</div>
+                  <label className="flex items-center gap-2 text-xs"><input type="checkbox" checked={meetingForm.notifyInApp} onChange={(e) => setMeetingForm({ ...meetingForm, notifyInApp: e.target.checked })} /> داخل المنصة (واجهة المستخدم)</label>
+                  <label className="flex items-center gap-2 text-xs"><input type="checkbox" checked={meetingForm.notifyEmail} onChange={(e) => setMeetingForm({ ...meetingForm, notifyEmail: e.target.checked })} /> بريد إلكتروني</label>
+                  <label className="flex items-center gap-2 text-xs"><input type="checkbox" checked={meetingForm.notifyWhatsapp} onChange={(e) => setMeetingForm({ ...meetingForm, notifyWhatsapp: e.target.checked })} /> واتساب</label>
+                  {meetingForm.notifyEmail && (
+                    <input value={meetingForm.email} onChange={(e) => setMeetingForm({ ...meetingForm, email: e.target.value })} placeholder="بريد المستلم (اختياري)" className="w-full h-9 border border-slate-300 rounded px-3 text-xs" />
+                  )}
+                  {meetingForm.notifyWhatsapp && (
+                    <input value={meetingForm.phone} onChange={(e) => setMeetingForm({ ...meetingForm, phone: e.target.value })} placeholder="رقم واتساب (مع رمز الدولة)" className="w-full h-9 border border-slate-300 rounded px-3 text-xs" />
+                  )}
+                </div>
+                {meetingMsg && (
+                  <div className={`text-xs ${meetingMsg.type === "ok" ? "text-emerald-600" : "text-red-600"}`}>{meetingMsg.text}</div>
+                )}
+                <button onClick={submitMeeting} className="w-full h-10 rounded bg-[color:var(--eyenak-teal)] text-white text-sm font-bold hover:opacity-90">إنشاء وإرسال</button>
+              </div>
+
+              {/* List */}
+              <div className="border border-slate-200 rounded-lg p-4">
+                <h3 className="font-bold text-slate-800 text-sm mb-3">الاجتماعات القادمة ({meetings.length})</h3>
+                {meetings.length === 0 ? (
+                  <div className="text-center text-xs text-slate-400 py-8">لا توجد اجتماعات بعد</div>
+                ) : (
+                  <ul className="space-y-3 max-h-[55vh] overflow-auto">
+                    {meetings.map((m) => {
+                      const links = meetingShareLinks(m);
+                      const waUrl = meetingForm.phone
+                        ? links.wa.replace("wa.me/?", `wa.me/${meetingForm.phone.replace(/\D/g, "")}?`)
+                        : links.wa;
+                      const mailUrl = meetingForm.email
+                        ? links.mail.replace("mailto:?", `mailto:${meetingForm.email}?`)
+                        : links.mail;
+                      return (
+                        <li key={m.id} className="border border-slate-100 rounded-lg p-3">
+                          <div className="flex items-start justify-between gap-2 mb-1">
+                            <span className="text-[10px] text-slate-500">{new Date(m.date).toLocaleString("ar-EG")}</span>
+                            <span className="font-bold text-slate-800 text-sm">{m.title}</span>
+                          </div>
+                          <div className="text-xs text-slate-500">المنظم: {m.organizer}</div>
+                          {m.location && <div className="text-xs text-slate-500">المكان: {m.location}</div>}
+                          {m.attendees.length > 0 && (
+                            <div className="text-xs text-slate-500 mt-1">المدعوون: {m.attendees.join("، ")}</div>
+                          )}
+                          {m.notes && <div className="text-xs text-slate-600 mt-1 bg-slate-50 p-2 rounded">{m.notes}</div>}
+                          <div className="flex items-center gap-2 mt-2">
+                            {m.channels.whatsapp && (
+                              <a href={waUrl} target="_blank" rel="noreferrer" className="text-[10px] px-2 py-1 rounded bg-emerald-100 text-emerald-700 hover:bg-emerald-200">واتساب</a>
+                            )}
+                            {m.channels.email && (
+                              <a href={mailUrl} className="text-[10px] px-2 py-1 rounded bg-blue-100 text-blue-700 hover:bg-blue-200">بريد إلكتروني</a>
+                            )}
+                            {m.channels.inApp && (
+                              <span className="text-[10px] px-2 py-1 rounded bg-amber-100 text-amber-700">إشعار داخل المنصة</span>
+                            )}
+                            <button onClick={() => setMeetings((p) => p.filter((x) => x.id !== m.id))} className="text-[10px] mr-auto text-red-500 hover:underline">حذف</button>
+                          </div>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {widgetsOpen && (
         <div className="fixed inset-0 z-[60] bg-black/40 flex items-center justify-center p-4" onClick={() => setWidgetsOpen(false)}>
           <div className="bg-white rounded-xl w-full max-w-5xl max-h-[85vh] overflow-hidden flex flex-col" onClick={(e) => e.stopPropagation()} dir="rtl">
