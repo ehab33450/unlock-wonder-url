@@ -139,6 +139,15 @@ function Index() {
   const [createOpen, setCreateOpen] = useState(false);
   const [tasksMenuOpen, setTasksMenuOpen] = useState(false);
   const [newProjectOpen, setNewProjectOpen] = useState(false);
+  // Quick-create extras: folder, task, templates
+  const [customFolders, setCustomFolders] = useState<string[]>([]);
+  const [newFolderOpen, setNewFolderOpen] = useState(false);
+  const [newFolderName, setNewFolderName] = useState("");
+  const [newTaskOpen, setNewTaskOpen] = useState(false);
+  const [newTaskProject, setNewTaskProject] = useState("");
+  const [newTaskName, setNewTaskName] = useState("");
+  const [newTaskEnd, setNewTaskEnd] = useState("");
+  const [templatesOpen, setTemplatesOpen] = useState(false);
   const [npFolder, setNpFolder] = useState("");
   const [npName, setNpName] = useState("");
   const [npStep, setNpStep] = useState<1 | 2>(1);
