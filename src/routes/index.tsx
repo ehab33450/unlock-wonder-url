@@ -2991,6 +2991,111 @@ function Index() {
                 </h2>
               </div>
 
+              {bookingTab === "services" ? (
+                <div className="bg-white rounded-lg border border-slate-200 p-4">
+                  {/* Toolbar */}
+                  <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => setBookingTab("book")}
+                        className="h-9 px-4 rounded bg-slate-100 hover:bg-slate-200 text-sm font-medium text-slate-700"
+                      >
+                        خدمة الكتاب
+                      </button>
+                      <button
+                        onClick={() => openServiceForm()}
+                        className="h-9 px-4 rounded bg-gradient-to-r from-sky-500 to-indigo-500 hover:shadow-md transition text-white text-sm font-semibold flex items-center gap-2"
+                      >
+                        <Plus className="w-4 h-4" /> أضف الخدمة
+                      </button>
+                    </div>
+                    <div className="relative">
+                      <Search className="w-4 h-4 absolute right-2 top-1/2 -translate-y-1/2 text-slate-400" />
+                      <input
+                        type="text"
+                        value={svcSearch}
+                        onChange={(e) => setSvcSearch(e.target.value)}
+                        placeholder="البحث"
+                        className="h-9 pr-8 pl-3 w-64 rounded border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-sky-200"
+                      />
+                    </div>
+                    <div className="ms-auto">
+                      <h3 className="text-base font-bold text-slate-800">خدمات</h3>
+                      <p className="text-xs text-slate-500">إدارة خدمات الحجز الخاصة بك</p>
+                    </div>
+                  </div>
+                  {(() => {
+                    const filtered = services.filter((s) =>
+                      !svcSearch.trim() || s.name.includes(svcSearch.trim()) || s.description.includes(svcSearch.trim()),
+                    );
+                    if (filtered.length === 0) {
+                      return (
+                        <div className="py-16 flex flex-col items-center justify-center text-slate-400">
+                          <div className="w-20 h-20 rounded-full bg-slate-100 flex items-center justify-center mb-3">
+                            <CalendarDays className="w-10 h-10 text-slate-300" />
+                          </div>
+                          <div className="text-sm">لم يتم العثور على الخدمة</div>
+                        </div>
+                      );
+                    }
+                    return (
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {filtered.map((s) => (
+                          <div
+                            key={s.id}
+                            className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition flex flex-col"
+                          >
+                            <div className="aspect-video bg-slate-100 flex items-center justify-center overflow-hidden">
+                              {s.image ? (
+                                <img src={s.image} alt={s.name} className="w-full h-full object-cover" />
+                              ) : (
+                                <FileIcon className="w-10 h-10 text-slate-300" />
+                              )}
+                            </div>
+                            <div className="p-3 flex-1 flex flex-col">
+                              <div className="flex items-center justify-between gap-2">
+                                <h4 className="text-sm font-bold text-slate-800">{s.name}</h4>
+                                <span
+                                  className={`text-[10px] px-2 py-0.5 rounded-full font-semibold ${
+                                    s.active ? "bg-emerald-100 text-emerald-700" : "bg-slate-100 text-slate-500"
+                                  }`}
+                                >
+                                  {s.active ? "نشطة" : "موقوفة"}
+                                </span>
+                              </div>
+                              <p className="text-xs text-slate-500 mt-1 line-clamp-2 flex-1">
+                                {s.description || "—"}
+                              </p>
+                              <div className="flex items-center justify-between mt-3 pt-2 border-t border-slate-100">
+                                <div className="text-sm font-bold text-sky-600">
+                                  {s.price ? `${s.price} ر.س` : "—"}
+                                </div>
+                                <div className="flex items-center gap-1">
+                                  <button
+                                    onClick={() => openServiceForm(s.id)}
+                                    className="p-1.5 rounded hover:bg-slate-100 text-slate-500"
+                                    aria-label="تعديل"
+                                  >
+                                    <Pencil className="w-3.5 h-3.5" />
+                                  </button>
+                                  <button
+                                    onClick={() => setServices((p) => p.filter((x) => x.id !== s.id))}
+                                    className="p-1.5 rounded hover:bg-red-50 text-red-500"
+                                    aria-label="حذف"
+                                  >
+                                    <Trash2 className="w-3.5 h-3.5" />
+                                  </button>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    );
+                  })()}
+                </div>
+              ) : (
+              <>
               {/* Top summary row */}
               <div className="grid grid-cols-2 gap-4 mb-4">
                 <div className="bg-white rounded-lg border border-slate-200 p-4 min-h-[260px] flex flex-col">
@@ -3035,6 +3140,144 @@ function Index() {
                     </div>
                   </div>
                 ))}
+              </div>
+              </>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Add/Edit service modal */}
+      {serviceFormOpen && (
+        <div
+          dir="rtl"
+          className="fixed inset-0 z-[70] bg-black/50 flex items-start justify-center p-4 overflow-y-auto"
+          onClick={() => setServiceFormOpen(false)}
+        >
+          <div
+            className="bg-slate-50 rounded-lg shadow-2xl w-full max-w-5xl mt-6"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between px-6 py-3 bg-white border-b border-slate-200 rounded-t-lg">
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={saveService}
+                  disabled={!svcName.trim()}
+                  className="h-9 px-5 rounded bg-[#0b1e3a] hover:bg-[#13294b] text-white text-sm font-semibold disabled:opacity-40"
+                >
+                  حفظ
+                </button>
+                <button
+                  onClick={() => setServiceFormOpen(false)}
+                  className="h-9 px-5 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-semibold"
+                >
+                  إلغاء
+                </button>
+              </div>
+              <h3 className="text-lg font-bold text-slate-800">
+                {editingServiceId ? "تعديل الخدمة" : "أضف الخدمة"}
+              </h3>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 p-4">
+              {/* Right column: form fields */}
+              <div className="bg-white rounded-lg border border-slate-200 p-5 space-y-4 order-2 lg:order-1">
+                <div>
+                  <label className="text-xs font-semibold text-slate-600 mb-1 block">اسم الخدمة</label>
+                  <input
+                    type="text"
+                    value={svcName}
+                    onChange={(e) => setSvcName(e.target.value)}
+                    placeholder="اسم الخدمة"
+                    className="w-full h-10 px-3 rounded border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-sky-200"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-semibold text-slate-600 mb-1 block">الوصف</label>
+                  <textarea
+                    value={svcDesc}
+                    onChange={(e) => setSvcDesc(e.target.value)}
+                    placeholder="الوصف"
+                    rows={5}
+                    className="w-full p-3 rounded border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-sky-200 resize-none"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-semibold text-slate-600 mb-1 block">السعر (اختياري)</label>
+                  <input
+                    type="number"
+                    value={svcPrice}
+                    onChange={(e) => setSvcPrice(e.target.value)}
+                    placeholder="السعر (اختياري)"
+                    className="w-full h-10 px-3 rounded border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-sky-200"
+                  />
+                </div>
+                <div className="flex items-center justify-between pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setSvcActive((v) => !v)}
+                    className={`relative w-12 h-6 rounded-full transition ${
+                      svcActive ? "bg-amber-400" : "bg-slate-300"
+                    }`}
+                    aria-pressed={svcActive}
+                  >
+                    <span
+                      className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow transition-all ${
+                        svcActive ? "right-0.5" : "right-[1.625rem]"
+                      }`}
+                    />
+                  </button>
+                  <label className="text-xs font-semibold text-slate-600">حالة</label>
+                </div>
+              </div>
+
+              {/* Left column: image upload + preview */}
+              <div className="space-y-4 order-1 lg:order-2">
+                <div className="bg-white rounded-lg border border-slate-200 p-5">
+                  <label className="text-xs font-semibold text-slate-600 mb-2 block">صورة الخدمة</label>
+                  <label className="block border-2 border-dashed border-slate-300 rounded-lg p-8 text-center cursor-pointer hover:border-sky-400 hover:bg-sky-50/30 transition">
+                    <input
+                      type="file"
+                      accept="image/png,image/jpeg"
+                      onChange={(e) => onServiceImagePick(e.target.files?.[0] ?? null)}
+                      className="hidden"
+                    />
+                    {svcImage ? (
+                      <img src={svcImage} alt="معاينة" className="max-h-32 mx-auto rounded" />
+                    ) : (
+                      <>
+                        <Upload className="w-8 h-8 mx-auto mb-2 text-slate-400" />
+                        <div className="text-sm text-slate-600">انقر لتحميل الصورة</div>
+                        <div className="text-xs text-slate-400 mt-1">PNG, JPG</div>
+                      </>
+                    )}
+                  </label>
+                </div>
+                <div className="bg-white rounded-lg border border-slate-200 p-5">
+                  <label className="text-xs font-semibold text-slate-600 mb-2 block">معاينة</label>
+                  <div className="border border-slate-200 rounded-lg overflow-hidden">
+                    <div className="aspect-video bg-slate-100 flex items-center justify-center">
+                      {svcImage ? (
+                        <img src={svcImage} alt="" className="w-full h-full object-cover" />
+                      ) : (
+                        <FileIcon className="w-12 h-12 text-slate-300" />
+                      )}
+                    </div>
+                    <div className="p-3 text-center">
+                      <div className="font-bold text-slate-800 text-sm">
+                        {svcName || "Service Name"}
+                      </div>
+                      <div className="text-xs text-slate-500 mt-1">
+                        {svcDesc || "Service description will appear here"}
+                      </div>
+                      {svcPrice && (
+                        <div className="text-sm font-bold text-sky-600 mt-2">{svcPrice} ر.س</div>
+                      )}
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
