@@ -55,6 +55,8 @@ import {
   Link as LinkIcon,
   Wallet,
   Receipt,
+  PlayCircle,
+  BookOpen,
 } from "lucide-react";
 
 export const Route = createFileRoute("/")({
@@ -329,6 +331,11 @@ function Index() {
 
   // ============ المالية ============
   const [financeOpen, setFinanceOpen] = useState(false);
+
+  // ============ الإرشادات ============
+  const [guidesOpen, setGuidesOpen] = useState(false);
+  const [guideVideos, setGuideVideos] = useState<Record<string, string>>({});
+  const [activeGuide, setActiveGuide] = useState<string>("dashboard");
 
   // New-project contract form fields
   const [npValue, setNpValue] = useState("");
@@ -1576,6 +1583,7 @@ function Index() {
               (item.label === "الحجز" && bookingOpen) ||
               (item.label === "الاجتماعات" && meetingsOpen) ||
               (item.label === "المالية" && financeOpen) ||
+              (item.label === "الإرشادات" && guidesOpen) ||
               (item.label === "قائمة المذكرات" && notesViewOpen);
             return (
               <button
@@ -1589,6 +1597,7 @@ function Index() {
                   if (item.label === "الاجتماعات") setMeetingsOpen(true);
                   if (item.label === "مستخدم") setMembersOpen(true);
                   if (item.label === "المالية") setFinanceOpen(true);
+                  if (item.label === "الإرشادات") setGuidesOpen(true);
                 }}
                 className={`group w-16 py-2.5 flex flex-col items-center gap-1 rounded-xl transition-all duration-200 hover:-translate-y-0.5 ${
                   isActive
@@ -5047,6 +5056,17 @@ function Index() {
         />
       )}
 
+      {guidesOpen && (
+        <GuidesModal
+          isAdmin={isAdmin}
+          active={activeGuide}
+          setActive={setActiveGuide}
+          videos={guideVideos}
+          setVideo={(id, url) => setGuideVideos((v) => ({ ...v, [id]: url }))}
+          onClose={() => setGuidesOpen(false)}
+        />
+      )}
+
       {widgetsOpen && (
         <div className="fixed inset-0 z-[60] bg-black/40 flex items-center justify-center p-4" onClick={() => setWidgetsOpen(false)}>
           <div className="bg-white rounded-xl w-full max-w-5xl max-h-[85vh] overflow-hidden flex flex-col" onClick={(e) => e.stopPropagation()} dir="rtl">
@@ -5695,6 +5715,364 @@ function ProjectDetailOverlay({
             </div>
           </>
         )}
+      </div>
+    </div>
+  );
+}
+
+type GuideTopic = {
+  id: string;
+  title: string;
+  subtitle: string;
+  icon: typeof HelpCircle;
+  color: string;
+  steps: { title: string; body: string }[];
+  tips?: string[];
+};
+
+const GUIDE_TOPICS: GuideTopic[] = [
+  {
+    id: "dashboard",
+    title: "البداية ولوحة التحكم",
+    subtitle: "تعرّف على واجهة المنصة والشريط الجانبي والإشعارات",
+    icon: Home,
+    color: "#0ea5e9",
+    steps: [
+      { title: "1. الشريط الجانبي الأيمن", body: "يحتوي على الاختصارات الرئيسية: التقويم، الملفات، المحادثة، الاجتماعات، المالية، المستخدمين، الإرشادات، الحجز. اضغط على أي أيقونة لفتحها مباشرة." },
+      { title: "2. الهيدر العلوي", body: "يحتوي على البحث، الإشعارات (الجرس)، تغيير اللغة عربي/إنجليزي، ومعلومات حسابك." },
+      { title: "3. لوحة التحكم", body: "تعرض ملخصًا حيًا للمشاريع، المهام، الاجتماعات القادمة، والإحصائيات. يمكنك تخصيص الأدوات الظاهرة من زر «مركز الأدوات»." },
+      { title: "4. الإشعارات", body: "اضغط على أيقونة الجرس لرؤية المهام المقتربة من موعد التسليم، دعوات الاجتماعات، والتنبيهات الأخرى." },
+    ],
+    tips: ["استخدم زر اللغة (AR/EN) في الأعلى لتبديل واجهة المنصة بالكامل.", "تظهر النقطة الحمراء على الجرس عند وجود إشعارات جديدة."],
+  },
+  {
+    id: "projects",
+    title: "إنشاء وإدارة المشاريع",
+    subtitle: "كيف تنشئ مشروعًا جديدًا وتربطه بعقد وموظف",
+    icon: Folder,
+    color: "#8b5cf6",
+    steps: [
+      { title: "1. إنشاء مشروع جديد", body: "اضغط على زر «+ مشروع جديد» من الشريط الجانبي للمشاريع. أدخل اسم المشروع، الوصف، تاريخ البداية والنهاية." },
+      { title: "2. بيانات العقد", body: "في الخطوة الثانية، أدخل قيمة العقد، اسم المسؤول من الشركة ورقم جواله، واختر الموظف المُكلَّف من القائمة." },
+      { title: "3. فتح المشروع", body: "اضغط على أي مشروع من الشريط الجانبي لفتح صفحة تفاصيله: بيانات العقد، جدول المهام، المحادثة، والملفات." },
+      { title: "4. تعديل بيانات العقد", body: "للأدمن فقط — اضغط على أي حقل في شريط بيانات العقد لتعديل قيمته مباشرة." },
+    ],
+  },
+  {
+    id: "tasks",
+    title: "المهام ونسبة الإنجاز",
+    subtitle: "إضافة مهام، تحديد الحالة، نسبة الإنجاز، والمرفقات",
+    icon: ClipboardList,
+    color: "#f59e0b",
+    steps: [
+      { title: "1. إضافة مهمة", body: "داخل المشروع، اضغط على زر «إضافة مهمة». ستظهر صف جديد قابل للتعديل في الجدول." },
+      { title: "2. تعبئة بيانات المهمة", body: "اكتب اسم المهمة، اسم المنصة، المستفيد، رقم المستند، تاريخ البداية والانتهاء." },
+      { title: "3. تحديد الحالة", body: "اختر من القائمة: جديد، جاري العمل، تم، معلق. كل حالة لها لون مميز." },
+      { title: "4. نسبة الإنجاز", body: "اختر النسبة (0% إلى 100%) من القائمة المنسدلة. شريط التقدّم يتحدّث تلقائيًا. عند 100% تتحوّل الحالة إلى «تم» تلقائيًا." },
+      { title: "5. العد التنازلي", body: "يعرض الوقت المتبقي للموعد النهائي. يتحوّل إلى الأحمر عند آخر 24 ساعة و«متأخر» بعد انتهاء الوقت." },
+      { title: "6. رفع المرفق", body: "اضغط على أيقونة الرفع في عمود المرفق لرفع التقرير النهائي للمهمة." },
+    ],
+    tips: ["استخدم فلتر «أنا فقط / المشترك بها / الجميع» لتصفية المهام حسب علاقتك بها.", "الموظف يرى فقط المهام المسندة إليه."],
+  },
+  {
+    id: "finance",
+    title: "المالية وأقساط العقود",
+    subtitle: "تقسيم العقد إلى أقساط، رفع الإيصالات، ومتابعة الاستحقاق",
+    icon: Wallet,
+    color: "#16a34a",
+    steps: [
+      { title: "1. تقسيم العقد", body: "افتح المشروع واضغط زر «تقسيم العقد إلى أقساط» في شريط بيانات العقد. اختر عدد الأقساط (2/3/4/6/8/12 أو مخصص)." },
+      { title: "2. التقسيم التلقائي", body: "يتم توزيع قيمة العقد بالتساوي على عدد الأقساط، وتُحدَّد التواريخ تلقائيًا بين بداية ونهاية العقد." },
+      { title: "3. شاشة المالية", body: "افتح «المالية» من الشريط الجانبي لرؤية كل الأقساط في كل المشاريع، مع ملخص (المستحق، المدفوع، الإجمالي، أقرب قسط)." },
+      { title: "4. العد التنازلي للأقساط", body: "كل قسط له عدّاد مباشر يعرض الأيام/الساعات المتبقية. القسط المتأخر يظهر باللون الأحمر." },
+      { title: "5. رفع الإيصال", body: "اضغط على أيقونة الرفع بجانب الإيصال لإرفاق صورة أو PDF. القسط يصبح «مدفوع» تلقائيًا." },
+      { title: "6. الفلاتر", body: "استخدم فلاتر «الكل، المستحقة، المتأخرة، المدفوعة» لتصفية الأقساط." },
+    ],
+    tips: ["الموظف يرى فقط أقساط المشاريع المسندة إليه.", "تعديل المبالغ والتواريخ متاح للأدمن فقط."],
+  },
+  {
+    id: "meetings",
+    title: "الاجتماعات والإشعارات",
+    subtitle: "جدولة اجتماع وإرسال دعوات عبر واتساب أو البريد",
+    icon: Video,
+    color: "#ef4444",
+    steps: [
+      { title: "1. فتح الاجتماعات", body: "اضغط على «الاجتماعات» في الشريط الجانبي لفتح شاشة الاجتماعات." },
+      { title: "2. اجتماع جديد", body: "املأ العنوان، التاريخ والوقت، اختر المنظم من قائمة الموظفين، المدعوين، المكان أو رابط الاجتماع، والملاحظات." },
+      { title: "3. طرق الإشعار", body: "اختر كيف تصل الدعوة: داخل المنصة (واجهة المستخدم)، البريد الإلكتروني، أو واتساب. يمكنك تفعيل أكثر من قناة." },
+      { title: "4. إرسال الدعوة", body: "اضغط «إنشاء وإرسال». ستظهر روابط مباشرة لإرسال الدعوة عبر واتساب/البريد بمحتوى جاهز." },
+      { title: "5. متابعة الاجتماعات", body: "تظهر الاجتماعات القادمة في القائمة الجانبية وعلى لوحة التحكم. الجرس يحتوي على دعوات اجتماعاتك." },
+    ],
+  },
+  {
+    id: "files",
+    title: "الملفات والمجلدات",
+    subtitle: "تنظيم ملفات كل مشروع وتعديل المستندات",
+    icon: FileText,
+    color: "#8b5cf6",
+    steps: [
+      { title: "1. فتح ملفات المشروع", body: "من داخل المشروع اضغط «ملفات المشروع» أو افتح «الملفات» من الشريط الجانبي للوصول لكل الملفات." },
+      { title: "2. المجلدات الافتراضية", body: "كل مشروع له مجلدات افتراضية جاهزة. يمكنك إضافة مجلدات جديدة بزر «+ مجلد»." },
+      { title: "3. رفع ملف جديد", body: "اضغط «+ ملف» داخل أي مجلد لرفع ملف، أو أنشئ مستند Word/Excel جديد قابل للتعديل داخل المنصة." },
+      { title: "4. تعديل المستندات", body: "اضغط على أي مستند Word لتعديله بمحرر النصوص، أو على ملف Excel لفتح المحرر الجدولي." },
+    ],
+  },
+  {
+    id: "chat",
+    title: "المحادثة والتواصل",
+    subtitle: "التواصل بين الأدمن والموظفين والعملاء",
+    icon: MessageSquare,
+    color: "#10b981",
+    steps: [
+      { title: "1. محادثة المشروع", body: "كل مشروع له غرفة محادثة خاصة. افتحها من داخل المشروع أو من «المحادثة» في الشريط الجانبي." },
+      { title: "2. مستويات الرؤية", body: "الأدمن يمكنه إرسال رسائل عامة (الجميع) أو رسائل داخلية (الأدمن والموظف فقط) لا يراها العميل." },
+      { title: "3. الإشعارات", body: "الرسائل الجديدة تظهر إشعارًا في الجرس وتُسلَّط في قائمة المشاريع." },
+    ],
+  },
+  {
+    id: "users",
+    title: "إدارة المستخدمين والصلاحيات",
+    subtitle: "إضافة موظفين وتحديد ما يستطيع كل واحد رؤيته",
+    icon: User,
+    color: "#6366f1",
+    steps: [
+      { title: "1. فتح إدارة المستخدمين", body: "اضغط «مستخدم» في الشريط الجانبي. ستفتح شاشة الموظفين والعملاء." },
+      { title: "2. إضافة موظف", body: "اضغط «+ موظف جديد». أدخل الاسم، البريد، اسم المستخدم، كلمة السر، والمسمى الوظيفي." },
+      { title: "3. تحديد الصلاحيات", body: "في صفحة الموظف، فعّل/عطّل أزرار الصلاحيات (رؤية المشاريع، تعديل المهام، رفع الملفات، رؤية المالية...). الموظف يرى فقط ما تفتحه له." },
+      { title: "4. تسليم بيانات الدخول", body: "أعطِ الموظف اسم المستخدم وكلمة السر؛ يدخل المنصة ويرى واجهته المخصصة." },
+    ],
+    tips: ["لا تشارك صلاحيات الأدمن إلا مع من تثق بهم.", "يمكنك تعطيل حساب الموظف مؤقتًا دون حذفه."],
+  },
+  {
+    id: "assistant",
+    title: "المساعد الذكي",
+    subtitle: "اسأل المساعد أي سؤال عن المنصة أو مهامك",
+    icon: Bot,
+    color: "#0ea5e9",
+    steps: [
+      { title: "1. فتح المساعد", body: "اضغط على زر الروبوت العائم في أسفل الشاشة لفتح المحادثة مع المساعد الذكي." },
+      { title: "2. اسأل بحرية", body: "اكتب أسئلة مثل: «ما المهام الواجب إنجازها قبل نهاية الأسبوع؟»، «ما أفضل أولوية لهذه المهمة؟»، «كيف أرفع إيصال قسط؟»" },
+      { title: "3. اقتراحات ذكية", body: "المساعد يستخدم بيانات حسابك (مهامك، صلاحياتك) ليقدّم إجابات دقيقة." },
+    ],
+  },
+];
+
+function GuidesModal({
+  isAdmin,
+  active,
+  setActive,
+  videos,
+  setVideo,
+  onClose,
+}: {
+  isAdmin: boolean;
+  active: string;
+  setActive: (id: string) => void;
+  videos: Record<string, string>;
+  setVideo: (id: string, url: string) => void;
+  onClose: () => void;
+}) {
+  const topic = GUIDE_TOPICS.find((t) => t.id === active) ?? GUIDE_TOPICS[0];
+  const TopicIcon = topic.icon;
+  const videoUrl = videos[topic.id] || "";
+  const [draftUrl, setDraftUrl] = useState(videoUrl);
+  useEffect(() => setDraftUrl(videoUrl), [videoUrl, topic.id]);
+
+  const embed = (url: string) => {
+    if (!url) return null;
+    const yt = url.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/))([\w-]{11})/);
+    if (yt) return `https://www.youtube.com/embed/${yt[1]}`;
+    return url;
+  };
+  const embedUrl = embed(videoUrl);
+  const isDirectVideo = videoUrl && /\.(mp4|webm|ogg|mov)$/i.test(videoUrl);
+
+  return (
+    <div
+      className="fixed inset-0 z-[60] bg-black/50 flex items-center justify-center p-4"
+      onClick={onClose}
+    >
+      <div
+        className="bg-white rounded-xl w-full max-w-6xl max-h-[92vh] overflow-hidden flex flex-col"
+        onClick={(e) => e.stopPropagation()}
+        dir="rtl"
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between px-5 py-3 border-b border-slate-200 bg-gradient-to-l from-teal-50 to-white">
+          <button onClick={onClose} className="p-1 text-slate-400 hover:text-slate-700">
+            <X className="w-5 h-5" />
+          </button>
+          <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2">
+            <BookOpen className="w-5 h-5 text-teal-600" /> دليل استخدام المنصة
+          </h2>
+        </div>
+
+        <div className="grid md:grid-cols-[260px_1fr] flex-1 overflow-hidden">
+          {/* Sidebar */}
+          <aside className="border-l border-slate-200 bg-slate-50 overflow-auto py-2">
+            {GUIDE_TOPICS.map((g) => {
+              const Icon = g.icon;
+              const isActive = g.id === active;
+              return (
+                <button
+                  key={g.id}
+                  onClick={() => setActive(g.id)}
+                  className={`w-full text-right px-4 py-3 flex items-start gap-2.5 transition border-r-4 ${
+                    isActive
+                      ? "bg-white border-teal-500"
+                      : "border-transparent hover:bg-white/60"
+                  }`}
+                >
+                  <span
+                    className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
+                    style={{ background: `${g.color}18`, color: g.color }}
+                  >
+                    <Icon className="w-4 h-4" />
+                  </span>
+                  <span className="flex-1 min-w-0">
+                    <span className={`block text-xs font-bold ${isActive ? "text-slate-900" : "text-slate-700"}`}>
+                      {g.title}
+                    </span>
+                    <span className="block text-[10px] text-slate-500 line-clamp-2 mt-0.5">
+                      {g.subtitle}
+                    </span>
+                  </span>
+                </button>
+              );
+            })}
+          </aside>
+
+          {/* Main */}
+          <div className="overflow-auto p-6 space-y-5">
+            {/* Topic header */}
+            <div className="flex items-start gap-3">
+              <span
+                className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0"
+                style={{ background: `${topic.color}18`, color: topic.color }}
+              >
+                <TopicIcon className="w-6 h-6" />
+              </span>
+              <div>
+                <h3 className="text-xl font-bold text-slate-900">{topic.title}</h3>
+                <p className="text-sm text-slate-500 mt-0.5">{topic.subtitle}</p>
+              </div>
+            </div>
+
+            {/* Video area */}
+            <div className="rounded-xl overflow-hidden border border-slate-200 bg-slate-900 aspect-video relative">
+              {isDirectVideo ? (
+                <video src={videoUrl} controls className="w-full h-full" />
+              ) : embedUrl ? (
+                <iframe
+                  src={embedUrl}
+                  title={topic.title}
+                  className="w-full h-full"
+                  allow="accelerated-2d-canvas; encrypted-media; picture-in-picture"
+                  allowFullScreen
+                />
+              ) : (
+                <div className="absolute inset-0 flex flex-col items-center justify-center text-slate-300 gap-2">
+                  <PlayCircle className="w-16 h-16 opacity-60" />
+                  <p className="text-sm">لم يُضَف فيديو شرح لهذا القسم بعد</p>
+                  {isAdmin && (
+                    <p className="text-xs text-slate-400">يمكنك إضافة رابط فيديو شرح من الحقل أدناه</p>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Admin video URL input */}
+            {isAdmin && (
+              <div className="flex gap-2 bg-slate-50 border border-slate-200 rounded-lg p-3">
+                <input
+                  value={draftUrl}
+                  onChange={(e) => setDraftUrl(e.target.value)}
+                  placeholder="رابط فيديو الشرح (YouTube أو ملف .mp4)"
+                  className="flex-1 h-9 border border-slate-300 rounded px-3 text-sm"
+                  dir="ltr"
+                />
+                <button
+                  onClick={() => setVideo(topic.id, draftUrl.trim())}
+                  className="h-9 px-4 rounded bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold"
+                >
+                  حفظ الرابط
+                </button>
+                {videoUrl && (
+                  <button
+                    onClick={() => { setVideo(topic.id, ""); setDraftUrl(""); }}
+                    className="h-9 px-3 rounded border border-slate-300 text-xs text-slate-600 hover:bg-white"
+                  >
+                    حذف
+                  </button>
+                )}
+              </div>
+            )}
+
+            {/* Steps */}
+            <div>
+              <h4 className="text-sm font-bold text-slate-800 mb-3 flex items-center gap-2">
+                <ClipboardList className="w-4 h-4 text-teal-600" /> الخطوات
+              </h4>
+              <ol className="space-y-3">
+                {topic.steps.map((s, i) => (
+                  <li key={i} className="flex gap-3 bg-slate-50 border border-slate-200 rounded-lg p-3">
+                    <span
+                      className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shrink-0"
+                      style={{ background: topic.color, color: "white" }}
+                    >
+                      {i + 1}
+                    </span>
+                    <div className="flex-1">
+                      <div className="text-sm font-bold text-slate-800">{s.title}</div>
+                      <div className="text-xs text-slate-600 mt-1 leading-relaxed">{s.body}</div>
+                    </div>
+                  </li>
+                ))}
+              </ol>
+            </div>
+
+            {/* Tips */}
+            {topic.tips && topic.tips.length > 0 && (
+              <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+                <h4 className="text-sm font-bold text-amber-800 mb-2 flex items-center gap-2">
+                  💡 نصائح سريعة
+                </h4>
+                <ul className="space-y-1.5">
+                  {topic.tips.map((tip, i) => (
+                    <li key={i} className="text-xs text-amber-800 leading-relaxed">• {tip}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {/* Nav */}
+            <div className="flex items-center justify-between pt-2 border-t border-slate-100">
+              <button
+                disabled={GUIDE_TOPICS.findIndex((g) => g.id === active) === 0}
+                onClick={() => {
+                  const i = GUIDE_TOPICS.findIndex((g) => g.id === active);
+                  if (i > 0) setActive(GUIDE_TOPICS[i - 1].id);
+                }}
+                className="text-xs text-slate-500 hover:text-teal-600 disabled:opacity-40 flex items-center gap-1"
+              >
+                <ChevronRight className="w-4 h-4" /> السابق
+              </button>
+              <span className="text-[10px] text-slate-400">
+                {GUIDE_TOPICS.findIndex((g) => g.id === active) + 1} / {GUIDE_TOPICS.length}
+              </span>
+              <button
+                disabled={GUIDE_TOPICS.findIndex((g) => g.id === active) === GUIDE_TOPICS.length - 1}
+                onClick={() => {
+                  const i = GUIDE_TOPICS.findIndex((g) => g.id === active);
+                  if (i < GUIDE_TOPICS.length - 1) setActive(GUIDE_TOPICS[i + 1].id);
+                }}
+                className="text-xs text-slate-500 hover:text-teal-600 disabled:opacity-40 flex items-center gap-1"
+              >
+                التالي <ChevronLeft className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
