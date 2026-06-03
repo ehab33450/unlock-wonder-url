@@ -2347,7 +2347,7 @@ function Index() {
       {filesViewOpen && (
         <div
           dir="rtl"
-          className="fixed inset-0 z-[55] bg-slate-100 flex overflow-hidden"
+          className="fixed top-14 left-20 right-72 bottom-0 z-40 bg-slate-100 flex overflow-hidden shadow-2xl rounded-tl-2xl"
         >
           {/* Main content area */}
           <div className="flex-1 overflow-auto p-6">
@@ -2586,11 +2586,10 @@ function Index() {
       {calendarOpen && (
         <div
           dir="rtl"
-          className="fixed inset-0 z-50 bg-black/40 flex items-stretch"
-          onClick={() => setCalendarOpen(false)}
+          className="fixed top-14 left-20 right-72 bottom-0 z-40 flex items-stretch"
         >
           <div
-            className="ml-auto w-full max-w-[1400px] bg-slate-50 h-full flex"
+            className="w-full bg-slate-50 h-full flex shadow-2xl rounded-tl-2xl overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Main calendar */}
@@ -2804,7 +2803,7 @@ function Index() {
       {bookingOpen && (
         <div
           dir="rtl"
-          className="fixed inset-0 z-50 bg-slate-100 overflow-auto"
+          className="fixed top-14 left-20 right-72 bottom-0 z-40 bg-slate-100 overflow-auto shadow-2xl rounded-tl-2xl"
         >
           <div className="flex min-h-full">
             {/* Right rail */}
@@ -2939,7 +2938,7 @@ function Index() {
       )}
 
       {chatViewOpen && (
-        <div dir="rtl" className="fixed inset-0 z-[60] bg-slate-50 flex overflow-hidden">
+        <div dir="rtl" className="fixed top-14 left-20 right-72 bottom-0 z-40 bg-slate-50 flex overflow-hidden shadow-2xl rounded-tl-2xl">
           {/* Right list: companies / projects */}
           <aside className="w-72 bg-white border-l border-slate-200 flex flex-col">
             <div className="h-14 px-4 flex items-center justify-between border-b border-slate-200">
