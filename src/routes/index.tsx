@@ -139,6 +139,15 @@ function Index() {
   const [createOpen, setCreateOpen] = useState(false);
   const [tasksMenuOpen, setTasksMenuOpen] = useState(false);
   const [newProjectOpen, setNewProjectOpen] = useState(false);
+  // Quick-create extras: folder, task, templates
+  const [customFolders, setCustomFolders] = useState<string[]>([]);
+  const [newFolderOpen, setNewFolderOpen] = useState(false);
+  const [newFolderName, setNewFolderName] = useState("");
+  const [newTaskOpen, setNewTaskOpen] = useState(false);
+  const [newTaskProject, setNewTaskProject] = useState("");
+  const [newTaskName, setNewTaskName] = useState("");
+  const [newTaskEnd, setNewTaskEnd] = useState("");
+  const [templatesOpen, setTemplatesOpen] = useState(false);
   const [npFolder, setNpFolder] = useState("");
   const [npName, setNpName] = useState("");
   const [npStep, setNpStep] = useState<1 | 2>(1);
@@ -2220,6 +2229,15 @@ function Index() {
                       onClick={() => {
                         setCreateOpen(false);
                         if (o.label === "مشروع جديد") setNewProjectOpen(true);
+                        else if (o.label === "مجلد جديد") { setNewFolderName(""); setNewFolderOpen(true); }
+                        else if (o.label === "إنشاء مهمة") {
+                          const first = Object.keys(projectMeta)[0] ?? "";
+                          setNewTaskProject(first);
+                          setNewTaskName("");
+                          setNewTaskEnd("");
+                          setNewTaskOpen(true);
+                        }
+                        else if (o.label === "اختيار قالب") setTemplatesOpen(true);
                       }}
                       className="w-full flex items-center justify-between gap-2 px-4 py-2.5 text-sm hover:bg-white/10"
                     >
@@ -2258,6 +2276,10 @@ function Index() {
                 if (!projects.some((p) => p.name === folder)) {
                   merged.push({ name: folder, children: list });
                 }
+              }
+              // User-created empty folders
+              for (const f of customFolders) {
+                if (!merged.some((m) => m.name === f)) merged.push({ name: f, children: [] });
               }
               // Projects with no folder mapping
               const orphans = Object.keys(projectMeta).filter(
@@ -2365,6 +2387,150 @@ function Index() {
           </div>
         </aside>
       </div>
+
+      {/* New Folder modal */}
+      {newFolderOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4" onClick={() => setNewFolderOpen(false)}>
+          <div dir="rtl" className="bg-white rounded-md shadow-xl w-full max-w-md p-6" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-4">
+              <button onClick={() => setNewFolderOpen(false)} className="text-slate-400 hover:text-slate-700"><X className="w-5 h-5" /></button>
+              <h3 className="text-base font-bold text-slate-800">مجلد جديد</h3>
+            </div>
+            <label className="block text-sm text-slate-600 mb-2 text-right">اسم المجلد</label>
+            <input
+              value={newFolderName}
+              onChange={(e) => setNewFolderName(e.target.value)}
+              autoFocus
+              placeholder="مثال: مشاريع 2026"
+              className="w-full h-11 border border-slate-300 rounded px-3 text-right focus:outline-none focus:border-[color:var(--eyenak-teal)] mb-4"
+            />
+            <button
+              disabled={!newFolderName.trim()}
+              onClick={() => {
+                const n = newFolderName.trim();
+                if (!n) return;
+                setCustomFolders((arr) => (arr.includes(n) ? arr : [...arr, n]));
+                setOpenProjects((o) => ({ ...o, [n]: true }));
+                setNewFolderOpen(false);
+              }}
+              className="w-full h-11 bg-[color:var(--eyenak-teal)] disabled:bg-slate-200 disabled:text-slate-500 hover:opacity-90 text-white rounded text-sm font-semibold"
+            >إنشاء</button>
+          </div>
+        </div>
+      )}
+
+      {/* New Task modal */}
+      {newTaskOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4" onClick={() => setNewTaskOpen(false)}>
+          <div dir="rtl" className="bg-white rounded-md shadow-xl w-full max-w-md p-6" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-4">
+              <button onClick={() => setNewTaskOpen(false)} className="text-slate-400 hover:text-slate-700"><X className="w-5 h-5" /></button>
+              <h3 className="text-base font-bold text-slate-800">إنشاء مهمة</h3>
+            </div>
+            {Object.keys(projectMeta).length === 0 ? (
+              <div className="text-sm text-slate-500 text-center py-6">لا توجد مشاريع. أنشئ مشروعاً أولاً.</div>
+            ) : (
+              <>
+                <label className="block text-sm text-slate-600 mb-2 text-right">المشروع</label>
+                <select
+                  value={newTaskProject}
+                  onChange={(e) => setNewTaskProject(e.target.value)}
+                  className="w-full h-11 border border-slate-300 rounded px-3 text-right focus:outline-none focus:border-[color:var(--eyenak-teal)] mb-3 bg-white"
+                >
+                  {Object.keys(projectMeta).map((p) => <option key={p} value={p}>{p}</option>)}
+                </select>
+                <label className="block text-sm text-slate-600 mb-2 text-right">اسم المهمة</label>
+                <input
+                  value={newTaskName}
+                  onChange={(e) => setNewTaskName(e.target.value)}
+                  autoFocus
+                  className="w-full h-11 border border-slate-300 rounded px-3 text-right focus:outline-none focus:border-[color:var(--eyenak-teal)] mb-3"
+                />
+                <label className="block text-sm text-slate-600 mb-2 text-right">تاريخ الانتهاء</label>
+                <input
+                  type="date"
+                  value={newTaskEnd}
+                  onChange={(e) => setNewTaskEnd(e.target.value)}
+                  className="w-full h-11 border border-slate-300 rounded px-3 text-right focus:outline-none focus:border-[color:var(--eyenak-teal)] mb-4"
+                />
+                <button
+                  disabled={!newTaskProject || !newTaskName.trim()}
+                  onClick={() => {
+                    const proj = newTaskProject;
+                    const name = newTaskName.trim();
+                    if (!proj || !name) return;
+                    const today = new Date().toISOString().slice(0, 10);
+                    const newRow: TaskRow = {
+                      id: `${Date.now()}`,
+                      name,
+                      platform: "",
+                      beneficiary: "",
+                      documentNo: "",
+                      startDate: today,
+                      endDate: newTaskEnd || today,
+                      doneDate: "",
+                      status: "جديد",
+                      priority: "لاشيء",
+                      progress: 0,
+                    };
+                    setProjectMeta((m) => {
+                      const cur = m[proj];
+                      if (!cur) return m;
+                      return { ...m, [proj]: { ...cur, tasks: [...cur.tasks, newRow] } };
+                    });
+                    setNewTaskOpen(false);
+                  }}
+                  className="w-full h-11 bg-[color:var(--eyenak-teal)] disabled:bg-slate-200 disabled:text-slate-500 hover:opacity-90 text-white rounded text-sm font-semibold"
+                >إضافة</button>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Templates modal */}
+      {templatesOpen && (() => {
+        const TEMPLATES = [
+          { name: "مشروع تسويق رقمي", desc: "حملة تسويقية شاملة عبر القنوات الرقمية", folder: "المبيعات" },
+          { name: "تطوير موقع إلكتروني", desc: "تصميم وتطوير موقع ويب احترافي", folder: "ايهاب تطوير" },
+          { name: "إدارة عميل جديد", desc: "متابعة عقد ومتطلبات عميل جديد", folder: "عملاء أ.أروى الجعدي" },
+          { name: "تقرير شهري", desc: "إعداد التقرير الشهري للأداء", folder: "المدير التنفيذي" },
+        ];
+        return (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4" onClick={() => setTemplatesOpen(false)}>
+            <div dir="rtl" className="bg-white rounded-md shadow-xl w-full max-w-2xl p-6" onClick={(e) => e.stopPropagation()}>
+              <div className="flex items-center justify-between mb-4">
+                <button onClick={() => setTemplatesOpen(false)} className="text-slate-400 hover:text-slate-700"><X className="w-5 h-5" /></button>
+                <h3 className="text-base font-bold text-slate-800">اختيار قالب</h3>
+              </div>
+              <p className="text-xs text-slate-500 text-right mb-4">اختر قالباً جاهزاً لإنشاء مشروع بسرعة.</p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {TEMPLATES.map((tpl) => (
+                  <button
+                    key={tpl.name}
+                    onClick={() => {
+                      setNpFolder(tpl.folder);
+                      setNpName(tpl.name);
+                      setNpDesc(tpl.desc);
+                      setNpStep(1);
+                      setTemplatesOpen(false);
+                      setNewProjectOpen(true);
+                    }}
+                    className="text-right border border-slate-200 rounded-lg p-4 hover:border-[color:var(--eyenak-teal)] hover:shadow-sm transition"
+                  >
+                    <div className="flex items-center justify-between mb-2">
+                      <LayoutTemplate className="w-4 h-4 text-[color:var(--eyenak-teal)]" />
+                      <div className="font-bold text-slate-800 text-sm">{tpl.name}</div>
+                    </div>
+                    <div className="text-xs text-slate-500 leading-relaxed">{tpl.desc}</div>
+                    <div className="text-[10px] text-slate-400 mt-2">المجلد: {tpl.folder}</div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
       {newProjectOpen && (
         <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/40 pt-10 pb-10 px-4 overflow-y-auto">
