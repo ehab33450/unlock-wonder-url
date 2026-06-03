@@ -1,5 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
+import { askAssistant } from "@/lib/ai-assistant.functions";
 import {
   Calendar,
   FileText,
@@ -48,6 +50,9 @@ import {
   AlarmClock,
   BellRing,
   StickyNote,
+  Bot,
+  Copy,
+  Link as LinkIcon,
 } from "lucide-react";
 
 export const Route = createFileRoute("/")({
