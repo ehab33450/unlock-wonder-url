@@ -6035,6 +6035,48 @@ function GuidesModal({
               </div>
             )}
 
+            {/* Illustrative screenshot */}
+            {displayImage && (
+              <figure className="rounded-xl overflow-hidden border border-slate-200 bg-slate-50">
+                <img
+                  src={displayImage}
+                  alt={`صورة توضيحية: ${topic.title}`}
+                  className="w-full h-auto block"
+                  loading="lazy"
+                />
+                <figcaption className="px-3 py-2 text-[11px] text-slate-500 border-t border-slate-200 bg-white">
+                  📸 صورة توضيحية من الموقع — {topic.title}
+                </figcaption>
+              </figure>
+            )}
+
+            {/* Admin image URL input */}
+            {isAdmin && (
+              <div className="flex gap-2 bg-slate-50 border border-slate-200 rounded-lg p-3">
+                <input
+                  value={draftImg}
+                  onChange={(e) => setDraftImg(e.target.value)}
+                  placeholder="رابط صورة توضيحية مخصصة (لتجاوز الصورة الافتراضية)"
+                  className="flex-1 h-9 border border-slate-300 rounded px-3 text-sm"
+                  dir="ltr"
+                />
+                <button
+                  onClick={() => setImage(topic.id, draftImg.trim())}
+                  className="h-9 px-4 rounded bg-slate-700 hover:bg-slate-800 text-white text-xs font-bold"
+                >
+                  حفظ الصورة
+                </button>
+                {customImage && (
+                  <button
+                    onClick={() => { setImage(topic.id, ""); setDraftImg(""); }}
+                    className="h-9 px-3 rounded border border-slate-300 text-xs text-slate-600 hover:bg-white"
+                  >
+                    استرجاع الافتراضي
+                  </button>
+                )}
+              </div>
+            )}
+
             {/* Steps */}
             <div>
               <h4 className="text-sm font-bold text-slate-800 mb-3 flex items-center gap-2">
