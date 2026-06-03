@@ -2488,6 +2488,15 @@ function Index() {
                               معاينة كهذا الموظف
                             </button>
                           )}
+                          {isAdmin && (
+                            <button
+                              onClick={() => { setLinkEmp(emp); setLinkCopied(false); }}
+                              className="mt-2 w-full rounded py-2 text-xs bg-[color:var(--eyenak-teal)]/10 text-[color:var(--eyenak-teal)] hover:bg-[color:var(--eyenak-teal)]/20 flex items-center justify-center gap-1.5"
+                            >
+                              <LinkIcon className="w-3.5 h-3.5" />
+                              رابط الدخول للموظف
+                            </button>
+                          )}
                         </div>
                       ))}
                   </div>
