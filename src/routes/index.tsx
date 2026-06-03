@@ -697,6 +697,69 @@ function Index() {
     reader.onload = () => setSvcImage(typeof reader.result === "string" ? reader.result : null);
     reader.readAsDataURL(file);
   };
+  // Bookings
+  type Booking = {
+    id: string;
+    code: string;
+    customerName: string;
+    customerPhone: string;
+    customerEmail: string;
+    serviceIds: string[];
+    basePrice: number;
+    vat: number;
+    discount: number;
+    total: number;
+    status: "pending" | "today";
+    createdAt: number;
+  };
+  const [bookings, setBookings] = useState<Booking[]>([]);
+  const [bkSelected, setBkSelected] = useState<string[]>([]);
+  const [bkName, setBkName] = useState("");
+  const [bkPhone, setBkPhone] = useState("");
+  const [bkEmail, setBkEmail] = useState("");
+  const [bkBase, setBkBase] = useState("");
+  const [bkVat, setBkVat] = useState("");
+  const [bkDiscount, setBkDiscount] = useState("");
+  const bkComputedBase = useMemo(() => {
+    if (bkBase.trim()) return Number(bkBase) || 0;
+    return bkSelected.reduce((sum, id) => {
+      const s = services.find((x) => x.id === id);
+      return sum + (s?.price ? Number(s.price) || 0 : 0);
+    }, 0);
+  }, [bkBase, bkSelected, services]);
+  const bkTotal = useMemo(
+    () => Math.max(0, bkComputedBase + (Number(bkVat) || 0) - (Number(bkDiscount) || 0)),
+    [bkComputedBase, bkVat, bkDiscount],
+  );
+  const resetBookingForm = () => {
+    setBkSelected([]);
+    setBkName("");
+    setBkPhone("");
+    setBkEmail("");
+    setBkBase("");
+    setBkVat("");
+    setBkDiscount("");
+  };
+  const confirmBooking = () => {
+    if (!bkName.trim() || !bkEmail.trim() || bkSelected.length === 0) return;
+    const newBooking: Booking = {
+      id: `bk_${Date.now()}`,
+      code: `#${Math.floor(100000 + Math.random() * 900000)}`,
+      customerName: bkName.trim(),
+      customerPhone: bkPhone.trim(),
+      customerEmail: bkEmail.trim(),
+      serviceIds: [...bkSelected],
+      basePrice: bkComputedBase,
+      vat: Number(bkVat) || 0,
+      discount: Number(bkDiscount) || 0,
+      total: bkTotal,
+      status: "pending",
+      createdAt: Date.now(),
+    };
+    setBookings((p) => [newBooking, ...p]);
+    resetBookingForm();
+    setBookingTab("pending");
+  };
   const [calView, setCalView] = useState<"month" | "week" | "day" | "list">("month");
   const [calCursor, setCalCursor] = useState(() => new Date());
   const [calSelected, setCalSelected] = useState<Date>(() => new Date());
