@@ -1352,6 +1352,7 @@ function Index() {
                   if (item.label === "الملفات") setFilesViewOpen(true);
                   if (item.label === "المحادثة") setChatViewOpen(true);
                   if (item.label === "قائمة المذكرات") setNotesViewOpen(true);
+                  if (item.label === "مستخدم") setMembersOpen(true);
                 }}
                 className={`group w-16 py-2.5 flex flex-col items-center gap-1 rounded-xl transition-all duration-200 hover:-translate-y-0.5 ${
                   isActive
