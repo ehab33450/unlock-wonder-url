@@ -1595,15 +1595,46 @@ function Index() {
             <Globe className="w-4 h-4" />
             <span>{isEn ? "EN" : "AR"}</span>
           </button>
-          <div className="flex items-center gap-2 pr-2 border-r border-slate-200">
-            <div className="text-right leading-tight">
-              <div className="text-sm font-semibold text-slate-800">{t("ايهاب فاتح", "Ehab Fateh")}</div>
-              <div className="text-xs text-slate-500">{t("مطور", "Developer")}</div>
-            </div>
-            <div className="w-10 h-10 rounded-full bg-[color:var(--eyenak-teal)] text-white flex items-center justify-center font-bold ring-2 ring-white shadow">
-              EA
-            </div>
-            <ChevronDown className="w-4 h-4 text-slate-400" />
+          <div className="relative">
+            <button
+              onClick={() => { const v = !userMenuOpen; closeAllPanels(); setUserMenuOpen(v); }}
+              className="flex items-center gap-2 pr-2 border-r border-slate-200 hover:bg-slate-50 rounded-l-lg pl-2 py-1 transition"
+            >
+              <div className="text-right leading-tight">
+                <div className="text-sm font-semibold text-slate-800">{t(currentUser, "Ehab Fateh")}</div>
+                <div className="text-xs text-slate-500">{isAdmin ? t("مدير", "Admin") : t("مطور", "Developer")}</div>
+              </div>
+              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[color:var(--eyenak-teal)] to-[color:var(--eyenak-dark)] text-white flex items-center justify-center font-bold ring-2 ring-white shadow">
+                {currentUser.charAt(0)}
+              </div>
+              <ChevronDown className="w-4 h-4 text-slate-400" />
+            </button>
+            {userMenuOpen && (
+              <div dir={isEn ? "ltr" : "rtl"} className="absolute left-0 mt-2 w-56 bg-white border border-slate-200 rounded-lg shadow-xl z-50 overflow-hidden">
+                <button
+                  onClick={() => { setUserMenuOpen(false); setAccountOpen(true); }}
+                  className="w-full text-right px-4 py-2.5 text-sm hover:bg-slate-50 flex items-center gap-2 text-slate-700"
+                >
+                  <User className="w-4 h-4 text-[color:var(--eyenak-teal)]" />
+                  {t("حسابي", "My account")}
+                </button>
+                <button
+                  onClick={() => { setUserMenuOpen(false); setSettingsOpen(true); }}
+                  className="w-full text-right px-4 py-2.5 text-sm hover:bg-slate-50 flex items-center gap-2 text-slate-700"
+                >
+                  <svg className="w-4 h-4 text-[color:var(--eyenak-teal)]" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h0a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h0a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v0a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                  {t("إعدادات الموقع", "Site settings")}
+                </button>
+                <div className="border-t border-slate-100" />
+                <button
+                  onClick={() => { setUserMenuOpen(false); setIsAdmin(false); setCurrentUser(t("ايهاب فاتح","Ehab Fateh")); setLoginOpen(true); }}
+                  className="w-full text-right px-4 py-2.5 text-sm hover:bg-red-50 flex items-center gap-2 text-red-600"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>
+                  {t("تسجيل الخروج", "Logout")}
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </header>
