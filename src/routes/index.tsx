@@ -1436,6 +1436,29 @@ function Index() {
     [meetingNotifs, isAdmin, currentUser]
   );
 
+  // إغلاق كل اللوحات المنبثقة قبل فتح أخرى أو عند الضغط في فراغ
+  const closeAllPanels = () => {
+    setCalendarOpen(false);
+    setBookingOpen(false);
+    setFilesViewOpen(false);
+    setChatViewOpen(false);
+    setNotesViewOpen(false);
+    setMeetingsOpen(false);
+    setMembersOpen(false);
+    setFinanceOpen(false);
+    setGuidesOpen(false);
+    setNotifOpen(false);
+    setCreateOpen(false);
+    setTasksMenuOpen(false);
+    setNewFileMenuOpen(false);
+    setPermsOpen(false);
+    setWidgetsOpen(false);
+    setNewProjectOpen(false);
+    setUserMenuOpen(false);
+    setMoreMenuOpen(false);
+    setAllProjectsOpen(false);
+  };
+
   return (
     <div dir={isEn ? "ltr" : "rtl"} className="min-h-screen bg-slate-50 text-slate-800 font-[Cairo]">
       {/* Top header */}
