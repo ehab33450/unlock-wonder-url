@@ -1078,23 +1078,25 @@ function Index() {
           {/* Tabs row */}
           <div className="flex items-center justify-end gap-2 flex-wrap mb-4">
             {[
-              { icon: Home, label: "لوحة التحكم", active: true },
-              { icon: FileCheck, label: "جديد المهام", badge: newCount },
-              { icon: FileText, label: "المقالات" },
-              { icon: Star, label: "المفضلة" },
-              { icon: ClipboardList, label: "المهام الجديدة", badge: newCount },
-              { icon: ClipboardList, label: "المهام المعلقة", badge: pending },
-              { icon: ClipboardList, label: "المهام المنتهية", badge: completed },
-              { icon: Clock, label: "المؤقتات النشطة", badge: inProgress },
-              { icon: Activity, label: "النشاط" },
-              { icon: MapPin, label: "تقرير التتبع" },
+              { icon: Home, label: "لوحة التحكم" as DashTab },
+              { icon: FileCheck, label: "جديد المهام" as DashTab, badge: newCount },
+              { icon: FileText, label: "المقالات" as DashTab },
+              { icon: Star, label: "المفضلة" as DashTab, badge: Object.keys(favorites).length },
+              { icon: ClipboardList, label: "المهام الجديدة" as DashTab, badge: newCount },
+              { icon: ClipboardList, label: "المهام المعلقة" as DashTab, badge: pending },
+              { icon: ClipboardList, label: "المهام المنتهية" as DashTab, badge: completed },
+              { icon: Clock, label: "المؤقتات النشطة" as DashTab, badge: inProgress },
+              { icon: Activity, label: "النشاط" as DashTab },
+              { icon: MapPin, label: "تقرير التتبع" as DashTab },
             ].map((t) => {
               const Icon = t.icon;
+              const active = activeTab === t.label;
               return (
                 <button
                   key={t.label}
+                  onClick={() => setActiveTab(t.label)}
                   className={`relative flex items-center gap-2 px-3 py-2 rounded-md text-sm border transition ${
-                    t.active
+                    active
                       ? "bg-[color:var(--eyenak-dark)] text-white border-transparent"
                       : "bg-white text-slate-600 border-slate-200 hover:border-slate-300"
                   }`}
@@ -1112,6 +1114,7 @@ function Index() {
           </div>
 
           {/* Card */}
+          {activeTab === "لوحة التحكم" && (
           <section className="bg-white rounded-lg border border-slate-200 shadow-sm p-5">
             {/* Card header */}
             <div className="flex items-center justify-between mb-4">
