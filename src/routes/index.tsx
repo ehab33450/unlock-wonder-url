@@ -243,6 +243,46 @@ function Index() {
   const [loginPass, setLoginPass] = useState("");
   const [loginErr, setLoginErr] = useState("");
 
+  // رسالة تأكيد إضافة الموظف + نافذة رابط الدخول
+  const [addEmpMsg, setAddEmpMsg] = useState<{ type: "ok" | "err"; text: string } | null>(null);
+  const [linkEmp, setLinkEmp] = useState<Employee | null>(null);
+  const [linkCopied, setLinkCopied] = useState(false);
+  const buildLoginLink = (emp: Employee) => {
+    if (typeof window === "undefined") return "";
+    const base = window.location.origin + window.location.pathname;
+    return `${base}?u=${encodeURIComponent(emp.username)}&p=${encodeURIComponent(emp.password)}`;
+  };
+
+  // الدخول التلقائي من رابط URL ?u=&p=
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const sp = new URLSearchParams(window.location.search);
+    const u = sp.get("u");
+    const p = sp.get("p");
+    if (!u || !p) return;
+    const emp = employees.find((e) => e.username === u && e.password === p && e.active);
+    if (emp) {
+      setCurrentUser(emp.name);
+      setIsAdmin(false);
+      // نظف الرابط
+      const url = new URL(window.location.href);
+      url.searchParams.delete("u");
+      url.searchParams.delete("p");
+      window.history.replaceState({}, "", url.toString());
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // المساعد الذكي
+  type AIMsg = { role: "user" | "assistant"; content: string };
+  const [aiOpen, setAiOpen] = useState(false);
+  const [aiMessages, setAiMessages] = useState<AIMsg[]>([
+    { role: "assistant", content: "أهلاً! أنا مساعدك داخل المنصة. اسألني عن المهام، الأولويات، أو كيفية استخدام أي ميزة." },
+  ]);
+  const [aiInput, setAiInput] = useState("");
+  const [aiLoading, setAiLoading] = useState(false);
+  const callAssistant = useServerFn(askAssistant);
+
   // Contract info + Tasks per project
   type Payment = { id: string; amount: string; date: string; paid: boolean };
   type ContractInfo = {
