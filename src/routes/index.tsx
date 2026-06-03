@@ -157,24 +157,86 @@ function Index() {
     "عقود وبيانات الموظفين",
   ];
   const [isAdmin, setIsAdmin] = useState(true);
-  const [employeePerms, setEmployeePerms] = useState({ add: true, delete: false });
   const [permsOpen, setPermsOpen] = useState(false);
-  const canAdd = isAdmin || employeePerms.add;
-  const canDelete = isAdmin || employeePerms.delete;
 
-  // Current logged-in user (for non-admin filtering)
-  type Employee = { id: string; name: string; email: string; canEdit: boolean };
+  // ====== نظام الصلاحيات الكامل ======
+  type PermKey =
+    | "files_view" | "files_add" | "files_edit" | "files_delete"
+    | "projects_view" | "projects_create" | "projects_edit"
+    | "tasks_edit"
+    | "services_view" | "services_manage"
+    | "bookings_view" | "bookings_manage"
+    | "notes_view" | "notes_manage"
+    | "chat_view" | "chat_send"
+    | "calendar_view" | "calendar_edit"
+    | "members_view";
+  const PERMS: { key: PermKey; label: string; group: string }[] = [
+    { key: "files_view",      label: "عرض الملفات",         group: "الملفات" },
+    { key: "files_add",       label: "إضافة ملفات/مجلدات",  group: "الملفات" },
+    { key: "files_edit",      label: "تعديل الملفات",        group: "الملفات" },
+    { key: "files_delete",    label: "حذف الملفات",          group: "الملفات" },
+    { key: "projects_view",   label: "عرض المشاريع",         group: "المشاريع" },
+    { key: "projects_create", label: "إنشاء مشروع",          group: "المشاريع" },
+    { key: "projects_edit",   label: "تعديل المشاريع",       group: "المشاريع" },
+    { key: "tasks_edit",      label: "تعديل المهام",         group: "المهام" },
+    { key: "services_view",   label: "عرض خدمات الكتاب",     group: "الخدمات" },
+    { key: "services_manage", label: "إدارة خدمات الكتاب",   group: "الخدمات" },
+    { key: "bookings_view",   label: "عرض الحجوزات",         group: "الحجز" },
+    { key: "bookings_manage", label: "إدارة الحجوزات",       group: "الحجز" },
+    { key: "notes_view",      label: "عرض المذكرات",         group: "المذكرات" },
+    { key: "notes_manage",    label: "إدارة المذكرات",       group: "المذكرات" },
+    { key: "chat_view",       label: "عرض المحادثة",         group: "المحادثة" },
+    { key: "chat_send",       label: "إرسال رسائل",          group: "المحادثة" },
+    { key: "calendar_view",   label: "عرض التقويم",          group: "التقويم" },
+    { key: "calendar_edit",   label: "تعديل التقويم",        group: "التقويم" },
+    { key: "members_view",    label: "عرض الأعضاء",          group: "الأعضاء" },
+  ];
+  const defaultEmpPerms = (): Record<PermKey, boolean> => {
+    const o = {} as Record<PermKey, boolean>;
+    for (const p of PERMS) o[p.key] = false;
+    // افتراضي: يستطيع رؤية مهامه وملفاته ومحادثاته
+    o.files_view = true;
+    o.projects_view = true;
+    o.chat_view = true;
+    o.calendar_view = true;
+    return o;
+  };
+
+  type Employee = {
+    id: string; name: string; email: string;
+    username: string; password: string; role: string;
+    active: boolean;
+    perms: Record<PermKey, boolean>;
+  };
   const [employees, setEmployees] = useState<Employee[]>([
-    { id: "u1", name: "ايهاب فاتح", email: "ehab@example.com", canEdit: false },
+    {
+      id: "u1", name: "ايهاب فاتح", email: "ehab@example.com",
+      username: "ehab", password: "1234", role: "موظف",
+      active: true, perms: defaultEmpPerms(),
+    },
   ]);
   const [currentUser, setCurrentUser] = useState<string>("ايهاب فاتح");
-  const [newEmpName, setNewEmpName] = useState("");
-  const [newEmpEmail, setNewEmpEmail] = useState("");
   const currentEmployee = useMemo(
     () => employees.find((e) => e.name === currentUser) ?? null,
     [employees, currentUser]
   );
-  const employeeCanEdit = !!currentEmployee?.canEdit;
+  const hasPerm = (k: PermKey) =>
+    isAdmin ? true : !!currentEmployee?.perms?.[k];
+  const canAdd = hasPerm("files_add");
+  const canDelete = hasPerm("files_delete");
+  const employeeCanEdit = hasPerm("tasks_edit");
+
+  // فورم إضافة موظف (في خانة الأعضاء)
+  const [newEmp, setNewEmp] = useState({
+    name: "", email: "", username: "", password: "", role: "موظف",
+  });
+  const [newEmpPerms, setNewEmpPerms] = useState<Record<PermKey, boolean>>(defaultEmpPerms());
+
+  // شاشة تسجيل الدخول
+  const [loginOpen, setLoginOpen] = useState(false);
+  const [loginUser, setLoginUser] = useState("");
+  const [loginPass, setLoginPass] = useState("");
+  const [loginErr, setLoginErr] = useState("");
 
   // Contract info + Tasks per project
   type Payment = { id: string; amount: string; date: string; paid: boolean };
