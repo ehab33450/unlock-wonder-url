@@ -62,15 +62,15 @@ export const Route = createFileRoute("/")({
 });
 
 const sidebarItems = [
-  { icon: Calendar, label: "التقويم" },
-  { icon: FileText, label: "الملفات" },
-  { icon: Pin, label: "قائمة المذكرات" },
-  { icon: MessageSquare, label: "المحادثة" },
-  { icon: Video, label: "الاجتماعات" },
-  { icon: User, label: "مستخدم" },
-  { icon: HelpCircle, label: "الإرشادات" },
-  { icon: CheckSquare, label: "الحجز" },
-  { icon: MoreHorizontal, label: "المزيد" },
+  { icon: Calendar, label: "التقويم", color: "#0ea5e9" },
+  { icon: FileText, label: "الملفات", color: "#8b5cf6" },
+  { icon: Pin, label: "قائمة المذكرات", color: "#f59e0b" },
+  { icon: MessageSquare, label: "المحادثة", color: "#10b981" },
+  { icon: Video, label: "الاجتماعات", color: "#ef4444" },
+  { icon: User, label: "مستخدم", color: "#6366f1" },
+  { icon: HelpCircle, label: "الإرشادات", color: "#14b8a6" },
+  { icon: CheckSquare, label: "الحجز", color: "#ec4899" },
+  { icon: MoreHorizontal, label: "المزيد", color: "#64748b" },
 ];
 
 const topTabs = [
@@ -1081,9 +1081,14 @@ function Index() {
 
       <div className="flex">
         {/* Left icon rail */}
-        <aside className="w-20 bg-white border-l border-slate-200 min-h-[calc(100vh-3.5rem)] flex flex-col items-center py-4 gap-1">
+        <aside className="w-20 bg-white border-l border-slate-200 min-h-[calc(100vh-3.5rem)] flex flex-col items-center py-4 gap-2">
           {sidebarItems.map((item) => {
             const Icon = item.icon;
+            const isActive =
+              (item.label === "التقويم" && calendarOpen) ||
+              (item.label === "الملفات" && filesViewOpen) ||
+              (item.label === "المحادثة" && chatViewOpen) ||
+              (item.label === "الحجز" && bookingOpen);
             return (
               <button
                 key={item.label}
@@ -1093,10 +1098,26 @@ function Index() {
                   if (item.label === "الملفات") setFilesViewOpen(true);
                   if (item.label === "المحادثة") setChatViewOpen(true);
                 }}
-                className="w-16 py-3 flex flex-col items-center gap-1 rounded-lg hover:bg-slate-100 text-slate-600 transition"
+                className={`group w-16 py-2.5 flex flex-col items-center gap-1 rounded-xl transition-all duration-200 hover:-translate-y-0.5 ${
+                  isActive
+                    ? "text-white shadow-lg"
+                    : "text-slate-600 hover:bg-slate-50"
+                }`}
+                style={
+                  isActive
+                    ? { background: `linear-gradient(135deg, ${item.color}, ${item.color}cc)` }
+                    : undefined
+                }
               >
-                <Icon className="w-5 h-5" />
-                <span className="text-[10px] font-medium">{item.label}</span>
+                <span
+                  className={`w-9 h-9 rounded-lg flex items-center justify-center transition ${
+                    isActive ? "bg-white/20" : "group-hover:scale-110"
+                  }`}
+                  style={!isActive ? { color: item.color, backgroundColor: `${item.color}15` } : undefined}
+                >
+                  <Icon className="w-5 h-5" />
+                </span>
+                <span className="text-[10px] font-semibold">{item.label}</span>
               </button>
             );
           })}
@@ -2347,7 +2368,7 @@ function Index() {
       {filesViewOpen && (
         <div
           dir="rtl"
-          className="fixed inset-0 z-[55] bg-slate-100 flex overflow-hidden"
+          className="fixed top-14 left-20 right-72 bottom-0 z-40 bg-slate-100 flex overflow-hidden shadow-2xl rounded-tl-2xl"
         >
           {/* Main content area */}
           <div className="flex-1 overflow-auto p-6">
@@ -2586,11 +2607,10 @@ function Index() {
       {calendarOpen && (
         <div
           dir="rtl"
-          className="fixed inset-0 z-50 bg-black/40 flex items-stretch"
-          onClick={() => setCalendarOpen(false)}
+          className="fixed top-14 left-20 right-72 bottom-0 z-40 flex items-stretch"
         >
           <div
-            className="ml-auto w-full max-w-[1400px] bg-slate-50 h-full flex"
+            className="w-full bg-slate-50 h-full flex shadow-2xl rounded-tl-2xl overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Main calendar */}
@@ -2804,7 +2824,7 @@ function Index() {
       {bookingOpen && (
         <div
           dir="rtl"
-          className="fixed inset-0 z-50 bg-slate-100 overflow-auto"
+          className="fixed top-14 left-20 right-72 bottom-0 z-40 bg-slate-100 overflow-auto shadow-2xl rounded-tl-2xl"
         >
           <div className="flex min-h-full">
             {/* Right rail */}
@@ -2939,7 +2959,7 @@ function Index() {
       )}
 
       {chatViewOpen && (
-        <div dir="rtl" className="fixed inset-0 z-[60] bg-slate-50 flex overflow-hidden">
+        <div dir="rtl" className="fixed top-14 left-20 right-72 bottom-0 z-40 bg-slate-50 flex overflow-hidden shadow-2xl rounded-tl-2xl">
           {/* Right list: companies / projects */}
           <aside className="w-72 bg-white border-l border-slate-200 flex flex-col">
             <div className="h-14 px-4 flex items-center justify-between border-b border-slate-200">
