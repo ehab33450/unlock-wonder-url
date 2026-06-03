@@ -256,6 +256,13 @@ function Index() {
   const [loginUser, setLoginUser] = useState("");
   const [loginPass, setLoginPass] = useState("");
   const [loginErr, setLoginErr] = useState("");
+  // واجهة عامة
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [accountOpen, setAccountOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [moreMenuOpen, setMoreMenuOpen] = useState(false);
+  const [allProjectsOpen, setAllProjectsOpen] = useState(false);
+  const [projectFilter, setProjectFilter] = useState<string | null>(null);
 
   // رسالة تأكيد إضافة الموظف + نافذة رابط الدخول
   const [addEmpMsg, setAddEmpMsg] = useState<{ type: "ok" | "err"; text: string } | null>(null);
