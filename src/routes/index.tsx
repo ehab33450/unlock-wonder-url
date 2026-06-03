@@ -1564,10 +1564,37 @@ function Index() {
         {/* Right projects panel */}
         <aside className="w-72 bg-white border-r border-slate-200 min-h-[calc(100vh-3.5rem)] flex flex-col">
           {/* Top toolbar */}
-          <div className="flex items-center justify-between px-3 py-2 border-b border-slate-200">
-            <button className="p-1.5 rounded hover:bg-slate-100 text-slate-500">
+          <div className="relative flex items-center justify-between px-3 py-2 border-b border-slate-200">
+            <button
+              onClick={() => setTasksMenuOpen((v) => !v)}
+              className={`p-1.5 rounded hover:bg-slate-100 ${tasksMenuOpen ? "bg-slate-100 text-slate-700" : "text-slate-500"}`}
+            >
               <MoreVertical className="w-4 h-4" />
             </button>
+            {tasksMenuOpen && (
+              <div className="absolute z-30 top-full right-3 mt-1 w-56 bg-white border border-slate-200 rounded-md shadow-lg overflow-hidden">
+                {([
+                  { icon: ClipboardList, label: "المهام الجديدة" as DashTab },
+                  { icon: ClipboardList, label: "المهام المعلقة" as DashTab },
+                  { icon: ClipboardList, label: "المهام المنتهية" as DashTab },
+                  { icon: FileText, label: "المقالات" as DashTab },
+                  { icon: Clock, label: "المؤقتات النشطة" as DashTab },
+                  { icon: Activity, label: "النشاط" as DashTab },
+                ]).map((o) => {
+                  const Icon = o.icon;
+                  return (
+                    <button
+                      key={o.label}
+                      onClick={() => { setActiveTab(o.label); setTasksMenuOpen(false); }}
+                      className="w-full flex items-center justify-between gap-2 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50"
+                    >
+                      <Icon className="w-4 h-4 text-slate-500" />
+                      <span>{o.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
             <div className="flex items-center gap-1">
               <button
                 onClick={() => setMembersOpen(true)}
@@ -1575,13 +1602,25 @@ function Index() {
               >
                 <Users className="w-4 h-4" />
               </button>
-              <button className="p-1.5 rounded hover:bg-slate-100 text-slate-500">
+              <button
+                onClick={() => setActiveTab("المفضلة")}
+                title="المفضلة"
+                className={`p-1.5 rounded hover:bg-slate-100 ${activeTab === "المفضلة" ? "bg-slate-100 text-slate-700" : "text-slate-500"}`}
+              >
                 <Star className="w-4 h-4" />
               </button>
-              <button className="p-1.5 rounded hover:bg-slate-100 text-slate-500">
+              <button
+                onClick={() => setActiveTab("جديد المهام")}
+                title="جديد المهام"
+                className={`p-1.5 rounded hover:bg-slate-100 ${activeTab === "جديد المهام" ? "bg-slate-100 text-slate-700" : "text-slate-500"}`}
+              >
                 <CheckSquare className="w-4 h-4" />
               </button>
-              <button className="p-1.5 rounded hover:bg-slate-100 text-slate-500">
+              <button
+                onClick={() => setActiveTab("لوحة التحكم")}
+                title="لوحة التحكم"
+                className={`p-1.5 rounded hover:bg-slate-100 ${activeTab === "لوحة التحكم" ? "bg-slate-100 text-slate-700" : "text-slate-500"}`}
+              >
                 <Home className="w-4 h-4" />
               </button>
             </div>
