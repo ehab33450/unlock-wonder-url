@@ -309,11 +309,19 @@ function Index() {
     // Extra employees
     setEmployees((prev) => {
       if (prev.length > 1) return prev;
+      const mk = (id: string, name: string, email: string, username: string, role: string, full = false): Employee => ({
+        id, name, email, username, password: "1234", role, active: true,
+        perms: (() => {
+          const p = defaultEmpPerms();
+          if (full) { for (const k of Object.keys(p) as PermKey[]) p[k] = true; }
+          return p;
+        })(),
+      });
       return [
         ...prev,
-        { id: "u2", name: "محمد علي", email: "mohamed@example.com", canEdit: true },
-        { id: "u3", name: "سارة أحمد", email: "sara@example.com", canEdit: false },
-        { id: "u4", name: "أ. أروى الجعدي", email: "arwa@example.com", canEdit: true },
+        mk("u2", "محمد علي", "mohamed@example.com", "mohamed", "مصمم", true),
+        mk("u3", "سارة أحمد", "sara@example.com", "sara", "محرر محتوى"),
+        mk("u4", "أ. أروى الجعدي", "arwa@example.com", "arwa", "مديرة حسابات", true),
       ];
     });
 
