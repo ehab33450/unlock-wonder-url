@@ -1,5 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
+import { askAssistant } from "@/lib/ai-assistant.functions";
 import {
   Calendar,
   FileText,
@@ -48,6 +50,9 @@ import {
   AlarmClock,
   BellRing,
   StickyNote,
+  Bot,
+  Copy,
+  Link as LinkIcon,
 } from "lucide-react";
 
 export const Route = createFileRoute("/")({
@@ -237,6 +242,46 @@ function Index() {
   const [loginUser, setLoginUser] = useState("");
   const [loginPass, setLoginPass] = useState("");
   const [loginErr, setLoginErr] = useState("");
+
+  // رسالة تأكيد إضافة الموظف + نافذة رابط الدخول
+  const [addEmpMsg, setAddEmpMsg] = useState<{ type: "ok" | "err"; text: string } | null>(null);
+  const [linkEmp, setLinkEmp] = useState<Employee | null>(null);
+  const [linkCopied, setLinkCopied] = useState(false);
+  const buildLoginLink = (emp: Employee) => {
+    if (typeof window === "undefined") return "";
+    const base = window.location.origin + window.location.pathname;
+    return `${base}?u=${encodeURIComponent(emp.username)}&p=${encodeURIComponent(emp.password)}`;
+  };
+
+  // الدخول التلقائي من رابط URL ?u=&p=
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const sp = new URLSearchParams(window.location.search);
+    const u = sp.get("u");
+    const p = sp.get("p");
+    if (!u || !p) return;
+    const emp = employees.find((e) => e.username === u && e.password === p && e.active);
+    if (emp) {
+      setCurrentUser(emp.name);
+      setIsAdmin(false);
+      // نظف الرابط
+      const url = new URL(window.location.href);
+      url.searchParams.delete("u");
+      url.searchParams.delete("p");
+      window.history.replaceState({}, "", url.toString());
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // المساعد الذكي
+  type AIMsg = { role: "user" | "assistant"; content: string };
+  const [aiOpen, setAiOpen] = useState(false);
+  const [aiMessages, setAiMessages] = useState<AIMsg[]>([
+    { role: "assistant", content: "أهلاً! أنا مساعدك داخل المنصة. اسألني عن المهام، الأولويات، أو كيفية استخدام أي ميزة." },
+  ]);
+  const [aiInput, setAiInput] = useState("");
+  const [aiLoading, setAiLoading] = useState(false);
+  const callAssistant = useServerFn(askAssistant);
 
   // Contract info + Tasks per project
   type Payment = { id: string; amount: string; date: string; paid: boolean };
@@ -2309,28 +2354,51 @@ function Index() {
 
                       <button
                         onClick={() => {
-                          if (!newEmp.name.trim() || !newEmp.username.trim() || !newEmp.password.trim()) return;
-                          if (employees.some((e) => e.username === newEmp.username.trim())) return;
-                          setEmployees((arr) => [
-                            ...arr,
-                            {
-                              id: `u${Date.now()}`,
-                              name: newEmp.name.trim(),
-                              email: newEmp.email.trim(),
-                              username: newEmp.username.trim(),
-                              password: newEmp.password.trim(),
-                              role: newEmp.role.trim() || "موظف",
-                              active: true,
-                              perms: { ...newEmpPerms },
-                            },
-                          ]);
+                          const name = newEmp.name.trim();
+                          let username = newEmp.username.trim();
+                          let password = newEmp.password.trim();
+                          if (!name) {
+                            setAddEmpMsg({ type: "err", text: "الاسم الكامل مطلوب" });
+                            return;
+                          }
+                          // توليد تلقائي إذا تُرك فارغاً
+                          if (!username) username = "u" + Math.random().toString(36).slice(2, 7);
+                          if (!password) password = Math.random().toString(36).slice(2, 8);
+                          if (employees.some((e) => e.username === username)) {
+                            setAddEmpMsg({ type: "err", text: "اسم المستخدم موجود مسبقاً، اختر اسماً آخر" });
+                            return;
+                          }
+                          const created: Employee = {
+                            id: `u${Date.now()}`,
+                            name,
+                            email: newEmp.email.trim(),
+                            username,
+                            password,
+                            role: newEmp.role.trim() || "موظف",
+                            active: true,
+                            perms: { ...newEmpPerms },
+                          };
+                          setEmployees((arr) => [...arr, created]);
                           setNewEmp({ name: "", email: "", username: "", password: "", role: "موظف" });
                           setNewEmpPerms(defaultEmpPerms());
+                          setAddEmpMsg({ type: "ok", text: `تم إنشاء حساب ${name} — افتح رابط الدخول لمشاركته` });
+                          setLinkEmp(created);
                         }}
                         className="mt-4 w-full h-10 rounded bg-[color:var(--eyenak-teal)] text-white text-sm hover:opacity-90"
                       >
                         + إضافة الموظف وتفعيل حسابه
                       </button>
+                      {addEmpMsg && (
+                        <div
+                          className={`mt-2 text-xs text-right px-3 py-2 rounded ${
+                            addEmpMsg.type === "ok"
+                              ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                              : "bg-red-50 text-red-700 border border-red-200"
+                          }`}
+                        >
+                          {addEmpMsg.text}
+                        </div>
+                      )}
                     </div>
                   )}
 
@@ -2418,6 +2486,15 @@ function Index() {
                               className="mt-3 w-full border border-slate-200 rounded py-2 text-xs text-slate-600 hover:bg-slate-50"
                             >
                               معاينة كهذا الموظف
+                            </button>
+                          )}
+                          {isAdmin && (
+                            <button
+                              onClick={() => { setLinkEmp(emp); setLinkCopied(false); }}
+                              className="mt-2 w-full rounded py-2 text-xs bg-[color:var(--eyenak-teal)]/10 text-[color:var(--eyenak-teal)] hover:bg-[color:var(--eyenak-teal)]/20 flex items-center justify-center gap-1.5"
+                            >
+                              <LinkIcon className="w-3.5 h-3.5" />
+                              رابط الدخول للموظف
                             </button>
                           )}
                         </div>
@@ -4384,6 +4461,177 @@ function Index() {
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* نافذة رابط دخول الموظف للمشاركة */}
+      {linkEmp && (
+        <div
+          className="fixed inset-0 z-[70] bg-slate-900/70 backdrop-blur-sm flex items-center justify-center p-4"
+          onClick={() => setLinkEmp(null)}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            dir="rtl"
+            className="bg-white rounded-xl shadow-2xl w-full max-w-lg p-6"
+          >
+            <div className="flex items-center justify-between mb-4">
+              <button onClick={() => setLinkEmp(null)} className="text-slate-400 hover:text-slate-700">
+                <X className="w-5 h-5" />
+              </button>
+              <h2 className="text-lg font-bold text-slate-800">رابط دخول الموظف</h2>
+            </div>
+            <div className="text-sm text-slate-600 mb-3 text-right">
+              شارك الرابط التالي مع <b>{linkEmp.name}</b> ليدخل مباشرة دون كتابة كلمة المرور، أو زوّده بـ
+              اسم المستخدم والرمز يدوياً.
+            </div>
+            <div className="bg-slate-50 border border-slate-200 rounded p-3 mb-3 text-xs text-right space-y-1">
+              <div className="flex justify-between"><span className="font-mono text-slate-700">{linkEmp.username}</span><span className="text-slate-500">اسم المستخدم</span></div>
+              <div className="flex justify-between"><span className="font-mono text-slate-700">{linkEmp.password}</span><span className="text-slate-500">كلمة المرور</span></div>
+            </div>
+            <div className="bg-slate-900 text-slate-100 rounded p-3 text-[11px] font-mono break-all text-left mb-3 max-h-28 overflow-y-auto">
+              {buildLoginLink(linkEmp)}
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                onClick={() => {
+                  const link = buildLoginLink(linkEmp);
+                  navigator.clipboard?.writeText(link);
+                  setLinkCopied(true);
+                  setTimeout(() => setLinkCopied(false), 1800);
+                }}
+                className="h-10 rounded bg-[color:var(--eyenak-teal)] text-white text-sm flex items-center justify-center gap-2 hover:opacity-90"
+              >
+                <Copy className="w-4 h-4" />
+                {linkCopied ? "تم النسخ ✓" : "نسخ الرابط"}
+              </button>
+              <a
+                href={`https://wa.me/?text=${encodeURIComponent(
+                  `مرحباً ${linkEmp.name}، هذا رابط دخولك إلى منصة EYENAK:\n${buildLoginLink(linkEmp)}\nاسم المستخدم: ${linkEmp.username}\nالرمز: ${linkEmp.password}`
+                )}`}
+                target="_blank"
+                rel="noreferrer"
+                className="h-10 rounded border border-emerald-500 text-emerald-600 text-sm flex items-center justify-center gap-2 hover:bg-emerald-50"
+              >
+                <Send className="w-4 h-4" />
+                مشاركة عبر واتساب
+              </a>
+              {linkEmp.email && (
+                <a
+                  href={`mailto:${linkEmp.email}?subject=${encodeURIComponent("بيانات دخولك إلى منصة EYENAK")}&body=${encodeURIComponent(
+                    `مرحباً ${linkEmp.name}،\n\nرابط الدخول المباشر:\n${buildLoginLink(linkEmp)}\n\nاسم المستخدم: ${linkEmp.username}\nالرمز: ${linkEmp.password}`
+                  )}`}
+                  className="col-span-2 h-10 rounded border border-slate-300 text-slate-700 text-sm flex items-center justify-center gap-2 hover:bg-slate-50"
+                >
+                  <Send className="w-4 h-4" />
+                  إرسال إلى البريد ({linkEmp.email})
+                </a>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* المساعد الذكي — زر عائم + لوحة محادثة */}
+      <button
+        onClick={() => setAiOpen((v) => !v)}
+        aria-label="المساعد الذكي"
+        className="fixed bottom-5 left-5 z-[55] w-14 h-14 rounded-full shadow-2xl bg-gradient-to-br from-[color:var(--eyenak-teal)] to-emerald-500 text-white flex items-center justify-center hover:scale-105 transition-transform"
+      >
+        <Bot className="w-7 h-7" />
+      </button>
+      {aiOpen && (
+        <div
+          dir="rtl"
+          className="fixed bottom-24 left-5 z-[55] w-[360px] max-w-[92vw] h-[520px] max-h-[80vh] bg-white rounded-2xl shadow-2xl border border-slate-200 flex flex-col overflow-hidden"
+        >
+          <div className="flex items-center justify-between px-4 py-3 bg-gradient-to-r from-[color:var(--eyenak-teal)] to-emerald-500 text-white">
+            <button onClick={() => setAiOpen(false)} className="text-white/80 hover:text-white">
+              <X className="w-5 h-5" />
+            </button>
+            <div className="flex items-center gap-2">
+              <div className="text-right">
+                <div className="font-bold text-sm">مساعد EYENAK</div>
+                <div className="text-[10px] opacity-90">{isAdmin ? "وضع المدير" : `الموظف: ${currentUser}`}</div>
+              </div>
+              <Bot className="w-6 h-6" />
+            </div>
+          </div>
+          <div className="flex-1 overflow-y-auto p-3 space-y-2 bg-slate-50">
+            {aiMessages.map((m, i) => (
+              <div key={i} className={`flex ${m.role === "user" ? "justify-start" : "justify-end"}`}>
+                <div
+                  className={`max-w-[80%] px-3 py-2 rounded-2xl text-sm whitespace-pre-wrap ${
+                    m.role === "user"
+                      ? "bg-slate-200 text-slate-800 rounded-tr-2xl rounded-bl-md"
+                      : "bg-white border border-slate-200 text-slate-700 rounded-tl-2xl rounded-br-md"
+                  }`}
+                >
+                  {m.content}
+                </div>
+              </div>
+            ))}
+            {aiLoading && (
+              <div className="flex justify-end">
+                <div className="bg-white border border-slate-200 rounded-2xl px-3 py-2 text-xs text-slate-500">
+                  يفكر…
+                </div>
+              </div>
+            )}
+          </div>
+          <form
+            onSubmit={async (e) => {
+              e.preventDefault();
+              const text = aiInput.trim();
+              if (!text || aiLoading) return;
+              const nextMsgs: AIMsg[] = [...aiMessages, { role: "user", content: text }];
+              setAiMessages(nextMsgs);
+              setAiInput("");
+              setAiLoading(true);
+              try {
+                const ctx = isAdmin
+                  ? `الدور: مدير. عدد الموظفين: ${employees.length}.`
+                  : `الدور: موظف باسم ${currentUser}. الصلاحيات المفتوحة: ${
+                      currentEmployee
+                        ? PERMS.filter((p) => currentEmployee.perms[p.key]).map((p) => p.label).join("، ") || "لا توجد"
+                        : "—"
+                    }.`;
+                const res = await callAssistant({
+                  data: {
+                    messages: nextMsgs.map((m) => ({ role: m.role, content: m.content })),
+                    context: ctx,
+                  },
+                });
+                if (res.ok) {
+                  setAiMessages((prev) => [...prev, { role: "assistant", content: res.reply || "…" }]);
+                } else {
+                  setAiMessages((prev) => [...prev, { role: "assistant", content: `تعذّر الرد: ${res.error}` }]);
+                }
+              } catch (err) {
+                setAiMessages((prev) => [
+                  ...prev,
+                  { role: "assistant", content: "حصل خطأ بالاتصال، حاول مرة ثانية." },
+                ]);
+              } finally {
+                setAiLoading(false);
+              }
+            }}
+            className="border-t border-slate-200 p-2 bg-white flex items-center gap-2"
+          >
+            <button
+              type="submit"
+              disabled={aiLoading || !aiInput.trim()}
+              className="w-9 h-9 rounded-full bg-[color:var(--eyenak-teal)] text-white flex items-center justify-center disabled:opacity-40"
+            >
+              <Send className="w-4 h-4 rotate-180" />
+            </button>
+            <input
+              value={aiInput}
+              onChange={(e) => setAiInput(e.target.value)}
+              placeholder="اسأل عن أي شيء داخل المنصة…"
+              className="flex-1 h-9 px-3 text-sm border border-slate-300 rounded-full focus:outline-none focus:border-[color:var(--eyenak-teal)]"
+            />
+          </form>
         </div>
       )}
 
