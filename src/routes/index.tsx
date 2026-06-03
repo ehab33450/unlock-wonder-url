@@ -427,6 +427,7 @@ function Index() {
               doneDate: "",
               status: statuses[1],
               priority: priorities[1],
+              progress: 60,
             },
             {
               id: `t2-${idx}`,
@@ -439,6 +440,7 @@ function Index() {
               doneDate: "",
               status: statuses[0],
               priority: priorities[0],
+              progress: 20,
             },
             {
               id: `t3-${idx}`,
@@ -451,6 +453,7 @@ function Index() {
               doneDate: iso(-2),
               status: statuses[2],
               priority: priorities[2],
+              progress: 100,
             },
           ],
         };
