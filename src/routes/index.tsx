@@ -5884,3 +5884,288 @@ function ExcelEditor({
     </div>
   );
 }
+
+function PaymentCountdown({ date, paid }: { date: string; paid: boolean }) {
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const id = setInterval(() => setNow(Date.now()), 60_000);
+    return () => clearInterval(id);
+  }, []);
+  if (paid) return <span className="text-[10px] text-emerald-600 font-bold">مدفوع ✓</span>;
+  if (!date) return <span className="text-[10px] text-slate-400">—</span>;
+  const diff = new Date(date + "T23:59:59").getTime() - now;
+  if (diff <= 0) {
+    const overdueDays = Math.ceil(-diff / 86_400_000);
+    return <span className="text-[10px] text-red-600 font-bold">متأخر {overdueDays}ي</span>;
+  }
+  const days = Math.floor(diff / 86_400_000);
+  const hours = Math.floor((diff % 86_400_000) / 3_600_000);
+  const urgent = days < 3;
+  return (
+    <span className={`text-[10px] font-bold font-mono ${urgent ? "text-amber-600" : "text-sky-700"}`}>
+      باقي {days > 0 ? `${days}ي ${hours}س` : `${hours}س`}
+    </span>
+  );
+}
+
+type FinancePayment = DPayment & { project: string; assignee: string };
+
+function FinanceModal({
+  isAdmin,
+  currentUser,
+  projectMeta,
+  onClose,
+  onUpdatePayment,
+  onAddPayment,
+  onRemovePayment,
+}: {
+  isAdmin: boolean;
+  currentUser: string;
+  projectMeta: Record<string, { contract: DContract; tasks: DTask[] }>;
+  onClose: () => void;
+  onUpdatePayment: (project: string, paymentId: string, patch: Partial<DPayment>) => void;
+  onAddPayment: (project: string) => void;
+  onRemovePayment: (project: string, paymentId: string) => void;
+}) {
+  const [filter, setFilter] = useState<"all" | "due" | "paid" | "overdue">("all");
+  const visibleProjects = Object.entries(projectMeta).filter(
+    ([, meta]) => isAdmin || meta.contract.assignee === currentUser,
+  );
+
+  const allPayments: FinancePayment[] = visibleProjects.flatMap(([project, meta]) =>
+    meta.contract.payments.map((p) => ({ ...p, project, assignee: meta.contract.assignee })),
+  );
+  const now = Date.now();
+  const filtered = allPayments.filter((p) => {
+    if (filter === "paid") return p.paid;
+    if (filter === "due") return !p.paid;
+    if (filter === "overdue") return !p.paid && p.date && new Date(p.date).getTime() < now;
+    return true;
+  });
+  filtered.sort((a, b) => {
+    if (a.paid !== b.paid) return a.paid ? 1 : -1;
+    return (a.date || "").localeCompare(b.date || "");
+  });
+
+  const totalDue = allPayments.filter((p) => !p.paid).reduce((s, p) => s + Number(p.amount || 0), 0);
+  const totalPaid = allPayments.filter((p) => p.paid).reduce((s, p) => s + Number(p.amount || 0), 0);
+  const nextDue = allPayments
+    .filter((p) => !p.paid && p.date)
+    .sort((a, b) => a.date.localeCompare(b.date))[0];
+
+  const onUploadReceipt = (project: string, paymentId: string, file: File) => {
+    const reader = new FileReader();
+    reader.onload = () =>
+      onUpdatePayment(project, paymentId, {
+        receiptName: file.name,
+        receiptData: typeof reader.result === "string" ? reader.result : "",
+        paid: true,
+      });
+    reader.readAsDataURL(file);
+  };
+
+  return (
+    <div
+      className="fixed inset-0 z-[60] bg-black/40 flex items-center justify-center p-4"
+      onClick={onClose}
+    >
+      <div
+        className="bg-white rounded-xl w-full max-w-6xl max-h-[90vh] overflow-hidden flex flex-col"
+        onClick={(e) => e.stopPropagation()}
+        dir="rtl"
+      >
+        <div className="flex items-center justify-between px-5 py-3 border-b border-slate-200">
+          <button onClick={onClose} className="p-1 text-slate-400 hover:text-slate-700">
+            <X className="w-5 h-5" />
+          </button>
+          <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2">
+            <Wallet className="w-5 h-5 text-emerald-600" /> المالية وأقساط العقود
+          </h2>
+        </div>
+
+        {/* Summary */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 p-4 bg-slate-50 border-b border-slate-200">
+          <div className="bg-white rounded-lg p-3 border border-slate-200">
+            <div className="text-[10px] text-slate-500">المستحق</div>
+            <div className="text-lg font-bold text-amber-600">{totalDue.toLocaleString()} ر.س</div>
+          </div>
+          <div className="bg-white rounded-lg p-3 border border-slate-200">
+            <div className="text-[10px] text-slate-500">المدفوع</div>
+            <div className="text-lg font-bold text-emerald-600">{totalPaid.toLocaleString()} ر.س</div>
+          </div>
+          <div className="bg-white rounded-lg p-3 border border-slate-200">
+            <div className="text-[10px] text-slate-500">إجمالي العقود</div>
+            <div className="text-lg font-bold text-slate-800">
+              {(totalDue + totalPaid).toLocaleString()} ر.س
+            </div>
+          </div>
+          <div className="bg-white rounded-lg p-3 border border-slate-200">
+            <div className="text-[10px] text-slate-500">أقرب قسط</div>
+            {nextDue ? (
+              <div className="mt-0.5">
+                <PaymentCountdown date={nextDue.date} paid={false} />
+                <div className="text-[10px] text-slate-500 truncate">{nextDue.project}</div>
+              </div>
+            ) : (
+              <div className="text-sm text-slate-400">—</div>
+            )}
+          </div>
+        </div>
+
+        {/* Filters */}
+        <div className="flex gap-2 px-5 py-3 border-b border-slate-200">
+          {([
+            ["all", "الكل"],
+            ["due", "المستحقة"],
+            ["overdue", "المتأخرة"],
+            ["paid", "المدفوعة"],
+          ] as const).map(([k, label]) => (
+            <button
+              key={k}
+              onClick={() => setFilter(k)}
+              className={`px-3 py-1 rounded text-xs font-bold border ${filter === k ? "bg-emerald-600 text-white border-emerald-600" : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50"}`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+
+        {/* Table */}
+        <div className="overflow-auto flex-1">
+          {filtered.length === 0 ? (
+            <div className="py-16 text-center text-slate-400 text-sm">
+              لا توجد أقساط. افتح أي مشروع واستخدم زر "تقسيم العقد إلى أقساط".
+            </div>
+          ) : (
+            <table className="w-full text-sm">
+              <thead className="bg-slate-100 text-slate-600 text-xs sticky top-0">
+                <tr>
+                  <th className="px-3 py-2 text-right font-bold">المشروع</th>
+                  <th className="px-3 py-2 text-right font-bold">الموظف</th>
+                  <th className="px-3 py-2 text-right font-bold">المبلغ</th>
+                  <th className="px-3 py-2 text-right font-bold">تاريخ الاستحقاق</th>
+                  <th className="px-3 py-2 text-right font-bold">العد التنازلي</th>
+                  <th className="px-3 py-2 text-right font-bold">الإيصال</th>
+                  <th className="px-3 py-2 text-right font-bold">الحالة</th>
+                  {isAdmin && <th className="px-3 py-2"></th>}
+                </tr>
+              </thead>
+              <tbody>
+                {filtered.map((p) => (
+                  <tr key={`${p.project}-${p.id}`} className="border-t border-slate-100 hover:bg-slate-50">
+                    <td className="px-3 py-2 font-semibold text-slate-800">{p.project}</td>
+                    <td className="px-3 py-2 text-slate-600 text-xs">{p.assignee || "—"}</td>
+                    <td className="px-3 py-2">
+                      <input
+                        type="number"
+                        value={p.amount}
+                        disabled={!isAdmin}
+                        onChange={(e) =>
+                          onUpdatePayment(p.project, p.id, { amount: e.target.value })
+                        }
+                        className="w-24 h-8 border border-slate-200 rounded px-2 text-sm text-right"
+                      />
+                      <span className="text-[10px] text-slate-500 mr-1">ر.س</span>
+                    </td>
+                    <td className="px-3 py-2">
+                      <input
+                        type="date"
+                        value={p.date}
+                        disabled={!isAdmin}
+                        onChange={(e) =>
+                          onUpdatePayment(p.project, p.id, { date: e.target.value })
+                        }
+                        className="h-8 border border-slate-200 rounded px-2 text-xs"
+                      />
+                    </td>
+                    <td className="px-3 py-2">
+                      <PaymentCountdown date={p.date} paid={p.paid} />
+                    </td>
+                    <td className="px-3 py-2">
+                      <div className="flex items-center gap-1.5">
+                        {p.receiptName ? (
+                          <a
+                            href={p.receiptData}
+                            download={p.receiptName}
+                            className="text-xs text-emerald-700 hover:underline truncate max-w-[120px] flex items-center gap-1"
+                          >
+                            <Receipt className="w-3 h-3" />
+                            {p.receiptName}
+                          </a>
+                        ) : (
+                          <span className="text-[10px] text-slate-400">لا يوجد</span>
+                        )}
+                        {isAdmin && (
+                          <>
+                            <input
+                              type="file"
+                              className="hidden"
+                              id={`receipt-${p.project}-${p.id}`}
+                              accept="image/*,.pdf"
+                              onChange={(e) => {
+                                const f = e.target.files?.[0];
+                                if (f) onUploadReceipt(p.project, p.id, f);
+                              }}
+                            />
+                            <label
+                              htmlFor={`receipt-${p.project}-${p.id}`}
+                              className="cursor-pointer p-1 rounded hover:bg-slate-100 text-slate-500"
+                              title="رفع إيصال"
+                            >
+                              <Upload className="w-3.5 h-3.5" />
+                            </label>
+                          </>
+                        )}
+                      </div>
+                    </td>
+                    <td className="px-3 py-2">
+                      <button
+                        disabled={!isAdmin}
+                        onClick={() => onUpdatePayment(p.project, p.id, { paid: !p.paid })}
+                        className={`text-[10px] font-bold px-2 py-1 rounded ${p.paid ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"} ${isAdmin ? "hover:opacity-80" : ""}`}
+                      >
+                        {p.paid ? "مدفوع" : "غير مدفوع"}
+                      </button>
+                    </td>
+                    {isAdmin && (
+                      <td className="px-3 py-2">
+                        <button
+                          onClick={() => onRemovePayment(p.project, p.id)}
+                          className="p-1 rounded hover:bg-red-50 text-slate-400 hover:text-red-500"
+                          title="حذف القسط"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </td>
+                    )}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
+
+        {isAdmin && (
+          <div className="border-t border-slate-200 p-3 flex items-center gap-2 justify-end bg-slate-50">
+            <span className="text-xs text-slate-500">إضافة قسط يدوي إلى مشروع:</span>
+            <select
+              onChange={(e) => {
+                if (e.target.value) {
+                  onAddPayment(e.target.value);
+                  e.target.value = "";
+                }
+              }}
+              defaultValue=""
+              className="h-9 border border-slate-300 rounded px-2 text-xs"
+            >
+              <option value="">— اختر المشروع —</option>
+              {visibleProjects.map(([p]) => (
+                <option key={p} value={p}>{p}</option>
+              ))}
+            </select>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
