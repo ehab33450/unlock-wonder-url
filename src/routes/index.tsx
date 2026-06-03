@@ -5070,6 +5070,8 @@ function Index() {
           setActive={setActiveGuide}
           videos={guideVideos}
           setVideo={(id, url) => setGuideVideos((v) => ({ ...v, [id]: url }))}
+          images={guideImages}
+          setImage={(id, url) => setGuideImages((v) => ({ ...v, [id]: url }))}
           onClose={() => setGuidesOpen(false)}
         />
       )}
