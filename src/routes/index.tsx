@@ -1759,7 +1759,7 @@ function Index() {
                     ? "ملخص التتبع حسب المشروع"
                     : activeTab === "المقالات"
                     ? "مقالات ومراجع داخلية"
-                    : `${tabFilteredTasks.length} عنصر`}
+                    : `${scopedTasks.length} عنصر`}
                 </span>
                 <h2 className="font-bold text-slate-700">{activeTab}</h2>
               </div>
@@ -1829,7 +1829,7 @@ function Index() {
                       </tr>
                     </thead>
                     <tbody>
-                      {tabFilteredTasks.map((t) => (
+                      {scopedTasks.map((t) => (
                         <tr key={`${t.project}-${t.id}`} className="border-b border-slate-100 hover:bg-slate-50">
                           <td className="py-2 px-2">
                             <button onClick={() => toggleFav(t.id)}>
@@ -1843,7 +1843,7 @@ function Index() {
                           <td className="py-2 px-2 font-medium text-slate-800">{t.name}</td>
                         </tr>
                       ))}
-                      {tabFilteredTasks.length === 0 && (
+                      {scopedTasks.length === 0 && (
                         <tr>
                           <td colSpan={6} className="py-6 text-center text-slate-400">لا توجد عناصر</td>
                         </tr>
