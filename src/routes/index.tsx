@@ -5319,7 +5319,19 @@ function ProjectDetailOverlay({
           <>
             {/* Contract bar */}
             <div className="px-6 py-4 bg-white border-b border-slate-200">
-              <h3 className="text-sm font-bold text-slate-700 mb-3 text-right">بيانات العقد</h3>
+              <div className="flex items-center justify-between mb-3">
+                {canEditAll && (
+                  <SplitContractButton
+                    value={data.contract.value}
+                    startDate={data.contract.startDate}
+                    endDate={data.contract.endDate}
+                    onSplit={(payments) =>
+                      onUpdate((c) => ({ ...c, contract: { ...c.contract, payments } }))
+                    }
+                  />
+                )}
+                <h3 className="text-sm font-bold text-slate-700 text-right">بيانات العقد</h3>
+              </div>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-right">
                 <InfoCell
                   label="بداية العقد"
