@@ -2120,17 +2120,22 @@ function Index() {
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="text-slate-500 border-b border-slate-200">
+                        <th className="text-center py-2 px-2 font-medium w-10">💬</th>
                         <th className="text-right py-2 px-2 font-medium">المفضلة</th>
                         <th className="text-right py-2 px-2 font-medium">الحالة</th>
                         <th className="text-right py-2 px-2 font-medium">المنفذ</th>
                         <th className="text-right py-2 px-2 font-medium">تاريخ الانتهاء</th>
                         <th className="text-right py-2 px-2 font-medium">المشروع</th>
                         <th className="text-right py-2 px-2 font-medium">المهمة</th>
+                        <ExtraColHeaders tableId="dashboard.tasks" isAdmin={isAdmin} thClass="text-right py-2 px-2 font-medium whitespace-nowrap" />
                       </tr>
                     </thead>
                     <tbody>
                       {scopedTasks.map((t) => (
                         <tr key={`${t.project}-${t.id}`} className="border-b border-slate-100 hover:bg-slate-50">
+                          <td className="py-2 px-2 text-center">
+                            <RowChatButton tableId="dashboard.tasks" rowId={`${t.project}-${t.id}`} rowLabel={t.name} currentUser={currentUser} isAdmin={isAdmin} employees={employees.map((e) => e.name)} />
+                          </td>
                           <td className="py-2 px-2">
                             <button onClick={() => toggleFav(t.id)}>
                               <Star className={`w-4 h-4 ${favorites[t.id] ? "fill-yellow-400 text-yellow-400" : "text-slate-300"}`} />
@@ -2141,11 +2146,12 @@ function Index() {
                           <td className="py-2 px-2">{t.endDate || "—"}</td>
                           <td className="py-2 px-2 text-slate-600">{t.project}</td>
                           <td className="py-2 px-2 font-medium text-slate-800">{t.name}</td>
+                          <ExtraCells tableId="dashboard.tasks" rowId={`${t.project}-${t.id}`} canEdit={isAdmin || employeeCanEdit} employees={employees.map((e) => e.name)} tdClass="py-2 px-2 min-w-[110px]" />
                         </tr>
                       ))}
                       {scopedTasks.length === 0 && (
                         <tr>
-                          <td colSpan={6} className="py-6 text-center text-slate-400">لا توجد عناصر</td>
+                          <td colSpan={20} className="py-6 text-center text-slate-400">لا توجد عناصر</td>
                         </tr>
                       )}
                     </tbody>
