@@ -371,6 +371,21 @@ function Index() {
   const [detailProject, setDetailProject] = useState<string | null>(null);
   const taskFileRefs = useRef<Record<string, HTMLInputElement | null>>({});
 
+  // ============ Per-task internal chat (private to admin + selected members) ============
+  type TaskChatMsg = { id: string; author: string; text: string; ts: number };
+  type TaskChat = { allowed: string[]; msgs: TaskChatMsg[] };
+  const [taskChats, setTaskChats] = useState<Record<string, TaskChat>>({});
+
+  // ============ Flexible task columns (right-click to add) ============
+  type CustomColType =
+    | "text" | "number" | "date" | "link" | "phone" | "email"
+    | "rating" | "tags" | "location" | "timer" | "people" | "vote";
+  type CustomCol = { id: string; name: string; type: CustomColType };
+  // Keyed by project name
+  const [customCols, setCustomCols] = useState<Record<string, CustomCol[]>>({});
+  // Keyed by `${taskId}::${colId}`
+  const [customCells, setCustomCells] = useState<Record<string, string>>({});
+
   // Notifications: derive from tasks' end dates
   const [notifOpen, setNotifOpen] = useState(false);
   const [dismissedNotifs, setDismissedNotifs] = useState<Record<string, true>>({});
