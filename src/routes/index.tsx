@@ -7328,6 +7328,7 @@ function FinanceModal({
                         {p.paid ? "مدفوع" : "غير مدفوع"}
                       </button>
                     </td>
+                    <ExtraCells tableId="finance.payments" rowId={`${p.project}-${p.id}`} canEdit={isAdmin} employees={employees} tdClass="px-3 py-2 min-w-[120px]" />
                     {isAdmin && (
                       <td className="px-3 py-2">
                         <button
