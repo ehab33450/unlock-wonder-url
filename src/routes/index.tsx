@@ -8,6 +8,7 @@ import guideFinanceImg from "@/assets/guide-finance.png";
 import guideMeetingsImg from "@/assets/guide-meetings.png";
 import guideUsersImg from "@/assets/guide-users.png";
 import guideAssistantImg from "@/assets/guide-assistant.png";
+import { ExtraColHeaders, ExtraCells, RowChatButton } from "@/components/table-extras";
 import {
   Calendar,
   FileText,
@@ -2119,17 +2120,22 @@ function Index() {
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="text-slate-500 border-b border-slate-200">
+                        <th className="text-center py-2 px-2 font-medium w-10">💬</th>
                         <th className="text-right py-2 px-2 font-medium">المفضلة</th>
                         <th className="text-right py-2 px-2 font-medium">الحالة</th>
                         <th className="text-right py-2 px-2 font-medium">المنفذ</th>
                         <th className="text-right py-2 px-2 font-medium">تاريخ الانتهاء</th>
                         <th className="text-right py-2 px-2 font-medium">المشروع</th>
                         <th className="text-right py-2 px-2 font-medium">المهمة</th>
+                        <ExtraColHeaders tableId="dashboard.tasks" isAdmin={isAdmin} thClass="text-right py-2 px-2 font-medium whitespace-nowrap" />
                       </tr>
                     </thead>
                     <tbody>
                       {scopedTasks.map((t) => (
                         <tr key={`${t.project}-${t.id}`} className="border-b border-slate-100 hover:bg-slate-50">
+                          <td className="py-2 px-2 text-center">
+                            <RowChatButton tableId="dashboard.tasks" rowId={`${t.project}-${t.id}`} rowLabel={t.name} currentUser={currentUser} isAdmin={isAdmin} employees={employees.map((e) => e.name)} />
+                          </td>
                           <td className="py-2 px-2">
                             <button onClick={() => toggleFav(t.id)}>
                               <Star className={`w-4 h-4 ${favorites[t.id] ? "fill-yellow-400 text-yellow-400" : "text-slate-300"}`} />
@@ -2140,11 +2146,12 @@ function Index() {
                           <td className="py-2 px-2">{t.endDate || "—"}</td>
                           <td className="py-2 px-2 text-slate-600">{t.project}</td>
                           <td className="py-2 px-2 font-medium text-slate-800">{t.name}</td>
+                          <ExtraCells tableId="dashboard.tasks" rowId={`${t.project}-${t.id}`} canEdit={isAdmin || employeeCanEdit} employees={employees.map((e) => e.name)} tdClass="py-2 px-2 min-w-[110px]" />
                         </tr>
                       ))}
                       {scopedTasks.length === 0 && (
                         <tr>
-                          <td colSpan={6} className="py-6 text-center text-slate-400">لا توجد عناصر</td>
+                          <td colSpan={20} className="py-6 text-center text-slate-400">لا توجد عناصر</td>
                         </tr>
                       )}
                     </tbody>
@@ -5305,6 +5312,7 @@ function Index() {
         <FinanceModal
           isAdmin={isAdmin}
           currentUser={currentUser}
+          employees={employees.map((e) => e.name)}
           projectMeta={projectMeta}
           onClose={() => setFinanceOpen(false)}
           onUpdatePayment={(project, paymentId, patch) => {
@@ -7099,6 +7107,7 @@ type FinancePayment = DPayment & { project: string; assignee: string };
 function FinanceModal({
   isAdmin,
   currentUser,
+  employees,
   projectMeta,
   onClose,
   onUpdatePayment,
@@ -7107,6 +7116,7 @@ function FinanceModal({
 }: {
   isAdmin: boolean;
   currentUser: string;
+  employees: string[];
   projectMeta: Record<string, { contract: DContract; tasks: DTask[] }>;
   onClose: () => void;
   onUpdatePayment: (project: string, paymentId: string, patch: Partial<DPayment>) => void;
@@ -7226,6 +7236,7 @@ function FinanceModal({
             <table className="w-full text-sm">
               <thead className="bg-slate-100 text-slate-600 text-xs sticky top-0">
                 <tr>
+                  <th className="px-3 py-2 text-center font-bold w-10">💬</th>
                   <th className="px-3 py-2 text-right font-bold">المشروع</th>
                   <th className="px-3 py-2 text-right font-bold">الموظف</th>
                   <th className="px-3 py-2 text-right font-bold">المبلغ</th>
@@ -7233,12 +7244,16 @@ function FinanceModal({
                   <th className="px-3 py-2 text-right font-bold">العد التنازلي</th>
                   <th className="px-3 py-2 text-right font-bold">الإيصال</th>
                   <th className="px-3 py-2 text-right font-bold">الحالة</th>
+                  <ExtraColHeaders tableId="finance.payments" isAdmin={isAdmin} thClass="px-3 py-2 text-right font-bold whitespace-nowrap" />
                   {isAdmin && <th className="px-3 py-2"></th>}
                 </tr>
               </thead>
               <tbody>
                 {filtered.map((p) => (
                   <tr key={`${p.project}-${p.id}`} className="border-t border-slate-100 hover:bg-slate-50">
+                    <td className="px-3 py-2 text-center">
+                      <RowChatButton tableId="finance.payments" rowId={`${p.project}-${p.id}`} rowLabel={`${p.project} — ${p.amount} ر.س`} currentUser={currentUser} isAdmin={isAdmin} employees={employees} />
+                    </td>
                     <td className="px-3 py-2 font-semibold text-slate-800">{p.project}</td>
                     <td className="px-3 py-2 text-slate-600 text-xs">{p.assignee || "—"}</td>
                     <td className="px-3 py-2">
@@ -7313,6 +7328,7 @@ function FinanceModal({
                         {p.paid ? "مدفوع" : "غير مدفوع"}
                       </button>
                     </td>
+                    <ExtraCells tableId="finance.payments" rowId={`${p.project}-${p.id}`} canEdit={isAdmin} employees={employees} tdClass="px-3 py-2 min-w-[120px]" />
                     {isAdmin && (
                       <td className="px-3 py-2">
                         <button
