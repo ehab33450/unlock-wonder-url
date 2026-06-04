@@ -5993,6 +5993,10 @@ function ProjectDetailOverlay({
                 <table className="w-full text-sm">
                   <thead className="bg-slate-100 text-slate-600 text-xs">
                     <tr>
+                      <th
+                        className="px-2 py-2 text-center font-semibold w-10"
+                        title="محادثة المهمة الخاصة"
+                      >💬</th>
                       <th className="px-2 py-2 text-right font-semibold">اسم المهمة</th>
                       <th className="px-2 py-2 text-right font-semibold">المنصة</th>
                       <th className="px-2 py-2 text-right font-semibold">المستفيد</th>
@@ -6004,20 +6008,68 @@ function ProjectDetailOverlay({
                       <th className="px-2 py-2 text-right font-semibold">الحالة</th>
                       <th className="px-2 py-2 text-right font-semibold">نسبة الإنجاز</th>
                       <th className="px-2 py-2 text-right font-semibold">الأهمية</th>
-                      <th className="px-2 py-2 text-right font-semibold">المرفق</th>
+                      <th
+                        className="px-2 py-2 text-right font-semibold"
+                        onContextMenu={(e) => canEditAll && openColMenu(e, customCols.length)}
+                      >المرفق</th>
+                      {customCols.map((c, idx) => (
+                        <th
+                          key={c.id}
+                          className="px-2 py-2 text-right font-semibold whitespace-nowrap group"
+                          onContextMenu={(e) => canEditAll && openColMenu(e, idx + 1)}
+                        >
+                          <span className="inline-flex items-center gap-1">
+                            <span>{COL_TYPE_OPTIONS.find((o) => o.type === c.type)?.icon}</span>
+                            <span>{c.name}</span>
+                            {canEditAll && (
+                              <button
+                                onClick={() => removeColumn(c.id)}
+                                className="opacity-0 group-hover:opacity-100 text-red-500 hover:text-red-700 text-[10px] mr-1"
+                                title="حذف العمود"
+                              >✕</button>
+                            )}
+                          </span>
+                        </th>
+                      ))}
+                      {canEditAll && (
+                        <th
+                          className="px-2 py-2 text-center font-semibold text-slate-400 hover:text-[color:var(--eyenak-teal)] cursor-pointer"
+                          title="إضافة عمود (أو انقر بزر الفأرة الأيمن على أي عنوان)"
+                          onClick={(e) => openColMenu(e, customCols.length)}
+                          onContextMenu={(e) => openColMenu(e, customCols.length)}
+                        >+</th>
+                      )}
                       {canEditOwn && <th className="px-2 py-2"></th>}
                     </tr>
                   </thead>
                   <tbody>
                     {data.tasks.length === 0 ? (
                       <tr>
-                        <td colSpan={13} className="py-12 text-center text-slate-400">
+                        <td colSpan={14 + customCols.length + (canEditAll ? 1 : 0)} className="py-12 text-center text-slate-400">
                           لا توجد مهام بعد. اضغط "إضافة مهمة" للبدء.
                         </td>
                       </tr>
                     ) : (
                       data.tasks.map((t) => (
                         <tr key={t.id} className="border-t border-slate-100 hover:bg-slate-50">
+                          <td className="px-1 py-1 text-center">
+                            {canSeeChat(t.id) ? (
+                              <button
+                                onClick={() => { setChatTaskId(t.id); setChatDraft(""); }}
+                                className="relative inline-flex items-center justify-center w-7 h-7 rounded-full hover:bg-slate-100 text-slate-500"
+                                title="محادثة خاصة بالمهمة"
+                              >
+                                <MessageSquare className="w-4 h-4" />
+                                {(taskChats[t.id]?.msgs.length ?? 0) > 0 && (
+                                  <span className="absolute -top-1 -right-1 bg-[color:var(--eyenak-teal)] text-white text-[9px] rounded-full px-1 min-w-[14px] h-[14px] flex items-center justify-center">
+                                    {taskChats[t.id]!.msgs.length}
+                                  </span>
+                                )}
+                              </button>
+                            ) : (
+                              <span className="text-slate-300 text-xs" title="لا تملك صلاحية الاطلاع">—</span>
+                            )}
+                          </td>
                           <td className="px-1 py-1">
                             <input
                               value={t.name}
