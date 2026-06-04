@@ -4518,6 +4518,25 @@ function Index() {
           isAdmin={isAdmin}
           currentUser={currentUser}
           employeeCanEdit={employeeCanEdit}
+          employees={employees.map((e) => e.name)}
+          taskChats={taskChats}
+          onUpdateTaskChat={(taskId, updater) =>
+            setTaskChats((prev) => {
+              const cur = prev[taskId] ?? { allowed: [], msgs: [] };
+              return { ...prev, [taskId]: updater(cur) };
+            })
+          }
+          customCols={customCols[detailProject] ?? []}
+          onUpdateCustomCols={(updater) =>
+            setCustomCols((prev) => ({
+              ...prev,
+              [detailProject!]: updater(prev[detailProject!] ?? []),
+            }))
+          }
+          customCells={customCells}
+          onSetCustomCell={(taskId, colId, val) =>
+            setCustomCells((prev) => ({ ...prev, [`${taskId}::${colId}`]: val }))
+          }
           onClose={() => setDetailProject(null)}
           onOpenChat={() => {
             setChatProject(detailProject);
