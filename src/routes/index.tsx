@@ -7107,6 +7107,7 @@ type FinancePayment = DPayment & { project: string; assignee: string };
 function FinanceModal({
   isAdmin,
   currentUser,
+  employees,
   projectMeta,
   onClose,
   onUpdatePayment,
@@ -7115,6 +7116,7 @@ function FinanceModal({
 }: {
   isAdmin: boolean;
   currentUser: string;
+  employees: string[];
   projectMeta: Record<string, { contract: DContract; tasks: DTask[] }>;
   onClose: () => void;
   onUpdatePayment: (project: string, paymentId: string, patch: Partial<DPayment>) => void;
