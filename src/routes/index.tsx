@@ -5811,6 +5811,39 @@ function ProjectDetailOverlay({
     "عالي": "bg-red-100 text-red-700",
   };
 
+  // Right-click column menu state
+  const [colMenu, setColMenu] = useState<{ x: number; y: number; insertAt: number } | null>(null);
+  const openColMenu = (e: React.MouseEvent, insertAt: number) => {
+    e.preventDefault();
+    setColMenu({ x: e.clientX, y: e.clientY, insertAt });
+  };
+  const addColumn = (type: DColType, insertAt: number) => {
+    const name = window.prompt("اسم العمود الجديد:", COL_TYPE_OPTIONS.find((o) => o.type === type)?.label ?? "عمود");
+    if (!name) { setColMenu(null); return; }
+    const id = `c${Date.now()}`;
+    onUpdateCustomCols((cur) => {
+      const next = [...cur];
+      next.splice(Math.max(0, Math.min(insertAt, next.length)), 0, { id, name, type });
+      return next;
+    });
+    setColMenu(null);
+  };
+  const removeColumn = (id: string) => {
+    if (!window.confirm("حذف هذا العمود؟")) return;
+    onUpdateCustomCols((cur) => cur.filter((c) => c.id !== id));
+  };
+
+  // Per-task chat panel state
+  const [chatTaskId, setChatTaskId] = useState<string | null>(null);
+  const [chatDraft, setChatDraft] = useState("");
+  const [memberPickOpen, setMemberPickOpen] = useState(false);
+  const activeChat = chatTaskId ? (taskChats[chatTaskId] ?? { allowed: [], msgs: [] }) : null;
+  const canSeeChat = (taskId: string) => {
+    if (isAdmin) return true;
+    const tc = taskChats[taskId];
+    return !!tc && tc.allowed.includes(currentUser);
+  };
+
   return (
     <div
       className="fixed inset-0 z-50 bg-black/40 flex items-start justify-center p-4 overflow-y-auto"
