@@ -5648,6 +5648,25 @@ type DTask = {
 };
 type DMeta = { contract: DContract; tasks: DTask[] };
 
+type DColType =
+  | "text" | "number" | "date" | "link" | "phone" | "email"
+  | "rating" | "tags" | "location" | "timer" | "people" | "vote";
+
+const COL_TYPE_OPTIONS: { type: DColType; label: string; icon: string }[] = [
+  { type: "people",   label: "الأشخاص",       icon: "👥" },
+  { type: "text",     label: "نص",            icon: "T"  },
+  { type: "date",     label: "التاريخ",       icon: "📅" },
+  { type: "number",   label: "رقم",           icon: "#"  },
+  { type: "tags",     label: "وسوم",          icon: "🏷️" },
+  { type: "link",     label: "الرابط",        icon: "🔗" },
+  { type: "phone",    label: "رقم التواصل",   icon: "📱" },
+  { type: "email",    label: "بريد إلكتروني", icon: "✉️" },
+  { type: "location", label: "الموقع",        icon: "📍" },
+  { type: "rating",   label: "التقييم",       icon: "⭐" },
+  { type: "timer",    label: "متابعة الوقت",  icon: "⏱️" },
+  { type: "vote",     label: "التصويت",       icon: "✅" },
+];
+
 function Countdown({ end, status }: { end: string; status: DStatus }) {
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
