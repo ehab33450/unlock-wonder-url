@@ -7236,6 +7236,7 @@ function FinanceModal({
             <table className="w-full text-sm">
               <thead className="bg-slate-100 text-slate-600 text-xs sticky top-0">
                 <tr>
+                  <th className="px-3 py-2 text-center font-bold w-10">💬</th>
                   <th className="px-3 py-2 text-right font-bold">المشروع</th>
                   <th className="px-3 py-2 text-right font-bold">الموظف</th>
                   <th className="px-3 py-2 text-right font-bold">المبلغ</th>
@@ -7243,12 +7244,16 @@ function FinanceModal({
                   <th className="px-3 py-2 text-right font-bold">العد التنازلي</th>
                   <th className="px-3 py-2 text-right font-bold">الإيصال</th>
                   <th className="px-3 py-2 text-right font-bold">الحالة</th>
+                  <ExtraColHeaders tableId="finance.payments" isAdmin={isAdmin} thClass="px-3 py-2 text-right font-bold whitespace-nowrap" />
                   {isAdmin && <th className="px-3 py-2"></th>}
                 </tr>
               </thead>
               <tbody>
                 {filtered.map((p) => (
                   <tr key={`${p.project}-${p.id}`} className="border-t border-slate-100 hover:bg-slate-50">
+                    <td className="px-3 py-2 text-center">
+                      <RowChatButton tableId="finance.payments" rowId={`${p.project}-${p.id}`} rowLabel={`${p.project} — ${p.amount} ر.س`} currentUser={currentUser} isAdmin={isAdmin} employees={employees} />
+                    </td>
                     <td className="px-3 py-2 font-semibold text-slate-800">{p.project}</td>
                     <td className="px-3 py-2 text-slate-600 text-xs">{p.assignee || "—"}</td>
                     <td className="px-3 py-2">
