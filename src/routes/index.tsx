@@ -6224,6 +6224,69 @@ function ProjectDetailOverlay({
                               )}
                             </div>
                           </td>
+                          {customCols.map((c) => {
+                            const key = `${t.id}::${c.id}`;
+                            const val = customCells[key] ?? "";
+                            const setVal = (v: string) => onSetCustomCell(t.id, c.id, v);
+                            const baseCls = "w-full px-2 py-1 text-right text-xs rounded bg-transparent focus:outline-none focus:bg-emerald-50";
+                            return (
+                              <td key={c.id} className="px-1 py-1 min-w-[110px]">
+                                {c.type === "text" && (
+                                  <input value={val} disabled={!canEditOwn} onChange={(e) => setVal(e.target.value)} className={baseCls} />
+                                )}
+                                {c.type === "number" && (
+                                  <input type="number" value={val} disabled={!canEditOwn} onChange={(e) => setVal(e.target.value)} className={baseCls} />
+                                )}
+                                {c.type === "date" && (
+                                  <input type="date" value={val} disabled={!canEditOwn} onChange={(e) => setVal(e.target.value)} className={baseCls} />
+                                )}
+                                {c.type === "link" && (
+                                  <input type="url" placeholder="https://" value={val} disabled={!canEditOwn} onChange={(e) => setVal(e.target.value)} className={baseCls} dir="ltr" />
+                                )}
+                                {c.type === "phone" && (
+                                  <input type="tel" value={val} disabled={!canEditOwn} onChange={(e) => setVal(e.target.value)} className={baseCls} dir="ltr" />
+                                )}
+                                {c.type === "email" && (
+                                  <input type="email" value={val} disabled={!canEditOwn} onChange={(e) => setVal(e.target.value)} className={baseCls} dir="ltr" />
+                                )}
+                                {c.type === "location" && (
+                                  <input value={val} placeholder="📍 الموقع" disabled={!canEditOwn} onChange={(e) => setVal(e.target.value)} className={baseCls} />
+                                )}
+                                {c.type === "tags" && (
+                                  <input value={val} placeholder="وسم، وسم" disabled={!canEditOwn} onChange={(e) => setVal(e.target.value)} className={baseCls} />
+                                )}
+                                {c.type === "timer" && (
+                                  <input value={val} placeholder="0h 0m" disabled={!canEditOwn} onChange={(e) => setVal(e.target.value)} className={baseCls} />
+                                )}
+                                {c.type === "people" && (
+                                  <select value={val} disabled={!canEditOwn} onChange={(e) => setVal(e.target.value)} className={baseCls}>
+                                    <option value="">—</option>
+                                    {employees.map((n) => <option key={n} value={n}>{n}</option>)}
+                                  </select>
+                                )}
+                                {c.type === "rating" && (
+                                  <div className="flex items-center gap-0.5 justify-end">
+                                    {[1,2,3,4,5].map((n) => (
+                                      <button
+                                        key={n}
+                                        type="button"
+                                        disabled={!canEditOwn}
+                                        onClick={() => setVal(String(n))}
+                                        className={`text-sm leading-none ${Number(val) >= n ? "text-amber-400" : "text-slate-300"} disabled:opacity-60`}
+                                      >★</button>
+                                    ))}
+                                  </div>
+                                )}
+                                {c.type === "vote" && (
+                                  <label className="flex items-center justify-end gap-1 text-xs text-slate-600">
+                                    <input type="checkbox" checked={val === "1"} disabled={!canEditOwn} onChange={(e) => setVal(e.target.checked ? "1" : "")} />
+                                    <span>{val === "1" ? "موافق" : "—"}</span>
+                                  </label>
+                                )}
+                              </td>
+                            );
+                          })}
+                          {canEditAll && <td className="px-1 py-1" />}
                           {canEditOwn && (
                             <td className="px-1 py-1">
                               {isAdmin && (
@@ -6246,6 +6309,152 @@ function ProjectDetailOverlay({
             </div>
           </>
         )}
+
+        {/* Column-type context menu */}
+        {colMenu && (
+          <div className="fixed inset-0 z-[80]" onClick={() => setColMenu(null)} onContextMenu={(e) => { e.preventDefault(); setColMenu(null); }}>
+            <div
+              className="absolute bg-white rounded-lg shadow-2xl border border-slate-200 p-2 grid grid-cols-2 gap-1 min-w-[260px]"
+              style={{ left: Math.min(colMenu.x, window.innerWidth - 280), top: Math.min(colMenu.y, window.innerHeight - 320) }}
+              dir="rtl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="col-span-2 px-2 py-1 text-[11px] font-bold text-slate-500 border-b border-slate-100 mb-1">إضافة عمود</div>
+              {COL_TYPE_OPTIONS.map((o) => (
+                <button
+                  key={o.type}
+                  onClick={() => addColumn(o.type, colMenu.insertAt)}
+                  className="flex items-center justify-between gap-2 px-3 py-2 rounded hover:bg-slate-100 text-xs text-slate-700"
+                >
+                  <span className="text-base w-5 text-center">{o.icon}</span>
+                  <span className="font-medium">{o.label}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Per-task internal chat panel */}
+        {chatTaskId && (() => {
+          const task = data.tasks.find((x) => x.id === chatTaskId);
+          if (!task) return null;
+          const tc = activeChat ?? { allowed: [], msgs: [] };
+          return (
+            <div className="fixed inset-0 z-[75] bg-black/40 flex" onClick={() => { setChatTaskId(null); setMemberPickOpen(false); }}>
+              <div
+                className="ml-auto h-full w-full max-w-md bg-white shadow-2xl flex flex-col"
+                dir="rtl"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="px-4 py-3 border-b border-slate-200 flex items-center justify-between bg-gradient-to-l from-slate-50 to-white">
+                  <button onClick={() => setChatTaskId(null)} className="text-slate-400 hover:text-slate-700"><X className="w-4 h-4" /></button>
+                  <div className="text-right">
+                    <div className="text-xs text-slate-500">محادثة خاصة بالمهمة</div>
+                    <div className="text-sm font-bold text-slate-800 truncate max-w-[260px]">{task.name}</div>
+                  </div>
+                </div>
+
+                {isAdmin && (
+                  <div className="px-4 py-2 border-b border-slate-100 bg-slate-50">
+                    <button
+                      onClick={() => setMemberPickOpen((v) => !v)}
+                      className="w-full text-right text-[11px] text-slate-600 flex items-center justify-between"
+                    >
+                      <span className="text-[color:var(--eyenak-teal)]">{memberPickOpen ? "إخفاء ▲" : "إدارة ▼"}</span>
+                      <span>الأعضاء المسموح لهم ({tc.allowed.length})</span>
+                    </button>
+                    {memberPickOpen && (
+                      <div className="mt-2 max-h-32 overflow-y-auto bg-white border border-slate-200 rounded p-2 space-y-1">
+                        {employees.length === 0 && <div className="text-[11px] text-slate-400 text-center">لا يوجد موظفون</div>}
+                        {employees.map((n) => {
+                          const checked = tc.allowed.includes(n);
+                          return (
+                            <label key={n} className="flex items-center justify-between gap-2 text-xs cursor-pointer hover:bg-slate-50 px-1 py-0.5 rounded">
+                              <input
+                                type="checkbox"
+                                checked={checked}
+                                onChange={(e) =>
+                                  onUpdateTaskChat(chatTaskId, (cur) => ({
+                                    ...cur,
+                                    allowed: e.target.checked
+                                      ? Array.from(new Set([...cur.allowed, n]))
+                                      : cur.allowed.filter((x) => x !== n),
+                                  }))
+                                }
+                              />
+                              <span className="flex-1 text-right">{n}</span>
+                            </label>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                <div className="flex-1 overflow-y-auto p-4 space-y-2 bg-slate-50">
+                  {tc.msgs.length === 0 && (
+                    <div className="text-center text-xs text-slate-400 mt-8">
+                      لا توجد رسائل بعد. {isAdmin ? "ابدأ المحادثة الخاصة بهذه المهمة." : ""}
+                    </div>
+                  )}
+                  {tc.msgs.map((m) => {
+                    const mine = m.author === currentUser;
+                    return (
+                      <div key={m.id} className={`flex ${mine ? "justify-start" : "justify-end"}`}>
+                        <div className={`max-w-[80%] rounded-2xl px-3 py-2 text-xs shadow-sm ${mine ? "bg-[color:var(--eyenak-teal)] text-white" : "bg-white border border-slate-200 text-slate-800"}`}>
+                          {!mine && <div className="text-[10px] font-bold text-[color:var(--eyenak-teal)] mb-0.5">{m.author}</div>}
+                          <div className="whitespace-pre-wrap">{m.text}</div>
+                          <div className={`text-[9px] mt-1 ${mine ? "text-white/70" : "text-slate-400"} text-left`} dir="ltr">
+                            {new Date(m.ts).toLocaleString("ar-EG", { hour: "2-digit", minute: "2-digit", day: "2-digit", month: "2-digit" })}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                <div className="border-t border-slate-200 p-3 bg-white">
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => {
+                        const text = chatDraft.trim();
+                        if (!text) return;
+                        onUpdateTaskChat(chatTaskId, (cur) => ({
+                          allowed: cur.allowed,
+                          msgs: [...cur.msgs, { id: `${Date.now()}`, author: currentUser, text, ts: Date.now() }],
+                        }));
+                        setChatDraft("");
+                      }}
+                      className="h-9 px-4 bg-[color:var(--eyenak-teal)] hover:opacity-90 text-white rounded-full text-xs font-semibold"
+                    >إرسال</button>
+                    <input
+                      value={chatDraft}
+                      onChange={(e) => setChatDraft(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" && !e.shiftKey) {
+                          e.preventDefault();
+                          const text = chatDraft.trim();
+                          if (!text) return;
+                          onUpdateTaskChat(chatTaskId, (cur) => ({
+                            allowed: cur.allowed,
+                            msgs: [...cur.msgs, { id: `${Date.now()}`, author: currentUser, text, ts: Date.now() }],
+                          }));
+                          setChatDraft("");
+                        }
+                      }}
+                      placeholder="اكتب رسالة..."
+                      className="flex-1 h-9 px-3 text-xs rounded-full border border-slate-200 focus:outline-none focus:border-[color:var(--eyenak-teal)]"
+                    />
+                  </div>
+                  <div className="text-[10px] text-slate-400 mt-1 text-center">
+                    🔒 محادثة خاصة — يراها فقط الأدمن والأعضاء المسموح لهم
+                  </div>
+                </div>
+              </div>
+            </div>
+          );
+        })()}
+
       </div>
     </div>
   );
