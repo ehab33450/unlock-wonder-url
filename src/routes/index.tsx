@@ -5687,6 +5687,13 @@ function ProjectDetailOverlay({
   onUpdate,
   onOpenChat,
   onOpenFiles,
+  employees,
+  taskChats,
+  onUpdateTaskChat,
+  customCols,
+  onUpdateCustomCols,
+  customCells,
+  onSetCustomCell,
 }: {
   name: string;
   meta: DMeta | undefined;
@@ -5697,6 +5704,20 @@ function ProjectDetailOverlay({
   onUpdate: (updater: (cur: DMeta) => DMeta) => void;
   onOpenChat?: () => void;
   onOpenFiles?: () => void;
+  employees: string[];
+  taskChats: Record<string, { allowed: string[]; msgs: { id: string; author: string; text: string; ts: number }[] }>;
+  onUpdateTaskChat: (
+    taskId: string,
+    updater: (
+      cur: { allowed: string[]; msgs: { id: string; author: string; text: string; ts: number }[] }
+    ) => { allowed: string[]; msgs: { id: string; author: string; text: string; ts: number }[] }
+  ) => void;
+  customCols: { id: string; name: string; type: DColType }[];
+  onUpdateCustomCols: (
+    updater: (cur: { id: string; name: string; type: DColType }[]) => { id: string; name: string; type: DColType }[]
+  ) => void;
+  customCells: Record<string, string>;
+  onSetCustomCell: (taskId: string, colId: string, val: string) => void;
 }) {
   const fallback: DMeta = {
     contract: {
