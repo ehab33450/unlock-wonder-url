@@ -5312,6 +5312,7 @@ function Index() {
         <FinanceModal
           isAdmin={isAdmin}
           currentUser={currentUser}
+          employees={employees.map((e) => e.name)}
           projectMeta={projectMeta}
           onClose={() => setFinanceOpen(false)}
           onUpdatePayment={(project, paymentId, patch) => {
