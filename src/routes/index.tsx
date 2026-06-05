@@ -5612,6 +5612,15 @@ function Index() {
         </div>
       </footer>
 
+      <AdminPanel
+        open={adminPanelOpen}
+        onClose={() => setAdminPanelOpen(false)}
+        employees={employees as any}
+        setEmployees={setEmployees as any}
+        perms={PERMS as any}
+        defaultPerms={defaultEmpPerms as any}
+      />
+
     </div>
   );
 }
