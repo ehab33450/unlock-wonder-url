@@ -9,6 +9,7 @@ import guideMeetingsImg from "@/assets/guide-meetings.png";
 import guideUsersImg from "@/assets/guide-users.png";
 import guideAssistantImg from "@/assets/guide-assistant.png";
 import { ExtraColHeaders, ExtraCells, RowChatButton } from "@/components/table-extras";
+import { AdminPanel } from "@/components/admin-panel";
 import {
   Calendar,
   FileText,
