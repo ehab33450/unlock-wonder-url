@@ -111,8 +111,8 @@ export function AdminPanel({ open, onClose, employees, setEmployees, perms, defa
               search={search} setSearch={setSearch}
               userTab={userTab} setUserTab={setUserTab}
               onAdd={() => setAddOpen(true)}
-              onEdit={(e) => setEditEmp(e)}
-              onPerms={(e) => setPermsEmp(e)}
+              onEdit={(e: AdminEmployee) => setEditEmp(e)}
+              onPerms={(e: AdminEmployee) => setPermsEmp(e)}
               total={employees.length}
             />
           )}
