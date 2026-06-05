@@ -9,6 +9,7 @@ import guideMeetingsImg from "@/assets/guide-meetings.png";
 import guideUsersImg from "@/assets/guide-users.png";
 import guideAssistantImg from "@/assets/guide-assistant.png";
 import { ExtraColHeaders, ExtraCells, RowChatButton } from "@/components/table-extras";
+import { AdminPanel } from "@/components/admin-panel";
 import {
   Calendar,
   FileText,
@@ -270,6 +271,7 @@ function Index() {
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [accountOpen, setAccountOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [adminPanelOpen, setAdminPanelOpen] = useState(false);
   const [moreMenuOpen, setMoreMenuOpen] = useState(false);
   const [allProjectsOpen, setAllProjectsOpen] = useState(false);
   const [projectFilter, setProjectFilter] = useState<string | null>(null);
@@ -1636,27 +1638,31 @@ function Index() {
             </button>
             {userMenuOpen && (
               <div dir={isEn ? "ltr" : "rtl"} className="absolute left-0 mt-2 w-56 bg-white border border-slate-200 rounded-lg shadow-xl z-50 overflow-hidden">
-                <button
-                  onClick={() => { setUserMenuOpen(false); setAccountOpen(true); }}
-                  className="w-full text-right px-4 py-2.5 text-sm hover:bg-slate-50 flex items-center gap-2 text-slate-700"
-                >
-                  <User className="w-4 h-4 text-[color:var(--eyenak-teal)]" />
-                  {t("حسابي", "My account")}
-                </button>
-                <button
-                  onClick={() => { setUserMenuOpen(false); setSettingsOpen(true); }}
-                  className="w-full text-right px-4 py-2.5 text-sm hover:bg-slate-50 flex items-center gap-2 text-slate-700"
-                >
-                  <svg className="w-4 h-4 text-[color:var(--eyenak-teal)]" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h0a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h0a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v0a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-                  {t("إعدادات الموقع", "Site settings")}
-                </button>
+                {[
+                  { label: "بياناتي", icon: "👤", onClick: () => setAccountOpen(true) },
+                  { label: "مقالاتي", icon: "📝", onClick: () => { setActiveTab("المقالات" as any); } },
+                  { label: "المشاريع المؤرشفة", icon: "📦", onClick: () => setAllProjectsOpen(true) },
+                  { label: "إعدادات المشرف", icon: "⚙️", onClick: () => setAdminPanelOpen(true), admin: true },
+                  { label: "الدعم والمساعدة", icon: "💬", onClick: () => setGuidesOpen(true) },
+                ].map((it) => (
+                  (!it.admin || isAdmin) && (
+                    <button
+                      key={it.label}
+                      onClick={() => { setUserMenuOpen(false); it.onClick(); }}
+                      className="w-full text-right px-4 py-2.5 text-sm hover:bg-slate-50 flex items-center gap-2 text-slate-700"
+                    >
+                      <span className="text-[color:var(--eyenak-teal)] w-5 text-center">{it.icon}</span>
+                      <span className="flex-1 text-right">{it.label}</span>
+                    </button>
+                  )
+                ))}
                 <div className="border-t border-slate-100" />
                 <button
                   onClick={() => { setUserMenuOpen(false); setIsAdmin(false); setCurrentUser(t("ايهاب فاتح","Ehab Fateh")); setLoginOpen(true); }}
                   className="w-full text-right px-4 py-2.5 text-sm hover:bg-red-50 flex items-center gap-2 text-red-600"
                 >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>
-                  {t("تسجيل الخروج", "Logout")}
+                  <span className="w-5 text-center">↩</span>
+                  <span className="flex-1 text-right">{t("تسجيل الخروج", "Logout")}</span>
                 </button>
               </div>
             )}
@@ -5605,6 +5611,15 @@ function Index() {
           <span className="opacity-60">© {new Date().getFullYear()} EYENAK</span>
         </div>
       </footer>
+
+      <AdminPanel
+        open={adminPanelOpen}
+        onClose={() => setAdminPanelOpen(false)}
+        employees={employees as any}
+        setEmployees={setEmployees as any}
+        perms={PERMS as any}
+        defaultPerms={defaultEmpPerms as any}
+      />
 
     </div>
   );
