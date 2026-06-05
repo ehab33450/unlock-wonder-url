@@ -270,6 +270,7 @@ function Index() {
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [accountOpen, setAccountOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [adminPanelOpen, setAdminPanelOpen] = useState(false);
   const [moreMenuOpen, setMoreMenuOpen] = useState(false);
   const [allProjectsOpen, setAllProjectsOpen] = useState(false);
   const [projectFilter, setProjectFilter] = useState<string | null>(null);
