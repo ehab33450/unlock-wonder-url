@@ -7128,6 +7128,7 @@ function FinanceModal({
   onRemovePayment: (project: string, paymentId: string) => void;
 }) {
   const [filter, setFilter] = useState<"all" | "due" | "paid" | "overdue">("all");
+  const [selectedProject, setSelectedProject] = useState<string | null>(null);
   const visibleProjects = Object.entries(projectMeta).filter(
     ([, meta]) => isAdmin || meta.contract.assignee === currentUser,
   );
@@ -7136,7 +7137,8 @@ function FinanceModal({
     meta.contract.payments.map((p) => ({ ...p, project, assignee: meta.contract.assignee })),
   );
   const now = Date.now();
-  const filtered = allPayments.filter((p) => {
+  const scoped = selectedProject ? allPayments.filter((p) => p.project === selectedProject) : allPayments;
+  const filtered = scoped.filter((p) => {
     if (filter === "paid") return p.paid;
     if (filter === "due") return !p.paid;
     if (filter === "overdue") return !p.paid && p.date && new Date(p.date).getTime() < now;
@@ -7179,7 +7181,13 @@ function FinanceModal({
             <X className="w-5 h-5" />
           </button>
           <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2">
-            <Wallet className="w-5 h-5 text-emerald-600" /> المالية وأقساط العقود
+            <Wallet className="w-5 h-5 text-emerald-600" />
+            {selectedProject ? (
+              <>
+                <button onClick={() => setSelectedProject(null)} className="text-xs text-emerald-700 hover:underline">← كل المشاريع</button>
+                <span>• {selectedProject}</span>
+              </>
+            ) : "المالية وأقساط العقود"}
           </h2>
         </div>
 
@@ -7241,13 +7249,13 @@ function FinanceModal({
               <thead className="bg-slate-100 text-slate-600 text-xs sticky top-0">
                 <tr>
                   <th className="px-3 py-2 text-center font-bold w-10">💬</th>
-                  <th className="px-3 py-2 text-right font-bold">المشروع</th>
-                  <th className="px-3 py-2 text-right font-bold">الموظف</th>
-                  <th className="px-3 py-2 text-right font-bold">المبلغ</th>
-                  <th className="px-3 py-2 text-right font-bold">تاريخ الاستحقاق</th>
-                  <th className="px-3 py-2 text-right font-bold">العد التنازلي</th>
-                  <th className="px-3 py-2 text-right font-bold">الإيصال</th>
-                  <th className="px-3 py-2 text-right font-bold">الحالة</th>
+                  <th className="px-3 py-2 text-right font-bold"><EditableHeaderLabel tableId="finance.payments" headerKey="project" defaultLabel="المشروع" isAdmin={isAdmin} /></th>
+                  <th className="px-3 py-2 text-right font-bold"><EditableHeaderLabel tableId="finance.payments" headerKey="assignee" defaultLabel="الموظف" isAdmin={isAdmin} /></th>
+                  <th className="px-3 py-2 text-right font-bold"><EditableHeaderLabel tableId="finance.payments" headerKey="amount" defaultLabel="المبلغ" isAdmin={isAdmin} /></th>
+                  <th className="px-3 py-2 text-right font-bold"><EditableHeaderLabel tableId="finance.payments" headerKey="date" defaultLabel="تاريخ الاستحقاق" isAdmin={isAdmin} /></th>
+                  <th className="px-3 py-2 text-right font-bold"><EditableHeaderLabel tableId="finance.payments" headerKey="count" defaultLabel="العد التنازلي" isAdmin={isAdmin} /></th>
+                  <th className="px-3 py-2 text-right font-bold"><EditableHeaderLabel tableId="finance.payments" headerKey="receipt" defaultLabel="الإيصال" isAdmin={isAdmin} /></th>
+                  <th className="px-3 py-2 text-right font-bold"><EditableHeaderLabel tableId="finance.payments" headerKey="status" defaultLabel="الحالة" isAdmin={isAdmin} /></th>
                   <ExtraColHeaders tableId="finance.payments" isAdmin={isAdmin} thClass="px-3 py-2 text-right font-bold whitespace-nowrap" />
                   {isAdmin && <th className="px-3 py-2"></th>}
                 </tr>
