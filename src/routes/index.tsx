@@ -2127,12 +2127,12 @@ function Index() {
                     <thead>
                       <tr className="text-slate-500 border-b border-slate-200">
                         <th className="text-center py-2 px-2 font-medium w-10">💬</th>
-                        <th className="text-right py-2 px-2 font-medium">المفضلة</th>
-                        <th className="text-right py-2 px-2 font-medium">الحالة</th>
-                        <th className="text-right py-2 px-2 font-medium">المنفذ</th>
-                        <th className="text-right py-2 px-2 font-medium">تاريخ الانتهاء</th>
-                        <th className="text-right py-2 px-2 font-medium">المشروع</th>
-                        <th className="text-right py-2 px-2 font-medium">المهمة</th>
+                        <th className="text-right py-2 px-2 font-medium"><EditableHeaderLabel tableId="dashboard.tasks" headerKey="fav" defaultLabel="المفضلة" isAdmin={isAdmin} /></th>
+                        <th className="text-right py-2 px-2 font-medium"><EditableHeaderLabel tableId="dashboard.tasks" headerKey="status" defaultLabel="الحالة" isAdmin={isAdmin} /></th>
+                        <th className="text-right py-2 px-2 font-medium"><EditableHeaderLabel tableId="dashboard.tasks" headerKey="assignee" defaultLabel="المنفذ" isAdmin={isAdmin} /></th>
+                        <th className="text-right py-2 px-2 font-medium"><EditableHeaderLabel tableId="dashboard.tasks" headerKey="end" defaultLabel="تاريخ الانتهاء" isAdmin={isAdmin} /></th>
+                        <th className="text-right py-2 px-2 font-medium"><EditableHeaderLabel tableId="dashboard.tasks" headerKey="project" defaultLabel="المشروع" isAdmin={isAdmin} /></th>
+                        <th className="text-right py-2 px-2 font-medium"><EditableHeaderLabel tableId="dashboard.tasks" headerKey="task" defaultLabel="المهمة" isAdmin={isAdmin} /></th>
                         <ExtraColHeaders tableId="dashboard.tasks" isAdmin={isAdmin} thClass="text-right py-2 px-2 font-medium whitespace-nowrap" />
                       </tr>
                     </thead>
