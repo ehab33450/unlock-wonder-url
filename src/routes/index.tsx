@@ -7238,6 +7238,34 @@ function FinanceModal({
           ))}
         </div>
 
+        {/* Projects grid (top level) */}
+        {!selectedProject && visibleProjects.length > 0 && (
+          <div className="px-5 py-3 border-b border-slate-200 bg-white">
+            <div className="text-[11px] font-bold text-slate-500 mb-2">المشاريع — اضغط مشروعًا لعرض أقساطه</div>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
+              {visibleProjects.map(([proj, meta]) => {
+                const pays = meta.contract.payments;
+                const due = pays.filter((p) => !p.paid).reduce((s, p) => s + Number(p.amount || 0), 0);
+                const paidSum = pays.filter((p) => p.paid).reduce((s, p) => s + Number(p.amount || 0), 0);
+                return (
+                  <button
+                    key={proj}
+                    onClick={() => setSelectedProject(proj)}
+                    className="text-right rounded-lg border border-slate-200 hover:border-emerald-400 hover:shadow-md transition p-3 bg-gradient-to-bl from-emerald-50/50 to-white"
+                  >
+                    <div className="text-xs font-bold text-slate-800 truncate">{proj}</div>
+                    <div className="text-[10px] text-slate-500 mt-1">{pays.length} قسط • {meta.contract.assignee || "—"}</div>
+                    <div className="flex justify-between text-[10px] mt-1.5">
+                      <span className="text-emerald-700">مدفوع {paidSum.toLocaleString()}</span>
+                      <span className="text-amber-700">مستحق {due.toLocaleString()}</span>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
         {/* Table */}
         <div className="overflow-auto flex-1">
           {filtered.length === 0 ? (
