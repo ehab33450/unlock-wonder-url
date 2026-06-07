@@ -24,6 +24,53 @@ type Store = {
 const STORAGE_KEY = "eyenak.tableExtras.v1";
 const EMPTY: Store = { cols: {}, cells: {}, chats: {} };
 
+/* ---------- Built-in header rename store (separate, simpler) ---------- */
+const HEADER_KEY = "eyenak.headerLabels.v1";
+type HeaderStore = Record<string, Record<string, string>>; // tableId -> key -> label
+function loadHeaders(): HeaderStore {
+  if (typeof window === "undefined") return {};
+  try { return JSON.parse(window.localStorage.getItem(HEADER_KEY) || "{}"); } catch { return {}; }
+}
+let headerStore: HeaderStore = loadHeaders();
+const headerListeners = new Set<() => void>();
+function notifyHeaders() {
+  if (typeof window !== "undefined") {
+    try { window.localStorage.setItem(HEADER_KEY, JSON.stringify(headerStore)); } catch {}
+  }
+  headerListeners.forEach((l) => l());
+}
+
+export function EditableHeaderLabel({
+  tableId, headerKey, defaultLabel, isAdmin,
+}: { tableId: string; headerKey: string; defaultLabel: string; isAdmin: boolean }) {
+  const [, setTick] = useState(0);
+  useEffect(() => {
+    const l = () => setTick((t) => t + 1);
+    headerListeners.add(l);
+    return () => { headerListeners.delete(l); };
+  }, []);
+  const label = headerStore[tableId]?.[headerKey] ?? defaultLabel;
+  const rename = () => {
+    const next = window.prompt("اسم العمود الجديد:", label);
+    if (next == null) return;
+    const t = { ...(headerStore[tableId] ?? {}) };
+    if (next.trim() === "" || next.trim() === defaultLabel) delete t[headerKey];
+    else t[headerKey] = next.trim();
+    headerStore = { ...headerStore, [tableId]: t };
+    notifyHeaders();
+  };
+  return (
+    <span
+      className={isAdmin ? "cursor-pointer hover:text-emerald-600" : ""}
+      title={isAdmin ? "انقر مرتين أو زر الفأرة الأيمن لإعادة التسمية" : undefined}
+      onDoubleClick={(e) => { if (!isAdmin) return; e.preventDefault(); rename(); }}
+      onContextMenu={(e) => { if (!isAdmin) return; e.preventDefault(); rename(); }}
+    >
+      {label}
+    </span>
+  );
+}
+
 function load(): Store {
   if (typeof window === "undefined") return EMPTY;
   try {
