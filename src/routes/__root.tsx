@@ -72,9 +72,9 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "EYENAK — Project Management & Team Collaboration" },
-      { name: "description", content: "EYENAK is a project management and collaboration platform for teams to manage projects, tasks, contracts, and files." },
-      { property: "og:site_name", content: "EYENAK" },
+      { title: "يسير — Project Management & Team Collaboration" },
+      { name: "description", content: "يسير is a project management and collaboration platform for teams to manage projects, tasks, contracts, and files." },
+      { property: "og:site_name", content: "يسير" },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
       { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/6484c2b7-a641-4413-ba92-53c1d8c44171/id-preview-9238e0ee--b2daafb0-559e-400d-97cb-16b0f67ea724.lovable.app-1780391280294.png" },
