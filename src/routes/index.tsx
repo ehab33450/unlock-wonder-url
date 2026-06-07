@@ -8,7 +8,7 @@ import guideFinanceImg from "@/assets/guide-finance.png";
 import guideMeetingsImg from "@/assets/guide-meetings.png";
 import guideUsersImg from "@/assets/guide-users.png";
 import guideAssistantImg from "@/assets/guide-assistant.png";
-import { ExtraColHeaders, ExtraCells, RowChatButton } from "@/components/table-extras";
+import { ExtraColHeaders, ExtraCells, RowChatButton, EditableHeaderLabel } from "@/components/table-extras";
 import { AdminPanel } from "@/components/admin-panel";
 import {
   Calendar,
@@ -2127,12 +2127,12 @@ function Index() {
                     <thead>
                       <tr className="text-slate-500 border-b border-slate-200">
                         <th className="text-center py-2 px-2 font-medium w-10">💬</th>
-                        <th className="text-right py-2 px-2 font-medium">المفضلة</th>
-                        <th className="text-right py-2 px-2 font-medium">الحالة</th>
-                        <th className="text-right py-2 px-2 font-medium">المنفذ</th>
-                        <th className="text-right py-2 px-2 font-medium">تاريخ الانتهاء</th>
-                        <th className="text-right py-2 px-2 font-medium">المشروع</th>
-                        <th className="text-right py-2 px-2 font-medium">المهمة</th>
+                        <th className="text-right py-2 px-2 font-medium"><EditableHeaderLabel tableId="dashboard.tasks" headerKey="fav" defaultLabel="المفضلة" isAdmin={isAdmin} /></th>
+                        <th className="text-right py-2 px-2 font-medium"><EditableHeaderLabel tableId="dashboard.tasks" headerKey="status" defaultLabel="الحالة" isAdmin={isAdmin} /></th>
+                        <th className="text-right py-2 px-2 font-medium"><EditableHeaderLabel tableId="dashboard.tasks" headerKey="assignee" defaultLabel="المنفذ" isAdmin={isAdmin} /></th>
+                        <th className="text-right py-2 px-2 font-medium"><EditableHeaderLabel tableId="dashboard.tasks" headerKey="end" defaultLabel="تاريخ الانتهاء" isAdmin={isAdmin} /></th>
+                        <th className="text-right py-2 px-2 font-medium"><EditableHeaderLabel tableId="dashboard.tasks" headerKey="project" defaultLabel="المشروع" isAdmin={isAdmin} /></th>
+                        <th className="text-right py-2 px-2 font-medium"><EditableHeaderLabel tableId="dashboard.tasks" headerKey="task" defaultLabel="المهمة" isAdmin={isAdmin} /></th>
                         <ExtraColHeaders tableId="dashboard.tasks" isAdmin={isAdmin} thClass="text-right py-2 px-2 font-medium whitespace-nowrap" />
                       </tr>
                     </thead>
@@ -6020,21 +6020,21 @@ function ProjectDetailOverlay({
                         className="px-2 py-2 text-center font-semibold w-10"
                         title="محادثة المهمة الخاصة"
                       >💬</th>
-                      <th className="px-2 py-2 text-right font-semibold">اسم المهمة</th>
-                      <th className="px-2 py-2 text-right font-semibold">المنصة</th>
-                      <th className="px-2 py-2 text-right font-semibold">المستفيد</th>
-                      <th className="px-2 py-2 text-right font-semibold">رقم المستند</th>
-                      <th className="px-2 py-2 text-right font-semibold">البداية</th>
-                      <th className="px-2 py-2 text-right font-semibold">الانتهاء</th>
-                      <th className="px-2 py-2 text-right font-semibold">عد تنازلي</th>
-                      <th className="px-2 py-2 text-right font-semibold">تاريخ الإنجاز</th>
-                      <th className="px-2 py-2 text-right font-semibold">الحالة</th>
-                      <th className="px-2 py-2 text-right font-semibold">نسبة الإنجاز</th>
-                      <th className="px-2 py-2 text-right font-semibold">الأهمية</th>
+                      <th className="px-2 py-2 text-right font-semibold"><EditableHeaderLabel tableId="project.tasks" headerKey="name" defaultLabel="اسم المهمة" isAdmin={canEditAll} /></th>
+                      <th className="px-2 py-2 text-right font-semibold"><EditableHeaderLabel tableId="project.tasks" headerKey="platform" defaultLabel="المنصة" isAdmin={canEditAll} /></th>
+                      <th className="px-2 py-2 text-right font-semibold"><EditableHeaderLabel tableId="project.tasks" headerKey="beneficiary" defaultLabel="المستفيد" isAdmin={canEditAll} /></th>
+                      <th className="px-2 py-2 text-right font-semibold"><EditableHeaderLabel tableId="project.tasks" headerKey="doc" defaultLabel="رقم المستند" isAdmin={canEditAll} /></th>
+                      <th className="px-2 py-2 text-right font-semibold"><EditableHeaderLabel tableId="project.tasks" headerKey="start" defaultLabel="البداية" isAdmin={canEditAll} /></th>
+                      <th className="px-2 py-2 text-right font-semibold"><EditableHeaderLabel tableId="project.tasks" headerKey="end" defaultLabel="الانتهاء" isAdmin={canEditAll} /></th>
+                      <th className="px-2 py-2 text-right font-semibold"><EditableHeaderLabel tableId="project.tasks" headerKey="count" defaultLabel="عد تنازلي" isAdmin={canEditAll} /></th>
+                      <th className="px-2 py-2 text-right font-semibold"><EditableHeaderLabel tableId="project.tasks" headerKey="done" defaultLabel="تاريخ الإنجاز" isAdmin={canEditAll} /></th>
+                      <th className="px-2 py-2 text-right font-semibold"><EditableHeaderLabel tableId="project.tasks" headerKey="status" defaultLabel="الحالة" isAdmin={canEditAll} /></th>
+                      <th className="px-2 py-2 text-right font-semibold"><EditableHeaderLabel tableId="project.tasks" headerKey="progress" defaultLabel="نسبة الإنجاز" isAdmin={canEditAll} /></th>
+                      <th className="px-2 py-2 text-right font-semibold"><EditableHeaderLabel tableId="project.tasks" headerKey="priority" defaultLabel="الأهمية" isAdmin={canEditAll} /></th>
                       <th
                         className="px-2 py-2 text-right font-semibold"
                         onContextMenu={(e) => canEditAll && openColMenu(e, customCols.length)}
-                      >المرفق</th>
+                      ><EditableHeaderLabel tableId="project.tasks" headerKey="attach" defaultLabel="المرفق" isAdmin={canEditAll} /></th>
                       {customCols.map((c, idx) => (
                         <th
                           key={c.id}
@@ -6913,10 +6913,10 @@ function SplitContractButton({
   onSplit: (payments: DPayment[]) => void;
 }) {
   const [open, setOpen] = useState(false);
-  const [count, setCount] = useState<number>(4);
+  const [count, setCount] = useState<2 | 4 | 8>(4);
   const total = Number(value || 0);
   const apply = () => {
-    const n = Math.max(1, Math.min(24, Math.floor(count) || 1));
+    const n = count;
     const per = total > 0 ? Math.round((total / n) * 100) / 100 : 0;
     const start = startDate ? new Date(startDate).getTime() : Date.now();
     const end = endDate ? new Date(endDate).getTime() : start + n * 30 * 86_400_000;
@@ -6941,9 +6941,9 @@ function SplitContractButton({
       </button>
       {open && (
         <div className="absolute top-10 right-0 z-30 bg-white border border-slate-200 shadow-xl rounded-lg p-4 w-72 space-y-3" dir="rtl">
-          <div className="text-xs font-bold text-slate-700">عدد الأقساط</div>
+          <div className="text-xs font-bold text-slate-700">عدد الأقساط (2 / 4 / 8 فقط)</div>
           <div className="flex gap-1.5 flex-wrap">
-            {[2, 3, 4, 6, 8, 12].map((n) => (
+            {([2, 4, 8] as const).map((n) => (
               <button
                 key={n}
                 onClick={() => setCount(n)}
@@ -6952,17 +6952,6 @@ function SplitContractButton({
                 {n}
               </button>
             ))}
-          </div>
-          <div>
-            <label className="text-xs text-slate-500">أو حدد عدد مخصص</label>
-            <input
-              type="number"
-              min={1}
-              max={24}
-              value={count}
-              onChange={(e) => setCount(Number(e.target.value))}
-              className="w-full h-9 border border-slate-300 rounded px-2 text-sm mt-1"
-            />
           </div>
           <div className="text-xs text-slate-500 bg-slate-50 p-2 rounded">
             {total > 0 ? (
@@ -7139,6 +7128,7 @@ function FinanceModal({
   onRemovePayment: (project: string, paymentId: string) => void;
 }) {
   const [filter, setFilter] = useState<"all" | "due" | "paid" | "overdue">("all");
+  const [selectedProject, setSelectedProject] = useState<string | null>(null);
   const visibleProjects = Object.entries(projectMeta).filter(
     ([, meta]) => isAdmin || meta.contract.assignee === currentUser,
   );
@@ -7147,7 +7137,8 @@ function FinanceModal({
     meta.contract.payments.map((p) => ({ ...p, project, assignee: meta.contract.assignee })),
   );
   const now = Date.now();
-  const filtered = allPayments.filter((p) => {
+  const scoped = selectedProject ? allPayments.filter((p) => p.project === selectedProject) : allPayments;
+  const filtered = scoped.filter((p) => {
     if (filter === "paid") return p.paid;
     if (filter === "due") return !p.paid;
     if (filter === "overdue") return !p.paid && p.date && new Date(p.date).getTime() < now;
@@ -7190,7 +7181,13 @@ function FinanceModal({
             <X className="w-5 h-5" />
           </button>
           <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2">
-            <Wallet className="w-5 h-5 text-emerald-600" /> المالية وأقساط العقود
+            <Wallet className="w-5 h-5 text-emerald-600" />
+            {selectedProject ? (
+              <>
+                <button onClick={() => setSelectedProject(null)} className="text-xs text-emerald-700 hover:underline">← كل المشاريع</button>
+                <span>• {selectedProject}</span>
+              </>
+            ) : "المالية وأقساط العقود"}
           </h2>
         </div>
 
@@ -7241,6 +7238,34 @@ function FinanceModal({
           ))}
         </div>
 
+        {/* Projects grid (top level) */}
+        {!selectedProject && visibleProjects.length > 0 && (
+          <div className="px-5 py-3 border-b border-slate-200 bg-white">
+            <div className="text-[11px] font-bold text-slate-500 mb-2">المشاريع — اضغط مشروعًا لعرض أقساطه</div>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
+              {visibleProjects.map(([proj, meta]) => {
+                const pays = meta.contract.payments;
+                const due = pays.filter((p) => !p.paid).reduce((s, p) => s + Number(p.amount || 0), 0);
+                const paidSum = pays.filter((p) => p.paid).reduce((s, p) => s + Number(p.amount || 0), 0);
+                return (
+                  <button
+                    key={proj}
+                    onClick={() => setSelectedProject(proj)}
+                    className="text-right rounded-lg border border-slate-200 hover:border-emerald-400 hover:shadow-md transition p-3 bg-gradient-to-bl from-emerald-50/50 to-white"
+                  >
+                    <div className="text-xs font-bold text-slate-800 truncate">{proj}</div>
+                    <div className="text-[10px] text-slate-500 mt-1">{pays.length} قسط • {meta.contract.assignee || "—"}</div>
+                    <div className="flex justify-between text-[10px] mt-1.5">
+                      <span className="text-emerald-700">مدفوع {paidSum.toLocaleString()}</span>
+                      <span className="text-amber-700">مستحق {due.toLocaleString()}</span>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
         {/* Table */}
         <div className="overflow-auto flex-1">
           {filtered.length === 0 ? (
@@ -7252,13 +7277,13 @@ function FinanceModal({
               <thead className="bg-slate-100 text-slate-600 text-xs sticky top-0">
                 <tr>
                   <th className="px-3 py-2 text-center font-bold w-10">💬</th>
-                  <th className="px-3 py-2 text-right font-bold">المشروع</th>
-                  <th className="px-3 py-2 text-right font-bold">الموظف</th>
-                  <th className="px-3 py-2 text-right font-bold">المبلغ</th>
-                  <th className="px-3 py-2 text-right font-bold">تاريخ الاستحقاق</th>
-                  <th className="px-3 py-2 text-right font-bold">العد التنازلي</th>
-                  <th className="px-3 py-2 text-right font-bold">الإيصال</th>
-                  <th className="px-3 py-2 text-right font-bold">الحالة</th>
+                  <th className="px-3 py-2 text-right font-bold"><EditableHeaderLabel tableId="finance.payments" headerKey="project" defaultLabel="المشروع" isAdmin={isAdmin} /></th>
+                  <th className="px-3 py-2 text-right font-bold"><EditableHeaderLabel tableId="finance.payments" headerKey="assignee" defaultLabel="الموظف" isAdmin={isAdmin} /></th>
+                  <th className="px-3 py-2 text-right font-bold"><EditableHeaderLabel tableId="finance.payments" headerKey="amount" defaultLabel="المبلغ" isAdmin={isAdmin} /></th>
+                  <th className="px-3 py-2 text-right font-bold"><EditableHeaderLabel tableId="finance.payments" headerKey="date" defaultLabel="تاريخ الاستحقاق" isAdmin={isAdmin} /></th>
+                  <th className="px-3 py-2 text-right font-bold"><EditableHeaderLabel tableId="finance.payments" headerKey="count" defaultLabel="العد التنازلي" isAdmin={isAdmin} /></th>
+                  <th className="px-3 py-2 text-right font-bold"><EditableHeaderLabel tableId="finance.payments" headerKey="receipt" defaultLabel="الإيصال" isAdmin={isAdmin} /></th>
+                  <th className="px-3 py-2 text-right font-bold"><EditableHeaderLabel tableId="finance.payments" headerKey="status" defaultLabel="الحالة" isAdmin={isAdmin} /></th>
                   <ExtraColHeaders tableId="finance.payments" isAdmin={isAdmin} thClass="px-3 py-2 text-right font-bold whitespace-nowrap" />
                   {isAdmin && <th className="px-3 py-2"></th>}
                 </tr>
