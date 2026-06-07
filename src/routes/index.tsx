@@ -6913,10 +6913,10 @@ function SplitContractButton({
   onSplit: (payments: DPayment[]) => void;
 }) {
   const [open, setOpen] = useState(false);
-  const [count, setCount] = useState<number>(4);
+  const [count, setCount] = useState<2 | 4 | 8>(4);
   const total = Number(value || 0);
   const apply = () => {
-    const n = Math.max(1, Math.min(24, Math.floor(count) || 1));
+    const n = count;
     const per = total > 0 ? Math.round((total / n) * 100) / 100 : 0;
     const start = startDate ? new Date(startDate).getTime() : Date.now();
     const end = endDate ? new Date(endDate).getTime() : start + n * 30 * 86_400_000;
@@ -6941,9 +6941,9 @@ function SplitContractButton({
       </button>
       {open && (
         <div className="absolute top-10 right-0 z-30 bg-white border border-slate-200 shadow-xl rounded-lg p-4 w-72 space-y-3" dir="rtl">
-          <div className="text-xs font-bold text-slate-700">عدد الأقساط</div>
+          <div className="text-xs font-bold text-slate-700">عدد الأقساط (2 / 4 / 8 فقط)</div>
           <div className="flex gap-1.5 flex-wrap">
-            {[2, 3, 4, 6, 8, 12].map((n) => (
+            {([2, 4, 8] as const).map((n) => (
               <button
                 key={n}
                 onClick={() => setCount(n)}
@@ -6952,17 +6952,6 @@ function SplitContractButton({
                 {n}
               </button>
             ))}
-          </div>
-          <div>
-            <label className="text-xs text-slate-500">أو حدد عدد مخصص</label>
-            <input
-              type="number"
-              min={1}
-              max={24}
-              value={count}
-              onChange={(e) => setCount(Number(e.target.value))}
-              className="w-full h-9 border border-slate-300 rounded px-2 text-sm mt-1"
-            />
           </div>
           <div className="text-xs text-slate-500 bg-slate-50 p-2 rounded">
             {total > 0 ? (
