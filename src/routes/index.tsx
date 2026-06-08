@@ -6469,8 +6469,14 @@ function ProjectDetailOverlay({
                         if (item.type === "group") {
                           const g = item.g;
                           const count = data.tasks.filter((x) => x.groupId === g.id).length;
+                          const subHeaders = [
+                            "", "اسم المهمة", "المنصة", "المستفيد", "رقم المستند",
+                            "فترة المهمة", "العد التنازلي", "تاريخ الإنجاز",
+                            "الحالة", "الأهمية", "المرفق",
+                          ];
                           return (
-                            <tr key={`g-${g.id}`} style={{ background: g.color + "18" }} className="border-t border-slate-200">
+                            <React.Fragment key={`g-${g.id}`}>
+                            <tr style={{ background: g.color + "18" }} className="border-t border-slate-200">
                               <td colSpan={totalCols} className="px-3 py-2">
                                 <div className="flex items-center gap-2">
                                   <button
@@ -6519,6 +6525,19 @@ function ProjectDetailOverlay({
                                 </div>
                               </td>
                             </tr>
+                            {!g.collapsed && (
+                              <tr className="bg-slate-50/80 border-t border-slate-200 text-[11px] text-slate-500">
+                                {subHeaders.map((h, i) => (
+                                  <th key={i} className="px-2 py-1.5 text-right font-semibold whitespace-nowrap">{h}</th>
+                                ))}
+                                {customCols.map((c) => (
+                                  <th key={c.id} className="px-2 py-1.5 text-right font-semibold whitespace-nowrap">{c.name}</th>
+                                ))}
+                                {canEditAll && <th className="px-2 py-1.5"></th>}
+                                {canEditOwn && <th className="px-2 py-1.5"></th>}
+                              </tr>
+                            )}
+                            </React.Fragment>
                           );
                         }
                         const t = item.t;
