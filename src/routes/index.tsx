@@ -5659,7 +5659,7 @@ type DContract = {
   responsiblePhone: string;
   assignee: string;
 };
-type DStatus = "جديد" | "جاري العمل" | "تم الانجاز" | "معلق";
+type DStatus = "جديد" | "جاري العمل" | "تم الانجاز" | "معلق" | "ملغي";
 type DPriority = "لاشيء" | "منخفض" | "متوسط" | "عالي";
 type DTask = {
   id: string;
@@ -5680,13 +5680,16 @@ type DMeta = { contract: DContract; tasks: DTask[] };
 
 type DColType =
   | "text" | "number" | "date" | "link" | "phone" | "email"
-  | "rating" | "tags" | "location" | "timer" | "people" | "vote";
+  | "rating" | "tags" | "location" | "timer" | "people" | "vote"
+  | "daterange" | "select" | "file";
 
 const COL_TYPE_OPTIONS: { type: DColType; label: string; icon: string }[] = [
   { type: "people",   label: "الأشخاص",       icon: "👥" },
   { type: "text",     label: "نص",            icon: "T"  },
   { type: "date",     label: "التاريخ",       icon: "📅" },
+  { type: "daterange",label: "مؤقت زمني (من/إلى)", icon: "⏳" },
   { type: "number",   label: "رقم",           icon: "#"  },
+  { type: "select",   label: "قائمة منسدلة",  icon: "▾"  },
   { type: "tags",     label: "وسوم",          icon: "🏷️" },
   { type: "link",     label: "الرابط",        icon: "🔗" },
   { type: "phone",    label: "رقم التواصل",   icon: "📱" },
@@ -5695,6 +5698,7 @@ const COL_TYPE_OPTIONS: { type: DColType; label: string; icon: string }[] = [
   { type: "rating",   label: "التقييم",       icon: "⭐" },
   { type: "timer",    label: "متابعة الوقت",  icon: "⏱️" },
   { type: "vote",     label: "التصويت",       icon: "✅" },
+  { type: "file",     label: "رفع مستند",     icon: "📎" },
 ];
 
 function Countdown({ end, status }: { end: string; status: DStatus }) {
