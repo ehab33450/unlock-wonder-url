@@ -6249,15 +6249,26 @@ function ProjectDetailOverlay({
             {/* Tasks table */}
             <div className="px-6 py-5">
               <div className="flex items-center justify-between mb-3">
-                {canEditOwn && (
-                  <button
-                    onClick={addTask}
-                    className="h-9 px-4 bg-[color:var(--eyenak-teal)] hover:opacity-90 text-white rounded text-sm font-semibold flex items-center gap-2"
-                  >
-                    <Plus className="w-4 h-4" />
-                    <span>إضافة مهمة</span>
-                  </button>
-                )}
+                <div className="flex items-center gap-2">
+                  {canEditOwn && (
+                    <button
+                      onClick={addTask}
+                      className="h-9 px-4 bg-[color:var(--eyenak-teal)] hover:opacity-90 text-white rounded text-sm font-semibold flex items-center gap-2"
+                    >
+                      <Plus className="w-4 h-4" />
+                      <span>إضافة مهمة</span>
+                    </button>
+                  )}
+                  {canEditAll && (
+                    <button
+                      onClick={addGroup}
+                      className="h-9 px-4 border border-slate-300 hover:bg-slate-100 text-slate-700 rounded text-sm font-semibold flex items-center gap-2"
+                    >
+                      <Plus className="w-4 h-4" />
+                      <span>إضافة مجموعة</span>
+                    </button>
+                  )}
+                </div>
                 <h3 className="text-base font-bold text-slate-800">المهام ({data.tasks.length})</h3>
               </div>
 
