@@ -6652,14 +6652,15 @@ function ProjectDetailOverlay({
                               className="px-1 py-1 text-xs rounded focus:outline-none focus:bg-emerald-50"
                             />
                           </td>
-                          <td className="px-1 py-1">
+                          <td className="px-1 py-1 whitespace-nowrap text-center">
                             <select
                               value={t.status}
                               disabled={!canEditOwn}
                               onChange={(e) =>
                                 updateTask(t.id, { status: e.target.value as DStatus })
                               }
-                              className={`text-xs font-semibold rounded px-2 py-1 focus:outline-none ${statusColors[t.status]}`}
+                              style={{ width: "auto" }}
+                              className={`text-xs font-semibold rounded px-2 py-1 focus:outline-none whitespace-nowrap w-auto ${statusColors[t.status]}`}
                             >
                               <option value="جديد">جديد</option>
                               <option value="جاري العمل">جاري العمل</option>
