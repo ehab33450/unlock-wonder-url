@@ -382,8 +382,10 @@ function Index() {
   // ============ Flexible task columns (right-click to add) ============
   type CustomColType =
     | "text" | "number" | "date" | "link" | "phone" | "email"
-    | "rating" | "tags" | "location" | "timer" | "people" | "vote";
-  type CustomCol = { id: string; name: string; type: CustomColType };
+    | "rating" | "tags" | "location" | "timer" | "people" | "vote"
+    | "daterange" | "select" | "file";
+  type CustomColOption = { id: string; label: string; color: string };
+  type CustomCol = { id: string; name: string; type: CustomColType; options?: CustomColOption[] };
   // Keyed by project name
   const [customCols, setCustomCols] = useState<Record<string, CustomCol[]>>({});
   // Keyed by `${taskId}::${colId}`
