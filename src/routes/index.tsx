@@ -5758,8 +5758,10 @@ type DTask = {
   progress: number;
   attachmentName?: string;
   attachmentData?: string;
+  groupId?: string;
 };
-type DMeta = { contract: DContract; tasks: DTask[] };
+export type DTaskGroup = { id: string; title: string; color: string; collapsed?: boolean };
+type DMeta = { contract: DContract; tasks: DTask[]; groups?: DTaskGroup[] };
 
 type DColType =
   | "text" | "number" | "date" | "link" | "phone" | "email"
