@@ -6143,6 +6143,7 @@ function ProjectDetailOverlay({
   };
   const [chatDraft, setChatDraft] = useState("");
   const [memberPickOpen, setMemberPickOpen] = useState(false);
+  const [servicesOpen, setServicesOpen] = useState(false);
   const activeChat = chatTaskId ? (taskChats[chatTaskId] ?? { allowed: [], msgs: [] }) : null;
   const canSeeChat = (taskId: string) => {
     if (isAdmin) return true;
