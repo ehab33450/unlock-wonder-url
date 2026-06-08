@@ -5893,6 +5893,12 @@ function ProjectDetailOverlay({
 
   // Per-task chat panel state
   const [chatTaskId, setChatTaskId] = useState<string | null>(null);
+  // Select-column options editor
+  const [editingSelectCol, setEditingSelectCol] = useState<string | null>(null);
+  const SELECT_PALETTE = ["#ef4444","#f97316","#f59e0b","#eab308","#84cc16","#10b981","#14b8a6","#06b6d4","#3b82f6","#6366f1","#8b5cf6","#d946ef","#ec4899","#64748b"];
+  const updateColOptions = (colId: string, opts: { id: string; label: string; color: string }[]) => {
+    onUpdateCustomCols((cur) => cur.map((c) => c.id === colId ? { ...c, options: opts } : c));
+  };
   const [chatDraft, setChatDraft] = useState("");
   const [memberPickOpen, setMemberPickOpen] = useState(false);
   const activeChat = chatTaskId ? (taskChats[chatTaskId] ?? { allowed: [], msgs: [] }) : null;
