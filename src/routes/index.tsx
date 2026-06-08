@@ -6561,12 +6561,12 @@ function ProjectDetailOverlay({
                           </td>
                           <td className="px-1 py-1">
                             <select
-                              value={t.priority}
+                              value={normPriority(t.priority)}
                               disabled={!canEditOwn}
                               onChange={(e) =>
                                 updateTask(t.id, { priority: e.target.value as DPriority })
                               }
-                              className={`text-xs font-semibold rounded px-2 py-1 focus:outline-none ${priorityColors[t.priority]}`}
+                              className={`text-xs font-semibold rounded px-2 py-1 focus:outline-none ${priorityColors[normPriority(t.priority)]}`}
                             >
                               <option value="عادي">عادي</option>
                               <option value="متوسط">متوسط</option>
