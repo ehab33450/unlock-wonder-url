@@ -2809,19 +2809,33 @@ function Index() {
                 {/* Payments */}
                 <div className="mb-4">
                   <div className="flex items-center justify-between mb-2">
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setNpPayments((p) => [
-                          ...p,
-                          { id: `${Date.now()}-${p.length}`, amount: "", date: "", paid: false },
-                        ])
-                      }
-                      className="text-xs text-[color:var(--eyenak-teal)] hover:underline flex items-center gap-1"
+                    <select
+                      value={npPayments.length || ""}
+                      onChange={(e) => {
+                        const n = Number(e.target.value);
+                        if (!n) {
+                          setNpPayments([]);
+                          return;
+                        }
+                        const total = Number(npValue) || 0;
+                        const each = total ? Math.round((total / n) * 100) / 100 : 0;
+                        setNpPayments(
+                          Array.from({ length: n }, (_, i) => ({
+                            id: `${Date.now()}-${i}`,
+                            amount: each ? String(each) : "",
+                            date: "",
+                            paid: false,
+                          })),
+                        );
+                      }}
+                      className="h-9 border border-slate-300 rounded px-2 text-xs text-right focus:outline-none focus:border-[color:var(--eyenak-teal)]"
                     >
-                      <Plus className="w-3 h-3" />
-                      <span>إضافة دفعة</span>
-                    </button>
+                      <option value="">عدد الأقساط</option>
+                      <option value="1">1</option>
+                      <option value="2">2</option>
+                      <option value="8">8</option>
+                      <option value="12">12</option>
+                    </select>
                     <label className="block text-sm text-slate-600 text-right">الدفعات</label>
                   </div>
                   {npPayments.length === 0 ? (
