@@ -7554,6 +7554,23 @@ function ExcelEditor({
   );
 }
 
+type PayStatus = "paid" | "partial" | "not_due" | "overdue";
+function computePayStatus(p: { amount: string; paidAmount?: string; paid: boolean; date: string }): PayStatus {
+  const amt = Number(p.amount || 0);
+  const paidN = Number((p.paidAmount ?? (p.paid ? p.amount : "0")) || 0);
+  if (amt > 0 && paidN >= amt) return "paid";
+  if (paidN > 0) return "partial";
+  if (!p.date) return "not_due";
+  const dueTs = new Date(p.date + "T23:59:59").getTime();
+  return Date.now() > dueTs ? "overdue" : "not_due";
+}
+const PAY_STATUS_META: Record<PayStatus, { label: string; cls: string }> = {
+  paid:    { label: "مدفوع",        cls: "bg-emerald-100 text-emerald-700" },
+  partial: { label: "مدفوع جزئي",   cls: "bg-sky-100 text-sky-700" },
+  not_due: { label: "غير مستحق",    cls: "bg-slate-100 text-slate-600" },
+  overdue: { label: "غير مدفوع",    cls: "bg-red-100 text-red-700" },
+};
+
 function PaymentCountdown({ date, paid }: { date: string; paid: boolean }) {
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
@@ -7607,16 +7624,19 @@ function FinanceModal({
   const allPayments: FinancePayment[] = visibleProjects.flatMap(([project, meta]) =>
     meta.contract.payments.map((p) => ({ ...p, project, assignee: meta.contract.assignee })),
   );
-  const now = Date.now();
   const scoped = selectedProject ? allPayments.filter((p) => p.project === selectedProject) : allPayments;
   const filtered = scoped.filter((p) => {
-    if (filter === "paid") return p.paid;
-    if (filter === "due") return !p.paid;
-    if (filter === "overdue") return !p.paid && p.date && new Date(p.date).getTime() < now;
+    const s = computePayStatus(p);
+    if (filter === "paid") return s === "paid";
+    if (filter === "due") return s !== "paid";
+    if (filter === "overdue") return s === "overdue";
     return true;
   });
   filtered.sort((a, b) => {
-    if (a.paid !== b.paid) return a.paid ? 1 : -1;
+    const order: Record<PayStatus, number> = { overdue: 0, partial: 1, not_due: 2, paid: 3 };
+    const da = order[computePayStatus(a)];
+    const db = order[computePayStatus(b)];
+    if (da !== db) return da - db;
     return (a.date || "").localeCompare(b.date || "");
   });
 
@@ -7930,13 +7950,18 @@ function FinanceModal({
                       </div>
                     </td>
                     <td className="px-3 py-2">
-                      <button
-                        disabled={!isAdmin}
-                        onClick={() => onUpdatePayment(p.project, p.id, { paid: !p.paid })}
-                        className={`text-[10px] font-bold px-2 py-1 rounded ${p.paid ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"} ${isAdmin ? "hover:opacity-80" : ""}`}
-                      >
-                        {p.paid ? "مدفوع" : "غير مدفوع"}
-                      </button>
+                      {(() => {
+                        const s = computePayStatus(p);
+                        const m = PAY_STATUS_META[s];
+                        return (
+                          <span
+                            className={`text-[10px] font-bold px-2 py-1 rounded ${m.cls}`}
+                            title="تتحدث الحالة تلقائياً حسب المبلغ المدفوع وتاريخ الاستحقاق"
+                          >
+                            {m.label}
+                          </span>
+                        );
+                      })()}
                     </td>
                     <ExtraCells tableId="finance.payments" rowId={`${p.project}-${p.id}`} canEdit={isAdmin} employees={employees} tdClass="px-3 py-2 min-w-[120px]" />
                     {isAdmin && (
