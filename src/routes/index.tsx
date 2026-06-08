@@ -7456,7 +7456,7 @@ function SplitContractButton({
   onSplit: (payments: DPayment[]) => void;
 }) {
   const [open, setOpen] = useState(false);
-  const [count, setCount] = useState<2 | 4 | 8>(4);
+  const [count, setCount] = useState<1 | 2 | 4 | 12>(4);
   const total = Number(value || 0);
   const apply = () => {
     const n = count;
