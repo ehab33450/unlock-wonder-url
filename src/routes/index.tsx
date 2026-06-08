@@ -2651,12 +2651,33 @@ function Index() {
                 <div className="mb-4">
                   <label className="block text-sm text-slate-600 mb-2 text-right">حدد المجلد</label>
                   <div className="relative">
-                    <input
+                    <select
                       value={npFolder}
-                      onChange={(e) => setNpFolder(e.target.value)}
-                      className="w-full h-11 border border-slate-300 rounded px-3 pl-10 text-right focus:outline-none focus:border-[color:var(--eyenak-teal)]"
-                    />
-                    <Folder className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                      onChange={(e) => {
+                        const v = e.target.value;
+                        if (v === "__new__") {
+                          const n = prompt("اسم المجلد الجديد")?.trim();
+                          if (n) {
+                            setCustomFolders((arr) => (arr.includes(n) ? arr : [...arr, n]));
+                            setNpFolder(n);
+                          }
+                        } else {
+                          setNpFolder(v);
+                        }
+                      }}
+                      className="w-full h-11 border border-slate-300 rounded px-3 pl-10 text-right focus:outline-none focus:border-[color:var(--eyenak-teal)] bg-white appearance-none"
+                    >
+                      <option value="">— بدون مجلد —</option>
+                      {Array.from(new Set([
+                        ...projects.map((p) => p.name),
+                        ...customFolders,
+                        ...Object.values(projectFolders),
+                      ])).filter(Boolean).map((f) => (
+                        <option key={f} value={f}>{f}</option>
+                      ))}
+                      <option value="__new__">+ إنشاء مجلد جديد…</option>
+                    </select>
+                    <Folder className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
                   </div>
                 </div>
 
