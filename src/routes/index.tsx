@@ -2427,34 +2427,30 @@ function Index() {
                             <span className="w-3.5" />
                           )}
                           <div className="flex items-center gap-2">
-                            {projectMeta[c] && (
-                              <>
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setChatProject(c);
-                                    setChatViewOpen(true);
-                                  }}
-                                  className="text-white/50 hover:text-white"
-                                  aria-label="فتح المحادثة"
-                                  title="فتح المحادثة"
-                                >
-                                  <MessageSquare className="w-3.5 h-3.5" />
-                                </button>
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setFolderViewProject(c);
-                                    setCurrentSubfolder(null);
-                                  }}
-                                  className="text-white/50 hover:text-white"
-                                  aria-label="فتح الملفات"
-                                  title="فتح الملفات"
-                                >
-                                  <Folder className="w-3.5 h-3.5" />
-                                </button>
-                              </>
-                            )}
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setChatProject(c);
+                                setChatViewOpen(true);
+                              }}
+                              className="text-white/50 hover:text-white"
+                              aria-label="فتح المحادثة"
+                              title="فتح المحادثة"
+                            >
+                              <MessageSquare className="w-3.5 h-3.5" />
+                            </button>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setFolderViewProject(c);
+                                setCurrentSubfolder(null);
+                              }}
+                              className="text-white/50 hover:text-white"
+                              aria-label="فتح الملفات"
+                              title="فتح الملفات"
+                            >
+                              <Folder className="w-3.5 h-3.5" />
+                            </button>
                             <span>{c}</span>
                             <FileIcon className="w-4 h-4 text-white/60" />
                           </div>
