@@ -412,6 +412,8 @@ function Index() {
   const [npRespPhone, setNpRespPhone] = useState("");
   const [npAssignee, setNpAssignee] = useState("");
   const [npPayments, setNpPayments] = useState<Payment[]>([]);
+  const [npServices, setNpServices] = useState<string[]>([]);
+  const [npServiceInput, setNpServiceInput] = useState("");
 
   // Project detail overlay
   const [detailProject, setDetailProject] = useState<string | null>(null);
@@ -1190,6 +1192,7 @@ function Index() {
             responsibleName: npRespName,
             responsiblePhone: npRespPhone,
             assignee: npAssignee || (npMembers[0] ?? ""),
+            services: npServices,
           },
           tasks: [],
         },
@@ -1403,6 +1406,8 @@ function Index() {
     setNpRespPhone("");
     setNpAssignee("");
     setNpPayments([]);
+    setNpServices([]);
+    setNpServiceInput("");
   };
   const toggle = (name: string) =>
     setOpenProjects((s) => ({ ...s, [name]: !s[name] }));
@@ -2804,19 +2809,33 @@ function Index() {
                 {/* Payments */}
                 <div className="mb-4">
                   <div className="flex items-center justify-between mb-2">
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setNpPayments((p) => [
-                          ...p,
-                          { id: `${Date.now()}-${p.length}`, amount: "", date: "", paid: false },
-                        ])
-                      }
-                      className="text-xs text-[color:var(--eyenak-teal)] hover:underline flex items-center gap-1"
+                    <select
+                      value={npPayments.length || ""}
+                      onChange={(e) => {
+                        const n = Number(e.target.value);
+                        if (!n) {
+                          setNpPayments([]);
+                          return;
+                        }
+                        const total = Number(npValue) || 0;
+                        const each = total ? Math.round((total / n) * 100) / 100 : 0;
+                        setNpPayments(
+                          Array.from({ length: n }, (_, i) => ({
+                            id: `${Date.now()}-${i}`,
+                            amount: each ? String(each) : "",
+                            date: "",
+                            paid: false,
+                          })),
+                        );
+                      }}
+                      className="h-9 border border-slate-300 rounded px-2 text-xs text-right focus:outline-none focus:border-[color:var(--eyenak-teal)]"
                     >
-                      <Plus className="w-3 h-3" />
-                      <span>إضافة دفعة</span>
-                    </button>
+                      <option value="">عدد الأقساط</option>
+                      <option value="1">1</option>
+                      <option value="2">2</option>
+                      <option value="8">8</option>
+                      <option value="12">12</option>
+                    </select>
                     <label className="block text-sm text-slate-600 text-right">الدفعات</label>
                   </div>
                   {npPayments.length === 0 ? (
@@ -2880,6 +2899,39 @@ function Index() {
                 </div>
 
                 <div className="mb-6">
+                  <label className="block text-sm text-slate-600 mb-2 text-right">نوع الخدمة</label>
+                  <div className="relative mb-2">
+                    <input
+                      value={npServiceInput}
+                      onChange={(e) => setNpServiceInput(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" && npServiceInput.trim()) {
+                          e.preventDefault();
+                          setNpServices((s) => [...s, npServiceInput.trim()]);
+                          setNpServiceInput("");
+                        }
+                      }}
+                      placeholder="مثل: موارد بشرية ، محاسبة ... ثم Enter"
+                      className="w-full h-11 border border-slate-300 rounded px-3 text-right focus:outline-none focus:border-[color:var(--eyenak-teal)]"
+                    />
+                  </div>
+                  {npServices.length > 0 && (
+                    <div className="flex flex-wrap gap-1 justify-end mb-4" dir="rtl">
+                      {npServices.map((s, i) => (
+                        <span
+                          key={`${s}-${i}`}
+                          className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[color:var(--eyenak-teal)]/10 text-[color:var(--eyenak-teal)] text-xs font-semibold border border-[color:var(--eyenak-teal)]/30"
+                        >
+                          <span>{s}</span>
+                          <button
+                            type="button"
+                            onClick={() => setNpServices((arr) => arr.filter((_, k) => k !== i))}
+                            className="text-[color:var(--eyenak-teal)]/70 hover:text-red-600"
+                          >×</button>
+                        </span>
+                      ))}
+                    </div>
+                  )}
                   <label className="block text-sm text-slate-600 mb-2 text-right">الأعضاء</label>
                   <div className="relative mb-2">
                     <input
