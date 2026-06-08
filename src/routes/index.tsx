@@ -6338,14 +6338,86 @@ function ProjectDetailOverlay({
                     </tr>
                   </thead>
                   <tbody>
-                    {data.tasks.length === 0 ? (
-                      <tr>
-                        <td colSpan={12 + customCols.length + (canEditAll ? 1 : 0)} className="py-12 text-center text-slate-400">
-                          لا توجد مهام بعد. اضغط "إضافة مهمة" للبدء.
-                        </td>
-                      </tr>
-                    ) : (
-                      data.tasks.map((t) => (
+                    {(() => {
+                      type Item = { type: "group"; g: DTaskGroup } | { type: "task"; t: DTask };
+                      const items: Item[] = [];
+                      for (const g of groups) {
+                        items.push({ type: "group", g });
+                        if (!g.collapsed) {
+                          for (const tk of data.tasks.filter((x) => x.groupId === g.id)) items.push({ type: "task", t: tk });
+                        }
+                      }
+                      for (const tk of data.tasks.filter((x) => !x.groupId || !groups.some((g) => g.id === x.groupId))) {
+                        items.push({ type: "task", t: tk });
+                      }
+                      const totalCols = 13 + customCols.length;
+                      if (items.length === 0) {
+                        return (
+                          <tr>
+                            <td colSpan={totalCols} className="py-12 text-center text-slate-400">
+                              لا توجد مهام بعد. اضغط "إضافة مهمة" للبدء.
+                            </td>
+                          </tr>
+                        );
+                      }
+                      return items.map((item) => {
+                        if (item.type === "group") {
+                          const g = item.g;
+                          const count = data.tasks.filter((x) => x.groupId === g.id).length;
+                          return (
+                            <tr key={`g-${g.id}`} style={{ background: g.color + "18" }} className="border-t border-slate-200">
+                              <td colSpan={totalCols} className="px-3 py-2">
+                                <div className="flex items-center gap-2">
+                                  <button
+                                    onClick={() => updateGroup(g.id, { collapsed: !g.collapsed })}
+                                    className="text-slate-500 hover:text-slate-700 text-xs font-bold w-5"
+                                    title={g.collapsed ? "توسيع" : "طي"}
+                                  >{g.collapsed ? "▸" : "▾"}</button>
+                                  <span className="w-2 h-4 rounded" style={{ background: g.color }} />
+                                  <input
+                                    value={g.title}
+                                    disabled={!canEditAll}
+                                    onChange={(e) => updateGroup(g.id, { title: e.target.value })}
+                                    className="bg-transparent font-bold text-sm text-slate-800 focus:outline-none focus:bg-white/60 px-1 rounded"
+                                  />
+                                  <span className="text-[11px] text-slate-500">({count} مهمة)</span>
+                                  <div className="flex-1" />
+                                  {canEditOwn && (
+                                    <button
+                                      onClick={() => addTaskToGroup(g.id)}
+                                      className="text-[11px] text-emerald-700 hover:underline flex items-center gap-1"
+                                    ><Plus className="w-3 h-3" />مهمة في المجموعة</button>
+                                  )}
+                                  {canEditAll && (
+                                    <HeaderMenu
+                                      extraItems={[
+                                        { label: "إضافة مجموعة", icon: "+", onClick: addGroup },
+                                        { label: g.collapsed ? "توسيع المجموعة" : "طي المجموعة", icon: g.collapsed ? "▸" : "▾", onClick: () => updateGroup(g.id, { collapsed: !g.collapsed }) },
+                                        { label: "تغيير اللون", icon: "🎨", onClick: () => {
+                                            const cur = GROUP_COLORS.indexOf(g.color);
+                                            const next = GROUP_COLORS[(cur + 1) % GROUP_COLORS.length];
+                                            updateGroup(g.id, { color: next });
+                                          } },
+                                        { label: "تصدير بصيغة إكسل (CSV)", icon: "📊", onClick: () => exportGroupCSV(g.id) },
+                                        { label: "استيراد مهام", icon: "📥", onClick: () => {
+                                            const inp = document.createElement("input");
+                                            inp.type = "file"; inp.accept = ".csv,text/csv";
+                                            inp.onchange = () => { const f = inp.files?.[0]; if (f) importGroupCSV(g.id, f); };
+                                            inp.click();
+                                          } },
+                                        { label: "حذف المجموعة", icon: "🗑", danger: true, onClick: () => {
+                                            if (window.confirm(`حذف المجموعة "${g.title}"؟ ستبقى المهام بدون مجموعة.`)) removeGroup(g.id);
+                                          } },
+                                      ]}
+                                    />
+                                  )}
+                                </div>
+                              </td>
+                            </tr>
+                          );
+                        }
+                        const t = item.t;
+                        return (
                         <tr key={t.id} className="border-t border-slate-100 hover:bg-slate-50">
                           <td className="px-1 py-1 text-center">
                             {canSeeChat(t.id) ? (
