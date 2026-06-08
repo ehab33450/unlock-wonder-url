@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { askAssistant } from "@/lib/ai-assistant.functions";
 import guideDashboardImg from "@/assets/guide-dashboard.png";
@@ -390,9 +390,10 @@ function Index() {
     responsibleName: string;
     responsiblePhone: string;
     assignee: string;
+    services?: string[];
   };
   type TaskStatus = "جديد" | "جاري العمل" | "تم الانجاز" | "معلق" | "ملغي";
-  type Priority = "لاشيء" | "منخفض" | "متوسط" | "عالي";
+  type Priority = "عادي" | "متوسط" | "عالي";
   type TaskRow = {
     id: string;
     name: string;
@@ -504,7 +505,7 @@ function Index() {
     const assignees = ["ايهاب فاتح", "محمد علي", "سارة أحمد", "أ. أروى الجعدي"];
     const platforms = ["نظام أبشر", "منصة اعتماد", "بوابة العميل", "البريد المؤسسي"];
     const statuses: TaskStatus[] = ["جديد", "جاري العمل", "تم الانجاز", "معلق"];
-    const priorities: Priority[] = ["متوسط", "عالي", "منخفض"];
+    const priorities: Priority[] = ["متوسط", "عالي", "عادي"];
 
     setProjectMeta((m) => {
       const next = { ...m };
@@ -2562,7 +2563,7 @@ function Index() {
                       endDate: newTaskEnd || today,
                       doneDate: "",
                       status: "جديد",
-                      priority: "لاشيء",
+                      priority: "عادي",
                       progress: 0,
                     };
                     setProjectMeta((m) => {
@@ -5769,9 +5770,10 @@ type DContract = {
   responsibleName: string;
   responsiblePhone: string;
   assignee: string;
+  services?: string[];
 };
 type DStatus = "جديد" | "جاري العمل" | "تم الانجاز" | "معلق" | "ملغي";
-type DPriority = "لاشيء" | "منخفض" | "متوسط" | "عالي";
+type DPriority = "عادي" | "متوسط" | "عالي";
 type DTask = {
   id: string;
   name: string;
@@ -5943,7 +5945,7 @@ function ProjectDetailOverlay({
           endDate: "",
           doneDate: "",
           status: "جديد",
-          priority: "لاشيء",
+          priority: "عادي",
           progress: 0,
         },
         ...cur.tasks,
@@ -5962,7 +5964,7 @@ function ProjectDetailOverlay({
         endDate: "",
         doneDate: "",
         status: "جديد",
-        priority: "لاشيء",
+        priority: "عادي",
         progress: 0,
       };
       const arr = [...cur.tasks];
@@ -6010,7 +6012,7 @@ function ProjectDetailOverlay({
       tasks: [
         { id: `${Date.now()}`, name: "مهمة جديدة", platform: "", beneficiary: "", documentNo: "",
           startDate: new Date().toISOString().slice(0,10), endDate: "", doneDate: "",
-          status: "جديد" as DStatus, priority: "لاشيء" as DPriority, progress: 0, groupId },
+          status: "جديد" as DStatus, priority: "عادي" as DPriority, progress: 0, groupId },
         ...cur.tasks,
       ],
     }));
@@ -6054,7 +6056,7 @@ function ProjectDetailOverlay({
           id: `${Date.now()}${i}`,
           name: c[0] || "مهمة", platform: c[1] || "", beneficiary: c[2] || "", documentNo: c[3] || "",
           startDate: c[4] || "", endDate: c[5] || "", doneDate: c[8] || "",
-          status: (c[6] as DStatus) || "جديد", priority: (c[7] as DPriority) || "لاشيء",
+          status: (c[6] as DStatus) || "جديد", priority: (c[7] as DPriority) || "عادي",
           progress: 0, groupId,
         });
       }
@@ -6095,11 +6097,12 @@ function ProjectDetailOverlay({
     "ملغي": "bg-zinc-200 text-zinc-500 line-through",
   };
   const priorityColors: Record<DPriority, string> = {
-    "لاشيء": "bg-slate-100 text-slate-500",
-    "منخفض": "bg-sky-100 text-sky-700",
+    "عادي": "bg-sky-100 text-sky-700",
     "متوسط": "bg-amber-100 text-amber-700",
     "عالي": "bg-red-100 text-red-700",
   };
+  const normPriority = (p: unknown): DPriority =>
+    p === "عالي" ? "عالي" : p === "متوسط" ? "متوسط" : "عادي";
 
   // Right-click column menu state
   const [colMenu, setColMenu] = useState<{ x: number; y: number; insertAt: number } | null>(null);
@@ -6275,6 +6278,73 @@ function ProjectDetailOverlay({
                   </div>
                 </div>
               </div>
+              {/* نوع الخدمة (متعدد) */}
+              <div className="mt-3 bg-slate-50 rounded border border-slate-200 p-3">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-xs text-slate-500">يمكنك إضافة أكثر من خدمة</span>
+                  <div className="text-xs font-semibold text-slate-600">نوع الخدمة</div>
+                </div>
+                <div className="flex flex-wrap gap-2 justify-end" dir="rtl">
+                  {(data.contract.services ?? []).map((s, i) => (
+                    <span
+                      key={`${s}-${i}`}
+                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-[color:var(--eyenak-teal)]/10 text-[color:var(--eyenak-teal)] text-xs font-semibold border border-[color:var(--eyenak-teal)]/30"
+                    >
+                      <span>{s}</span>
+                      {canEditAll && (
+                        <button
+                          type="button"
+                          onClick={() =>
+                            onUpdate((c) => ({
+                              ...c,
+                              contract: {
+                                ...c.contract,
+                                services: (c.contract.services ?? []).filter((_, k) => k !== i),
+                              },
+                            }))
+                          }
+                          className="text-[color:var(--eyenak-teal)]/70 hover:text-red-600"
+                          title="حذف"
+                        >×</button>
+                      )}
+                    </span>
+                  ))}
+                  {(data.contract.services ?? []).length === 0 && (
+                    <span className="text-xs text-slate-400">لا توجد خدمات بعد</span>
+                  )}
+                  {canEditAll && (
+                    <form
+                      onSubmit={(e) => {
+                        e.preventDefault();
+                        const inp = (e.currentTarget.elements.namedItem("svc") as HTMLInputElement);
+                        const v = inp.value.trim();
+                        if (!v) return;
+                        onUpdate((c) => ({
+                          ...c,
+                          contract: {
+                            ...c.contract,
+                            services: [...(c.contract.services ?? []), v],
+                          },
+                        }));
+                        inp.value = "";
+                      }}
+                      className="flex items-center gap-1"
+                    >
+                      <input
+                        name="svc"
+                        placeholder="مثل: موارد بشرية"
+                        className="h-7 px-2 text-xs border border-slate-300 rounded text-right focus:outline-none focus:border-[color:var(--eyenak-teal)]"
+                      />
+                      <button
+                        type="submit"
+                        className="h-7 px-2 rounded bg-[color:var(--eyenak-teal)] text-white text-xs font-semibold hover:opacity-90"
+                      >
+                        + إضافة
+                      </button>
+                    </form>
+                  )}
+                </div>
+              </div>
             </div>
 
             {/* Tasks table */}
@@ -6399,8 +6469,14 @@ function ProjectDetailOverlay({
                         if (item.type === "group") {
                           const g = item.g;
                           const count = data.tasks.filter((x) => x.groupId === g.id).length;
+                          const subHeaders = [
+                            "", "اسم المهمة", "المنصة", "المستفيد", "رقم المستند",
+                            "فترة المهمة", "العد التنازلي", "تاريخ الإنجاز",
+                            "الحالة", "الأهمية", "المرفق",
+                          ];
                           return (
-                            <tr key={`g-${g.id}`} style={{ background: g.color + "18" }} className="border-t border-slate-200">
+                            <Fragment key={`g-${g.id}`}>
+                            <tr style={{ background: g.color + "18" }} className="border-t border-slate-200">
                               <td colSpan={totalCols} className="px-3 py-2">
                                 <div className="flex items-center gap-2">
                                   <button
@@ -6449,6 +6525,19 @@ function ProjectDetailOverlay({
                                 </div>
                               </td>
                             </tr>
+                            {!g.collapsed && (
+                              <tr className="bg-slate-50/80 border-t border-slate-200 text-[11px] text-slate-500">
+                                {subHeaders.map((h, i) => (
+                                  <th key={i} className="px-2 py-1.5 text-right font-semibold whitespace-nowrap">{h}</th>
+                                ))}
+                                {customCols.map((c) => (
+                                  <th key={c.id} className="px-2 py-1.5 text-right font-semibold whitespace-nowrap">{c.name}</th>
+                                ))}
+                                {canEditAll && <th className="px-2 py-1.5"></th>}
+                                {canEditOwn && <th className="px-2 py-1.5"></th>}
+                              </tr>
+                            )}
+                            </Fragment>
                           );
                         }
                         const t = item.t;
@@ -6477,7 +6566,7 @@ function ProjectDetailOverlay({
                               value={t.name}
                               disabled={!canEditOwn}
                               onChange={(e) => updateTask(t.id, { name: e.target.value })}
-                              className="w-32 px-2 py-1 text-right text-xs rounded focus:outline-none focus:bg-emerald-50"
+                              className="w-full px-2 py-1 text-right text-xs rounded focus:outline-none focus:bg-emerald-50"
                             />
                           </td>
                           <td className="px-1 py-1">
@@ -6485,7 +6574,7 @@ function ProjectDetailOverlay({
                               value={t.platform}
                               disabled={!canEditOwn}
                               onChange={(e) => updateTask(t.id, { platform: e.target.value })}
-                              className="w-28 px-2 py-1 text-right text-xs rounded focus:outline-none focus:bg-emerald-50"
+                              className="w-full px-2 py-1 text-right text-xs rounded focus:outline-none focus:bg-emerald-50"
                             />
                           </td>
                           <td className="px-1 py-1">
@@ -6493,7 +6582,7 @@ function ProjectDetailOverlay({
                               value={t.beneficiary}
                               disabled={!canEditOwn}
                               onChange={(e) => updateTask(t.id, { beneficiary: e.target.value })}
-                              className="w-28 px-2 py-1 text-right text-xs rounded focus:outline-none focus:bg-emerald-50"
+                              className="w-full px-2 py-1 text-right text-xs rounded focus:outline-none focus:bg-emerald-50"
                             />
                           </td>
                           <td className="px-1 py-1">
@@ -6501,7 +6590,7 @@ function ProjectDetailOverlay({
                               value={t.documentNo}
                               disabled={!canEditOwn}
                               onChange={(e) => updateTask(t.id, { documentNo: e.target.value })}
-                              className="w-24 px-2 py-1 text-right text-xs rounded focus:outline-none focus:bg-emerald-50"
+                              className="w-full px-2 py-1 text-right text-xs rounded focus:outline-none focus:bg-emerald-50"
                             />
                           </td>
                           <td className="px-1 py-1">
@@ -6558,15 +6647,14 @@ function ProjectDetailOverlay({
                           </td>
                           <td className="px-1 py-1">
                             <select
-                              value={t.priority}
+                              value={normPriority(t.priority)}
                               disabled={!canEditOwn}
                               onChange={(e) =>
                                 updateTask(t.id, { priority: e.target.value as DPriority })
                               }
-                              className={`text-xs font-semibold rounded px-2 py-1 focus:outline-none ${priorityColors[t.priority]}`}
+                              className={`text-xs font-semibold rounded px-2 py-1 focus:outline-none ${priorityColors[normPriority(t.priority)]}`}
                             >
-                              <option value="لاشيء">لاشيء</option>
-                              <option value="منخفض">منخفض</option>
+                              <option value="عادي">عادي</option>
                               <option value="متوسط">متوسط</option>
                               <option value="عالي">عالي</option>
                             </select>
