@@ -7624,16 +7624,19 @@ function FinanceModal({
   const allPayments: FinancePayment[] = visibleProjects.flatMap(([project, meta]) =>
     meta.contract.payments.map((p) => ({ ...p, project, assignee: meta.contract.assignee })),
   );
-  const now = Date.now();
   const scoped = selectedProject ? allPayments.filter((p) => p.project === selectedProject) : allPayments;
   const filtered = scoped.filter((p) => {
-    if (filter === "paid") return p.paid;
-    if (filter === "due") return !p.paid;
-    if (filter === "overdue") return !p.paid && p.date && new Date(p.date).getTime() < now;
+    const s = computePayStatus(p);
+    if (filter === "paid") return s === "paid";
+    if (filter === "due") return s !== "paid";
+    if (filter === "overdue") return s === "overdue";
     return true;
   });
   filtered.sort((a, b) => {
-    if (a.paid !== b.paid) return a.paid ? 1 : -1;
+    const order: Record<PayStatus, number> = { overdue: 0, partial: 1, not_due: 2, paid: 3 };
+    const da = order[computePayStatus(a)];
+    const db = order[computePayStatus(b)];
+    if (da !== db) return da - db;
     return (a.date || "").localeCompare(b.date || "");
   });
 
