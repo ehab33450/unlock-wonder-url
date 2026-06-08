@@ -6278,6 +6278,73 @@ function ProjectDetailOverlay({
                   </div>
                 </div>
               </div>
+              {/* نوع الخدمة (متعدد) */}
+              <div className="mt-3 bg-slate-50 rounded border border-slate-200 p-3">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-xs text-slate-500">يمكنك إضافة أكثر من خدمة</span>
+                  <div className="text-xs font-semibold text-slate-600">نوع الخدمة</div>
+                </div>
+                <div className="flex flex-wrap gap-2 justify-end" dir="rtl">
+                  {(data.contract.services ?? []).map((s, i) => (
+                    <span
+                      key={`${s}-${i}`}
+                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-[color:var(--eyenak-teal)]/10 text-[color:var(--eyenak-teal)] text-xs font-semibold border border-[color:var(--eyenak-teal)]/30"
+                    >
+                      <span>{s}</span>
+                      {canEditAll && (
+                        <button
+                          type="button"
+                          onClick={() =>
+                            onUpdate((c) => ({
+                              ...c,
+                              contract: {
+                                ...c.contract,
+                                services: (c.contract.services ?? []).filter((_, k) => k !== i),
+                              },
+                            }))
+                          }
+                          className="text-[color:var(--eyenak-teal)]/70 hover:text-red-600"
+                          title="حذف"
+                        >×</button>
+                      )}
+                    </span>
+                  ))}
+                  {(data.contract.services ?? []).length === 0 && (
+                    <span className="text-xs text-slate-400">لا توجد خدمات بعد</span>
+                  )}
+                  {canEditAll && (
+                    <form
+                      onSubmit={(e) => {
+                        e.preventDefault();
+                        const inp = (e.currentTarget.elements.namedItem("svc") as HTMLInputElement);
+                        const v = inp.value.trim();
+                        if (!v) return;
+                        onUpdate((c) => ({
+                          ...c,
+                          contract: {
+                            ...c.contract,
+                            services: [...(c.contract.services ?? []), v],
+                          },
+                        }));
+                        inp.value = "";
+                      }}
+                      className="flex items-center gap-1"
+                    >
+                      <input
+                        name="svc"
+                        placeholder="مثل: موارد بشرية"
+                        className="h-7 px-2 text-xs border border-slate-300 rounded text-right focus:outline-none focus:border-[color:var(--eyenak-teal)]"
+                      />
+                      <button
+                        type="submit"
+                        className="h-7 px-2 rounded bg-[color:var(--eyenak-teal)] text-white text-xs font-semibold hover:opacity-90"
+                      >
+                        + إضافة
+                      </button>
+                    </form>
+                  )}
+                </div>
+              </div>
             </div>
 
             {/* Tasks table */}
