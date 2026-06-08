@@ -6143,6 +6143,7 @@ function ProjectDetailOverlay({
   };
   const [chatDraft, setChatDraft] = useState("");
   const [memberPickOpen, setMemberPickOpen] = useState(false);
+  const [servicesOpen, setServicesOpen] = useState(false);
   const activeChat = chatTaskId ? (taskChats[chatTaskId] ?? { allowed: [], msgs: [] }) : null;
   const canSeeChat = (taskId: string) => {
     if (isAdmin) return true;
@@ -6277,46 +6278,53 @@ function ProjectDetailOverlay({
                     {paidCount} / {data.contract.payments.length}
                   </div>
                 </div>
-              </div>
-              {/* نوع الخدمة (متعدد) */}
-              <div className="mt-3 bg-slate-50 rounded border border-slate-200 p-3">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-xs text-slate-500">يمكنك إضافة أكثر من خدمة</span>
-                  <div className="text-xs font-semibold text-slate-600">نوع الخدمة</div>
-                </div>
-                <div className="flex flex-wrap gap-2 justify-end" dir="rtl">
-                  {(data.contract.services ?? []).map((s, i) => (
-                    <span
-                      key={`${s}-${i}`}
-                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-[color:var(--eyenak-teal)]/10 text-[color:var(--eyenak-teal)] text-xs font-semibold border border-[color:var(--eyenak-teal)]/30"
-                    >
-                      <span>{s}</span>
-                      {canEditAll && (
-                        <button
-                          type="button"
-                          onClick={() =>
-                            onUpdate((c) => ({
-                              ...c,
-                              contract: {
-                                ...c.contract,
-                                services: (c.contract.services ?? []).filter((_, k) => k !== i),
-                              },
-                            }))
-                          }
-                          className="text-[color:var(--eyenak-teal)]/70 hover:text-red-600"
-                          title="حذف"
-                        >×</button>
-                      )}
+                {/* نوع الخدمة (متعدد) - يملأ الفراغ في الشبكة */}
+                <div className="bg-slate-50 rounded border border-slate-200 p-3 text-right">
+                  <button
+                    type="button"
+                    onClick={() => setServicesOpen((v) => !v)}
+                    className="w-full flex items-center justify-between text-xs text-slate-500 hover:text-[color:var(--eyenak-teal)]"
+                    title="انقر لإظهار/إخفاء إضافة خدمة"
+                  >
+                    <span className="text-[10px] text-slate-400">
+                      {servicesOpen ? "▲" : "▼"}
                     </span>
-                  ))}
-                  {(data.contract.services ?? []).length === 0 && (
-                    <span className="text-xs text-slate-400">لا توجد خدمات بعد</span>
-                  )}
-                  {canEditAll && (
+                    <span>نوع الخدمة</span>
+                  </button>
+                  <div className="mt-1 flex flex-wrap gap-1 justify-end" dir="rtl">
+                    {(data.contract.services ?? []).length === 0 && !servicesOpen && (
+                      <span className="text-sm text-slate-400">—</span>
+                    )}
+                    {(data.contract.services ?? []).map((s, i) => (
+                      <span
+                        key={`${s}-${i}`}
+                        className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[color:var(--eyenak-teal)]/10 text-[color:var(--eyenak-teal)] text-[11px] font-semibold border border-[color:var(--eyenak-teal)]/30"
+                      >
+                        <span>{s}</span>
+                        {canEditAll && servicesOpen && (
+                          <button
+                            type="button"
+                            onClick={() =>
+                              onUpdate((c) => ({
+                                ...c,
+                                contract: {
+                                  ...c.contract,
+                                  services: (c.contract.services ?? []).filter((_, k) => k !== i),
+                                },
+                              }))
+                            }
+                            className="text-[color:var(--eyenak-teal)]/70 hover:text-red-600"
+                            title="حذف"
+                          >×</button>
+                        )}
+                      </span>
+                    ))}
+                  </div>
+                  {servicesOpen && canEditAll && (
                     <form
                       onSubmit={(e) => {
                         e.preventDefault();
-                        const inp = (e.currentTarget.elements.namedItem("svc") as HTMLInputElement);
+                        const inp = e.currentTarget.elements.namedItem("svc") as HTMLInputElement;
                         const v = inp.value.trim();
                         if (!v) return;
                         onUpdate((c) => ({
@@ -6328,19 +6336,17 @@ function ProjectDetailOverlay({
                         }));
                         inp.value = "";
                       }}
-                      className="flex items-center gap-1"
+                      className="mt-2 flex items-center gap-1"
                     >
                       <input
                         name="svc"
                         placeholder="مثل: موارد بشرية"
-                        className="h-7 px-2 text-xs border border-slate-300 rounded text-right focus:outline-none focus:border-[color:var(--eyenak-teal)]"
+                        className="flex-1 h-7 px-2 text-xs border border-slate-300 rounded text-right focus:outline-none focus:border-[color:var(--eyenak-teal)]"
                       />
                       <button
                         type="submit"
-                        className="h-7 px-2 rounded bg-[color:var(--eyenak-teal)] text-white text-xs font-semibold hover:opacity-90"
-                      >
-                        + إضافة
-                      </button>
+                        className="h-7 px-2 rounded bg-[color:var(--eyenak-teal)] text-white text-xs font-semibold hover:opacity-90 whitespace-nowrap"
+                      >+ إضافة</button>
                     </form>
                   )}
                 </div>
@@ -6383,20 +6389,20 @@ function ProjectDetailOverlay({
                         className="px-2 py-2 text-center font-semibold w-10"
                         title="محادثة المهمة الخاصة"
                       >💬</th>
-                      <th className="px-2 py-2 text-right font-semibold"><EditableHeaderLabel tableId={projectTableId} headerKey="name" defaultLabel="اسم المهمة" isAdmin={canEditAll} colMenu={builtinColMenu} /></th>
-                      <th className="px-2 py-2 text-right font-semibold"><EditableHeaderLabel tableId={projectTableId} headerKey="platform" defaultLabel="المنصة" isAdmin={canEditAll} colMenu={builtinColMenu} /></th>
-                      <th className="px-2 py-2 text-right font-semibold"><EditableHeaderLabel tableId={projectTableId} headerKey="beneficiary" defaultLabel="المستفيد" isAdmin={canEditAll} colMenu={builtinColMenu} /></th>
-                      <th className="px-2 py-2 text-right font-semibold"><EditableHeaderLabel tableId={projectTableId} headerKey="doc" defaultLabel="رقم المستند" isAdmin={canEditAll} colMenu={builtinColMenu} /></th>
-                      <th className="px-2 py-2 text-right font-semibold"><EditableHeaderLabel tableId={projectTableId} headerKey="period" defaultLabel="فترة المهمة" isAdmin={canEditAll} colMenu={builtinColMenu} /></th>
-                      <th className="px-2 py-2 text-right font-semibold"><EditableHeaderLabel tableId={projectTableId} headerKey="count" defaultLabel="العد التنازلي" isAdmin={canEditAll} colMenu={builtinColMenu} /></th>
-                      <th className="px-2 py-2 text-right font-semibold"><EditableHeaderLabel tableId={projectTableId} headerKey="done" defaultLabel="تاريخ الإنجاز" isAdmin={canEditAll} colMenu={builtinColMenu} /></th>
-                      <th className="px-2 py-2 text-right font-semibold"><EditableHeaderLabel tableId={projectTableId} headerKey="status" defaultLabel="الحالة" isAdmin={canEditAll} colMenu={builtinColMenu} /></th>
-                      <th className="px-2 py-2 text-right font-semibold"><EditableHeaderLabel tableId={projectTableId} headerKey="priority" defaultLabel="الأهمية" isAdmin={canEditAll} colMenu={builtinColMenu} /></th>
-                      <th className="px-2 py-2 text-right font-semibold"><EditableHeaderLabel tableId={projectTableId} headerKey="attach" defaultLabel="المرفق" isAdmin={canEditAll} colMenu={builtinColMenu} /></th>
+                      <th className="px-2 py-2 text-center font-semibold"><EditableHeaderLabel tableId={projectTableId} headerKey="name" defaultLabel="اسم المهمة" isAdmin={canEditAll} colMenu={builtinColMenu} /></th>
+                      <th className="px-2 py-2 text-center font-semibold"><EditableHeaderLabel tableId={projectTableId} headerKey="platform" defaultLabel="المنصة" isAdmin={canEditAll} colMenu={builtinColMenu} /></th>
+                      <th className="px-2 py-2 text-center font-semibold"><EditableHeaderLabel tableId={projectTableId} headerKey="beneficiary" defaultLabel="المستفيد" isAdmin={canEditAll} colMenu={builtinColMenu} /></th>
+                      <th className="px-2 py-2 text-center font-semibold"><EditableHeaderLabel tableId={projectTableId} headerKey="doc" defaultLabel="رقم المستند" isAdmin={canEditAll} colMenu={builtinColMenu} /></th>
+                      <th className="px-2 py-2 text-center font-semibold"><EditableHeaderLabel tableId={projectTableId} headerKey="period" defaultLabel="فترة المهمة" isAdmin={canEditAll} colMenu={builtinColMenu} /></th>
+                      <th className="px-2 py-2 text-center font-semibold"><EditableHeaderLabel tableId={projectTableId} headerKey="count" defaultLabel="العد التنازلي" isAdmin={canEditAll} colMenu={builtinColMenu} /></th>
+                      <th className="px-2 py-2 text-center font-semibold"><EditableHeaderLabel tableId={projectTableId} headerKey="done" defaultLabel="تاريخ الإنجاز" isAdmin={canEditAll} colMenu={builtinColMenu} /></th>
+                      <th className="px-2 py-2 text-center font-semibold"><EditableHeaderLabel tableId={projectTableId} headerKey="status" defaultLabel="الحالة" isAdmin={canEditAll} colMenu={builtinColMenu} /></th>
+                      <th className="px-2 py-2 text-center font-semibold"><EditableHeaderLabel tableId={projectTableId} headerKey="priority" defaultLabel="الأهمية" isAdmin={canEditAll} colMenu={builtinColMenu} /></th>
+                      <th className="px-2 py-2 text-center font-semibold"><EditableHeaderLabel tableId={projectTableId} headerKey="attach" defaultLabel="المرفق" isAdmin={canEditAll} colMenu={builtinColMenu} /></th>
                       {customCols.map((c, idx) => (
                         <th
                           key={c.id}
-                          className="px-2 py-2 text-right font-semibold whitespace-nowrap group"
+                          className="px-2 py-2 text-center font-semibold whitespace-nowrap group"
                         >
                           <span className="inline-flex items-center gap-1">
                             <span>{COL_TYPE_OPTIONS.find((o) => o.type === c.type)?.icon}</span>
@@ -6528,10 +6534,10 @@ function ProjectDetailOverlay({
                             {!g.collapsed && (
                               <tr className="bg-slate-50/80 border-t border-slate-200 text-[11px] text-slate-500">
                                 {subHeaders.map((h, i) => (
-                                  <th key={i} className="px-2 py-1.5 text-right font-semibold whitespace-nowrap">{h}</th>
+                                  <th key={i} className="px-2 py-1.5 text-center font-semibold whitespace-nowrap">{h}</th>
                                 ))}
                                 {customCols.map((c) => (
-                                  <th key={c.id} className="px-2 py-1.5 text-right font-semibold whitespace-nowrap">{c.name}</th>
+                                  <th key={c.id} className="px-2 py-1.5 text-center font-semibold whitespace-nowrap">{c.name}</th>
                                 ))}
                                 {canEditAll && <th className="px-2 py-1.5"></th>}
                                 {canEditOwn && <th className="px-2 py-1.5"></th>}
@@ -6566,7 +6572,7 @@ function ProjectDetailOverlay({
                               value={t.name}
                               disabled={!canEditOwn}
                               onChange={(e) => updateTask(t.id, { name: e.target.value })}
-                              className="w-full px-2 py-1 text-right text-xs rounded focus:outline-none focus:bg-emerald-50"
+                              className="w-full px-2 py-1 text-center text-xs rounded focus:outline-none focus:bg-emerald-50"
                             />
                           </td>
                           <td className="px-1 py-1">
@@ -6574,7 +6580,7 @@ function ProjectDetailOverlay({
                               value={t.platform}
                               disabled={!canEditOwn}
                               onChange={(e) => updateTask(t.id, { platform: e.target.value })}
-                              className="w-full px-2 py-1 text-right text-xs rounded focus:outline-none focus:bg-emerald-50"
+                              className="w-full px-2 py-1 text-center text-xs rounded focus:outline-none focus:bg-emerald-50"
                             />
                           </td>
                           <td className="px-1 py-1">
@@ -6582,7 +6588,7 @@ function ProjectDetailOverlay({
                               value={t.beneficiary}
                               disabled={!canEditOwn}
                               onChange={(e) => updateTask(t.id, { beneficiary: e.target.value })}
-                              className="w-full px-2 py-1 text-right text-xs rounded focus:outline-none focus:bg-emerald-50"
+                              className="w-full px-2 py-1 text-center text-xs rounded focus:outline-none focus:bg-emerald-50"
                             />
                           </td>
                           <td className="px-1 py-1">
@@ -6590,7 +6596,7 @@ function ProjectDetailOverlay({
                               value={t.documentNo}
                               disabled={!canEditOwn}
                               onChange={(e) => updateTask(t.id, { documentNo: e.target.value })}
-                              className="w-full px-2 py-1 text-right text-xs rounded focus:outline-none focus:bg-emerald-50"
+                              className="w-full px-2 py-1 text-center text-xs rounded focus:outline-none focus:bg-emerald-50"
                             />
                           </td>
                           <td className="px-1 py-1">
@@ -6699,7 +6705,7 @@ function ProjectDetailOverlay({
                             const key = `${t.id}::${c.id}`;
                             const val = customCells[key] ?? "";
                             const setVal = (v: string) => onSetCustomCell(t.id, c.id, v);
-                            const baseCls = "w-full px-2 py-1 text-right text-xs rounded bg-transparent focus:outline-none focus:bg-emerald-50";
+                            const baseCls = "w-full px-2 py-1 text-center text-xs rounded bg-transparent focus:outline-none focus:bg-emerald-50";
                             return (
                               <td key={c.id} className="px-1 py-1 min-w-[110px]">
                                 {c.type === "text" && (
