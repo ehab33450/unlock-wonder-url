@@ -2899,6 +2899,39 @@ function Index() {
                 </div>
 
                 <div className="mb-6">
+                  <label className="block text-sm text-slate-600 mb-2 text-right">نوع الخدمة</label>
+                  <div className="relative mb-2">
+                    <input
+                      value={npServiceInput}
+                      onChange={(e) => setNpServiceInput(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" && npServiceInput.trim()) {
+                          e.preventDefault();
+                          setNpServices((s) => [...s, npServiceInput.trim()]);
+                          setNpServiceInput("");
+                        }
+                      }}
+                      placeholder="مثل: موارد بشرية ، محاسبة ... ثم Enter"
+                      className="w-full h-11 border border-slate-300 rounded px-3 text-right focus:outline-none focus:border-[color:var(--eyenak-teal)]"
+                    />
+                  </div>
+                  {npServices.length > 0 && (
+                    <div className="flex flex-wrap gap-1 justify-end mb-4" dir="rtl">
+                      {npServices.map((s, i) => (
+                        <span
+                          key={`${s}-${i}`}
+                          className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[color:var(--eyenak-teal)]/10 text-[color:var(--eyenak-teal)] text-xs font-semibold border border-[color:var(--eyenak-teal)]/30"
+                        >
+                          <span>{s}</span>
+                          <button
+                            type="button"
+                            onClick={() => setNpServices((arr) => arr.filter((_, k) => k !== i))}
+                            className="text-[color:var(--eyenak-teal)]/70 hover:text-red-600"
+                          >×</button>
+                        </span>
+                      ))}
+                    </div>
+                  )}
                   <label className="block text-sm text-slate-600 mb-2 text-right">الأعضاء</label>
                   <div className="relative mb-2">
                     <input
