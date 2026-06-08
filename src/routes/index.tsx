@@ -6278,46 +6278,53 @@ function ProjectDetailOverlay({
                     {paidCount} / {data.contract.payments.length}
                   </div>
                 </div>
-              </div>
-              {/* نوع الخدمة (متعدد) */}
-              <div className="mt-3 bg-slate-50 rounded border border-slate-200 p-3">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-xs text-slate-500">يمكنك إضافة أكثر من خدمة</span>
-                  <div className="text-xs font-semibold text-slate-600">نوع الخدمة</div>
-                </div>
-                <div className="flex flex-wrap gap-2 justify-end" dir="rtl">
-                  {(data.contract.services ?? []).map((s, i) => (
-                    <span
-                      key={`${s}-${i}`}
-                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-[color:var(--eyenak-teal)]/10 text-[color:var(--eyenak-teal)] text-xs font-semibold border border-[color:var(--eyenak-teal)]/30"
-                    >
-                      <span>{s}</span>
-                      {canEditAll && (
-                        <button
-                          type="button"
-                          onClick={() =>
-                            onUpdate((c) => ({
-                              ...c,
-                              contract: {
-                                ...c.contract,
-                                services: (c.contract.services ?? []).filter((_, k) => k !== i),
-                              },
-                            }))
-                          }
-                          className="text-[color:var(--eyenak-teal)]/70 hover:text-red-600"
-                          title="حذف"
-                        >×</button>
-                      )}
+                {/* نوع الخدمة (متعدد) - يملأ الفراغ في الشبكة */}
+                <div className="bg-slate-50 rounded border border-slate-200 p-3 text-right">
+                  <button
+                    type="button"
+                    onClick={() => setServicesOpen((v) => !v)}
+                    className="w-full flex items-center justify-between text-xs text-slate-500 hover:text-[color:var(--eyenak-teal)]"
+                    title="انقر لإظهار/إخفاء إضافة خدمة"
+                  >
+                    <span className="text-[10px] text-slate-400">
+                      {servicesOpen ? "▲" : "▼"}
                     </span>
-                  ))}
-                  {(data.contract.services ?? []).length === 0 && (
-                    <span className="text-xs text-slate-400">لا توجد خدمات بعد</span>
-                  )}
-                  {canEditAll && (
+                    <span>نوع الخدمة</span>
+                  </button>
+                  <div className="mt-1 flex flex-wrap gap-1 justify-end" dir="rtl">
+                    {(data.contract.services ?? []).length === 0 && !servicesOpen && (
+                      <span className="text-sm text-slate-400">—</span>
+                    )}
+                    {(data.contract.services ?? []).map((s, i) => (
+                      <span
+                        key={`${s}-${i}`}
+                        className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[color:var(--eyenak-teal)]/10 text-[color:var(--eyenak-teal)] text-[11px] font-semibold border border-[color:var(--eyenak-teal)]/30"
+                      >
+                        <span>{s}</span>
+                        {canEditAll && servicesOpen && (
+                          <button
+                            type="button"
+                            onClick={() =>
+                              onUpdate((c) => ({
+                                ...c,
+                                contract: {
+                                  ...c.contract,
+                                  services: (c.contract.services ?? []).filter((_, k) => k !== i),
+                                },
+                              }))
+                            }
+                            className="text-[color:var(--eyenak-teal)]/70 hover:text-red-600"
+                            title="حذف"
+                          >×</button>
+                        )}
+                      </span>
+                    ))}
+                  </div>
+                  {servicesOpen && canEditAll && (
                     <form
                       onSubmit={(e) => {
                         e.preventDefault();
-                        const inp = (e.currentTarget.elements.namedItem("svc") as HTMLInputElement);
+                        const inp = e.currentTarget.elements.namedItem("svc") as HTMLInputElement;
                         const v = inp.value.trim();
                         if (!v) return;
                         onUpdate((c) => ({
@@ -6329,19 +6336,17 @@ function ProjectDetailOverlay({
                         }));
                         inp.value = "";
                       }}
-                      className="flex items-center gap-1"
+                      className="mt-2 flex items-center gap-1"
                     >
                       <input
                         name="svc"
                         placeholder="مثل: موارد بشرية"
-                        className="h-7 px-2 text-xs border border-slate-300 rounded text-right focus:outline-none focus:border-[color:var(--eyenak-teal)]"
+                        className="flex-1 h-7 px-2 text-xs border border-slate-300 rounded text-right focus:outline-none focus:border-[color:var(--eyenak-teal)]"
                       />
                       <button
                         type="submit"
-                        className="h-7 px-2 rounded bg-[color:var(--eyenak-teal)] text-white text-xs font-semibold hover:opacity-90"
-                      >
-                        + إضافة
-                      </button>
+                        className="h-7 px-2 rounded bg-[color:var(--eyenak-teal)] text-white text-xs font-semibold hover:opacity-90 whitespace-nowrap"
+                      >+ إضافة</button>
                     </form>
                   )}
                 </div>
