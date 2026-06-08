@@ -6505,21 +6505,13 @@ function ProjectDetailOverlay({
                               </td>
                             );
                           })}
-                          {canEditAll && <td className="px-1 py-1" />}
                           {canEditOwn && (
-                            <td className="px-1 py-1">
-                              <RowActions
-                                disabled={!canEditAll}
-                                onInsertAbove={() => insertTaskAt(data.tasks.findIndex((x) => x.id === t.id))}
-                                onInsertBelow={() => insertTaskAt(data.tasks.findIndex((x) => x.id === t.id) + 1)}
-                                onDelete={() => removeTask(t.id)}
-                                columnTools={canEditAll ? {
-                                  customCols: customCols.map((c) => ({ id: c.id, name: c.name })),
-                                  types: COL_TYPE_OPTIONS.map((o) => ({ type: o.type, label: o.label, icon: o.icon })),
-                                  onAddColumn: (type) => addColumn(type as DColType, customCols.length),
-                                  onDeleteColumn: (id) => onUpdateCustomCols((cur) => cur.filter((c) => c.id !== id)),
-                                } : undefined}
-                              />
+                            <td className="px-1 py-1 text-center">
+                              <button
+                                onClick={() => { if (window.confirm("حذف هذه المهمة؟")) removeTask(t.id); }}
+                                className="p-1 rounded hover:bg-red-50 text-red-500"
+                                title="حذف المهمة"
+                              ><Trash2 className="w-3.5 h-3.5" /></button>
                             </td>
                           )}
                         </tr>
