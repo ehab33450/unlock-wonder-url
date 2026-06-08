@@ -5642,6 +5642,11 @@ type DPayment = {
   paid: boolean;
   receiptName?: string;
   receiptData?: string;
+  paidAmount?: string;          // المبلغ المدفوع من القسط
+  periodStart?: string;         // بداية فترة الاستحقاق
+  periodEnd?: string;           // نهاية فترة الاستحقاق
+  taxInvoiceName?: string;      // الفاتورة الضريبية
+  taxInvoiceData?: string;
 };
 type DContract = {
   startDate: string;
