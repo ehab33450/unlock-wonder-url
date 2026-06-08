@@ -1548,14 +1548,19 @@ function Index() {
   return (
     <div dir={isEn ? "ltr" : "rtl"} className="min-h-screen bg-slate-50 text-slate-800 font-[Cairo]">
       {/* Top header */}
-      <header className="h-14 bg-gradient-to-l from-white via-white to-slate-50 border-b border-slate-200 flex items-center justify-between px-4 shadow-sm">
-        {/* Right: logo */}
-        <div className="flex items-center gap-2" dir="ltr">
-          <img src={yaseerLogo.url} alt="يسير" className="h-9 w-auto" />
+      <header className="h-14 bg-white border-b border-slate-200 flex items-center justify-between shadow-sm relative">
+        {/* Logo block (sits at the start edge — right in RTL, left in LTR) */}
+        <div className="h-full bg-[color:var(--eyenak-dark)] flex items-center justify-center px-6 min-w-[180px]">
+          <img
+            src={yaseerLogo.url}
+            alt="يسير"
+            className="h-8 w-auto select-none"
+            draggable={false}
+          />
         </div>
 
-        {/* Left: user controls */}
-        <div className="flex items-center gap-3">
+        {/* User controls (opposite edge) */}
+        <div className="flex items-center gap-3 px-4">
           <button aria-label="بحث" className="p-2 rounded hover:bg-slate-100 text-slate-600">
             <Search className="w-5 h-5" />
           </button>
