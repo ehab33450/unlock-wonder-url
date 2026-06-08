@@ -8,6 +8,7 @@ import guideFinanceImg from "@/assets/guide-finance.png";
 import guideMeetingsImg from "@/assets/guide-meetings.png";
 import guideUsersImg from "@/assets/guide-users.png";
 import guideAssistantImg from "@/assets/guide-assistant.png";
+import yaseerLogo from "@/assets/yaseer-logo.png.asset.json";
 import { ExtraColHeaders, ExtraCells, RowChatButton, EditableHeaderLabel, HeaderMenu, HiddenColsRestore } from "@/components/table-extras";
 import { AdminPanel } from "@/components/admin-panel";
 import {
@@ -1550,14 +1551,7 @@ function Index() {
       <header className="h-14 bg-gradient-to-l from-white via-white to-slate-50 border-b border-slate-200 flex items-center justify-between px-4 shadow-sm">
         {/* Right: logo */}
         <div className="flex items-center gap-2" dir="ltr">
-          <div className="flex items-baseline">
-            <span className="text-2xl font-extrabold tracking-tight text-[color:var(--eyenak-dark)]">
-              EYE
-            </span>
-            <span className="text-2xl font-extrabold tracking-tight text-[color:var(--eyenak-teal)]">
-              NAK
-            </span>
-          </div>
+          <img src={yaseerLogo.url} alt="يسير" className="h-9 w-auto" />
         </div>
 
         {/* Left: user controls */}
