@@ -7288,9 +7288,13 @@ function FinanceModal({
                   <th className="px-3 py-2 text-right font-bold"><EditableHeaderLabel tableId="finance.payments" headerKey="project" defaultLabel="المشروع" isAdmin={isAdmin} /></th>
                   <th className="px-3 py-2 text-right font-bold"><EditableHeaderLabel tableId="finance.payments" headerKey="assignee" defaultLabel="الموظف" isAdmin={isAdmin} /></th>
                   <th className="px-3 py-2 text-right font-bold"><EditableHeaderLabel tableId="finance.payments" headerKey="amount" defaultLabel="المبلغ" isAdmin={isAdmin} /></th>
+                  <th className="px-3 py-2 text-right font-bold"><EditableHeaderLabel tableId="finance.payments" headerKey="paidAmount" defaultLabel="المبلغ المدفوع" isAdmin={isAdmin} /></th>
+                  <th className="px-3 py-2 text-right font-bold"><EditableHeaderLabel tableId="finance.payments" headerKey="remaining" defaultLabel="المبلغ المتبقي" isAdmin={isAdmin} /></th>
+                  <th className="px-3 py-2 text-right font-bold"><EditableHeaderLabel tableId="finance.payments" headerKey="period" defaultLabel="فترة الاستحقاق" isAdmin={isAdmin} /></th>
                   <th className="px-3 py-2 text-right font-bold"><EditableHeaderLabel tableId="finance.payments" headerKey="date" defaultLabel="تاريخ الاستحقاق" isAdmin={isAdmin} /></th>
                   <th className="px-3 py-2 text-right font-bold"><EditableHeaderLabel tableId="finance.payments" headerKey="count" defaultLabel="العد التنازلي" isAdmin={isAdmin} /></th>
                   <th className="px-3 py-2 text-right font-bold"><EditableHeaderLabel tableId="finance.payments" headerKey="receipt" defaultLabel="الإيصال" isAdmin={isAdmin} /></th>
+                  <th className="px-3 py-2 text-right font-bold"><EditableHeaderLabel tableId="finance.payments" headerKey="taxInvoice" defaultLabel="الفاتورة الضريبية" isAdmin={isAdmin} /></th>
                   <th className="px-3 py-2 text-right font-bold"><EditableHeaderLabel tableId="finance.payments" headerKey="status" defaultLabel="الحالة" isAdmin={isAdmin} /></th>
                   <ExtraColHeaders tableId="finance.payments" isAdmin={isAdmin} thClass="px-3 py-2 text-right font-bold whitespace-nowrap" />
                   {isAdmin && <th className="px-3 py-2"></th>}
