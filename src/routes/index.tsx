@@ -3526,16 +3526,6 @@ function Index() {
                               <Trash2 className="w-4 h-4" />
                             </button>
                           )}
-                          {isAdmin && (
-                            <button
-                              onClick={() => setDownloadPermsFor(f)}
-                              className="text-slate-300 hover:text-[color:var(--eyenak-teal)]"
-                              title="صلاحيات التنزيل"
-                              aria-label="صلاحيات التنزيل"
-                            >
-                              <Users className="w-4 h-4" />
-                            </button>
-                          )}
                           <button
                             onClick={() => downloadFile(f)}
                             disabled={!canDownloadFile(f)}
