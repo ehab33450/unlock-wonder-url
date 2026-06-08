@@ -1366,8 +1366,7 @@ function Index() {
     : [];
 
   // ============ صلاحيات تنزيل الملفات ============
-  const canDownloadFile = (f: FileItem) =>
-    isAdmin || (f.allowedDownload ?? []).includes(currentUser);
+  const canDownloadFile = (_f: FileItem) => hasPerm("files_download");
 
   const downloadFile = (f: FileItem) => {
     if (!canDownloadFile(f)) {
