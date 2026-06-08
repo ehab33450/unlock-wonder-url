@@ -6073,6 +6073,8 @@ function ProjectDetailOverlay({
                 <h3 className="text-base font-bold text-slate-800">المهام ({data.tasks.length})</h3>
               </div>
 
+              <HiddenColsRestore tableId="project.tasks" isAdmin={canEditAll} />
+
               <div className="overflow-auto bg-white rounded-lg border border-slate-200">
                 <table className="w-full text-sm">
                   <thead className="bg-slate-100 text-slate-600 text-xs">
