@@ -6097,8 +6097,7 @@ function ProjectDetailOverlay({
     "ملغي": "bg-zinc-200 text-zinc-500 line-through",
   };
   const priorityColors: Record<DPriority, string> = {
-    "لاشيء": "bg-slate-100 text-slate-500",
-    "منخفض": "bg-sky-100 text-sky-700",
+    "عادي": "bg-sky-100 text-sky-700",
     "متوسط": "bg-amber-100 text-amber-700",
     "عالي": "bg-red-100 text-red-700",
   };
@@ -6567,8 +6566,7 @@ function ProjectDetailOverlay({
                               }
                               className={`text-xs font-semibold rounded px-2 py-1 focus:outline-none ${priorityColors[t.priority]}`}
                             >
-                              <option value="لاشيء">لاشيء</option>
-                              <option value="منخفض">منخفض</option>
+                              <option value="عادي">عادي</option>
                               <option value="متوسط">متوسط</option>
                               <option value="عالي">عالي</option>
                             </select>
