@@ -257,11 +257,6 @@ function Index() {
     { key: "acc_reports",       label: "التقارير المالية",        group: "النظام المحاسبي" },
     { key: "acc_tax",           label: "الفاتورة الضريبية",       group: "النظام المحاسبي" },
 
-    // ===== عيناك للاجتماعات =====
-    { key: "meet_create",       label: "إنشاء اجتماع",            group: "عيناك للاجتماعات" },
-    { key: "meet_join",         label: "الانضمام للاجتماعات",     group: "عيناك للاجتماعات" },
-    { key: "meet_record",       label: "تسجيل الاجتماعات",        group: "عيناك للاجتماعات" },
-
     // ===== الموارد البشرية =====
     { key: "hr_dept",           label: "إدارة الأقسام",           group: "الموارد البشرية" },
     { key: "hr_jobs",           label: "المسميات الوظيفية",       group: "الموارد البشرية" },
@@ -6279,7 +6274,7 @@ function ProjectDetailOverlay({
 
               <div className="overflow-auto bg-white rounded-lg border border-slate-200">
                 <table className="w-full text-sm">
-                  <thead className="bg-slate-100 text-slate-600 text-xs">
+                  <thead className="bg-slate-100 text-slate-600 text-xs sticky top-0 z-20 shadow-sm">
                     <tr>
                       <th
                         className="px-2 py-2 text-center font-semibold w-10"
