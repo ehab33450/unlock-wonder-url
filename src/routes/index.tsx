@@ -1550,12 +1550,14 @@ function Index() {
       {/* Top header */}
       <header className="h-14 bg-gradient-to-l from-white via-white to-slate-50 border-b border-slate-200 flex items-center justify-between px-4 shadow-sm">
         {/* Right: logo */}
-        <div className="flex items-baseline gap-1 select-none" dir="rtl">
-          <span className="text-2xl font-extrabold tracking-tight text-[color:var(--eyenak-dark)] leading-none">
-            يـسـ
+        <div className="flex items-center gap-2 select-none" dir="ltr">
+          <span className="text-2xl font-extrabold tracking-tight text-[color:var(--eyenak-dark)] leading-none" dir="rtl">
+            يسير
           </span>
-          <span className="text-2xl font-extrabold tracking-tight text-[color:var(--eyenak-teal)] leading-none">
-            ير
+          <span className="h-7 w-px bg-[color:var(--eyenak-teal)]/60" />
+          <span className="flex flex-col text-[10px] font-bold leading-[1.05] tracking-[0.18em] text-[color:var(--eyenak-teal)]">
+            <span>YAS</span>
+            <span>EER</span>
           </span>
         </div>
 
