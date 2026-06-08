@@ -863,3 +863,57 @@ export function RowChatButton({
     </>
   );
 }
+
+/* ============================================================
+   Row actions menu — Excel-style insert above / below / delete
+============================================================ */
+
+export function RowActions({
+  onInsertAbove, onInsertBelow, onDelete, disabled,
+}: {
+  onInsertAbove?: () => void;
+  onInsertBelow?: () => void;
+  onDelete?: () => void;
+  disabled?: boolean;
+}) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!open) return;
+    const h = (e: MouseEvent) => { if (!ref.current?.contains(e.target as Node)) setOpen(false); };
+    document.addEventListener("mousedown", h);
+    return () => document.removeEventListener("mousedown", h);
+  }, [open]);
+  if (disabled) return <span className="text-slate-200">—</span>;
+  return (
+    <div ref={ref} className="relative inline-block">
+      <button
+        onClick={() => setOpen((v) => !v)}
+        className="p-1 rounded hover:bg-slate-200 text-slate-500"
+        title="إجراءات الصف"
+      ><MoreVertical className="w-3.5 h-3.5" /></button>
+      {open && (
+        <div className="absolute z-50 left-0 mt-1 w-44 bg-white rounded-lg shadow-xl border border-slate-200 py-1 text-xs" dir="rtl">
+          {onInsertAbove && (
+            <button
+              onClick={() => { onInsertAbove(); setOpen(false); }}
+              className="w-full px-3 py-1.5 text-right hover:bg-slate-50 flex items-center gap-2"
+            ><ArrowUp className="w-3.5 h-3.5 text-emerald-600" /><span>إدراج صف فوق</span></button>
+          )}
+          {onInsertBelow && (
+            <button
+              onClick={() => { onInsertBelow(); setOpen(false); }}
+              className="w-full px-3 py-1.5 text-right hover:bg-slate-50 flex items-center gap-2"
+            ><ArrowDown className="w-3.5 h-3.5 text-emerald-600" /><span>إدراج صف تحت</span></button>
+          )}
+          {onDelete && (
+            <button
+              onClick={() => { if (window.confirm("حذف هذا الصف؟")) { onDelete(); setOpen(false); } }}
+              className="w-full px-3 py-1.5 text-right hover:bg-red-50 flex items-center gap-2 text-red-600"
+            ><Trash2 className="w-3.5 h-3.5" /><span>حذف الصف</span></button>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
