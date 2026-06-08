@@ -6083,6 +6083,13 @@ function ProjectDetailOverlay({
                           <span className="inline-flex items-center gap-1">
                             <span>{COL_TYPE_OPTIONS.find((o) => o.type === c.type)?.icon}</span>
                             <span>{c.name}</span>
+                            {canEditAll && c.type === "select" && (
+                              <button
+                                onClick={() => setEditingSelectCol(c.id)}
+                                className="opacity-0 group-hover:opacity-100 text-slate-500 hover:text-emerald-600"
+                                title="تعديل خيارات القائمة"
+                              >⚙</button>
+                            )}
                             {canEditAll && (
                               <button
                                 onClick={() => removeColumn(c.id)}
