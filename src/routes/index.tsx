@@ -5897,6 +5897,9 @@ function ProjectDetailOverlay({
   const canView = isAdmin || isAssignee || !data.contract.assignee;
   const canEditAll = isAdmin;
   const canEditOwn = isAdmin || (isAssignee && !!employeeCanEdit);
+  // Per-project tableId so column renames, hidden columns, etc.
+  // are scoped to THIS project and do not leak across other projects.
+  const projectTableId = `project.tasks::${name}`;
 
   const addTask = () => {
     onUpdate((cur) => ({
