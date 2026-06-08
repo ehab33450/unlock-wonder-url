@@ -115,8 +115,16 @@ export function HiddenColsRestore({ tableId, isAdmin }: { tableId: string; isAdm
 }
 
 export function EditableHeaderLabel({
-  tableId, headerKey, defaultLabel, isAdmin,
-}: { tableId: string; headerKey: string; defaultLabel: string; isAdmin: boolean }) {
+  tableId, headerKey, defaultLabel, isAdmin, colMenu,
+}: {
+  tableId: string; headerKey: string; defaultLabel: string; isAdmin: boolean;
+  colMenu?: {
+    onInsertBefore?: () => void;
+    onInsertAfter?: () => void;
+    onDelete?: () => void;
+    extraItems?: { label: string; icon?: string; onClick: () => void; danger?: boolean }[];
+  };
+}) {
   const [, setTick] = useState(0);
   const wrapRef = useRef<HTMLSpanElement>(null);
   useEffect(() => {
@@ -176,13 +184,91 @@ export function EditableHeaderLabel({
         onContextMenu={(e) => { if (!isAdmin) return; e.preventDefault(); rename(); }}
       >{label}</span>
       {isAdmin && (
-        <button
-          onClick={hide}
-          title="إخفاء هذا العمود (يمكنك إظهاره لاحقاً من أعلى الجدول)"
-          className="opacity-0 group-hover/hdr:opacity-100 text-slate-400 hover:text-red-600 transition"
-        ><EyeOff className="w-3 h-3" /></button>
+        <HeaderMenu
+          onRename={rename}
+          onHide={hide}
+          onInsertBefore={colMenu?.onInsertBefore}
+          onInsertAfter={colMenu?.onInsertAfter}
+          onDelete={colMenu?.onDelete}
+          extraItems={colMenu?.extraItems}
+        />
       )}
     </span>
+  );
+}
+
+/* ============================================================
+   HeaderMenu — (⋮) on every column header.
+   Items: rename, hide, insert before, insert after, delete.
+============================================================ */
+export function HeaderMenu({
+  onRename, onHide, onInsertBefore, onInsertAfter, onDelete, extraItems,
+}: {
+  onRename?: () => void;
+  onHide?: () => void;
+  onInsertBefore?: () => void;
+  onInsertAfter?: () => void;
+  onDelete?: () => void;
+  extraItems?: { label: string; icon?: string; onClick: () => void; danger?: boolean }[];
+}) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!open) return;
+    const h = (e: MouseEvent) => { if (!ref.current?.contains(e.target as Node)) setOpen(false); };
+    document.addEventListener("mousedown", h);
+    return () => document.removeEventListener("mousedown", h);
+  }, [open]);
+  const close = () => setOpen(false);
+  return (
+    <div ref={ref} className="relative inline-block">
+      <button
+        onClick={(e) => { e.stopPropagation(); setOpen((v) => !v); }}
+        className="p-0.5 rounded hover:bg-slate-200 text-slate-400 hover:text-slate-700"
+        title="إجراءات العمود"
+      ><MoreVertical className="w-3.5 h-3.5" /></button>
+      {open && (
+        <div className="absolute z-[80] left-0 mt-1 w-48 bg-white rounded-lg shadow-xl border border-slate-200 py-1 text-xs" dir="rtl" onClick={(e) => e.stopPropagation()}>
+          {onRename && (
+            <button onClick={() => { onRename(); close(); }} className="w-full px-3 py-1.5 text-right hover:bg-slate-50 flex items-center gap-2">
+              <Settings2 className="w-3.5 h-3.5 text-slate-500" /><span>إعادة تسمية</span>
+            </button>
+          )}
+          {onInsertBefore && (
+            <button onClick={() => { onInsertBefore(); close(); }} className="w-full px-3 py-1.5 text-right hover:bg-slate-50 flex items-center gap-2">
+              <Plus className="w-3.5 h-3.5 text-emerald-600" /><span>إدراج عمود قبل</span>
+            </button>
+          )}
+          {onInsertAfter && (
+            <button onClick={() => { onInsertAfter(); close(); }} className="w-full px-3 py-1.5 text-right hover:bg-slate-50 flex items-center gap-2">
+              <Plus className="w-3.5 h-3.5 text-emerald-600" /><span>إدراج عمود بعد</span>
+            </button>
+          )}
+          {onHide && (
+            <button onClick={() => { onHide(); close(); }} className="w-full px-3 py-1.5 text-right hover:bg-slate-50 flex items-center gap-2">
+              <EyeOff className="w-3.5 h-3.5 text-slate-500" /><span>إخفاء العمود</span>
+            </button>
+          )}
+          {extraItems?.map((it, i) => (
+            <button
+              key={i}
+              onClick={() => { it.onClick(); close(); }}
+              className={`w-full px-3 py-1.5 text-right flex items-center gap-2 ${it.danger ? "hover:bg-red-50 text-red-600" : "hover:bg-slate-50"}`}
+            >
+              {it.icon && <span className="w-3.5 text-center">{it.icon}</span>}<span>{it.label}</span>
+            </button>
+          ))}
+          {onDelete && (
+            <>
+              <div className="my-1 border-t border-slate-100" />
+              <button onClick={() => { if (window.confirm("حذف هذا العمود؟")) { onDelete(); close(); } }} className="w-full px-3 py-1.5 text-right hover:bg-red-50 flex items-center gap-2 text-red-600">
+                <Trash2 className="w-3.5 h-3.5" /><span>حذف العمود</span>
+              </button>
+            </>
+          )}
+        </div>
+      )}
+    </div>
   );
 }
 

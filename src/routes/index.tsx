@@ -8,7 +8,7 @@ import guideFinanceImg from "@/assets/guide-finance.png";
 import guideMeetingsImg from "@/assets/guide-meetings.png";
 import guideUsersImg from "@/assets/guide-users.png";
 import guideAssistantImg from "@/assets/guide-assistant.png";
-import { ExtraColHeaders, ExtraCells, RowChatButton, EditableHeaderLabel, RowActions, HiddenColsRestore } from "@/components/table-extras";
+import { ExtraColHeaders, ExtraCells, RowChatButton, EditableHeaderLabel, HeaderMenu, HiddenColsRestore } from "@/components/table-extras";
 import { AdminPanel } from "@/components/admin-panel";
 import {
   Calendar,
@@ -5758,8 +5758,10 @@ type DTask = {
   progress: number;
   attachmentName?: string;
   attachmentData?: string;
+  groupId?: string;
 };
-type DMeta = { contract: DContract; tasks: DTask[] };
+export type DTaskGroup = { id: string; title: string; color: string; collapsed?: boolean };
+type DMeta = { contract: DContract; tasks: DTask[]; groups?: DTaskGroup[] };
 
 type DColType =
   | "text" | "number" | "date" | "link" | "phone" | "email"
@@ -5947,6 +5949,102 @@ function ProjectDetailOverlay({
     onUpdate((cur) => ({ ...cur, tasks: cur.tasks.filter((t) => t.id !== id) }));
   };
 
+  // ===== Task groups =====
+  const groups: DTaskGroup[] = data.groups ?? [];
+  const GROUP_COLORS = ["#ef4444","#f97316","#f59e0b","#10b981","#14b8a6","#06b6d4","#3b82f6","#6366f1","#8b5cf6","#ec4899","#64748b"];
+  const addGroup = () => {
+    const title = window.prompt("اسم المجموعة الجديدة:", "مجموعة جديدة");
+    if (!title || !title.trim()) return;
+    const g: DTaskGroup = {
+      id: `g${Date.now()}`,
+      title: title.trim(),
+      color: GROUP_COLORS[(groups.length) % GROUP_COLORS.length],
+      collapsed: false,
+    };
+    onUpdate((cur) => ({ ...cur, groups: [...(cur.groups ?? []), g] }));
+  };
+  const updateGroup = (id: string, patch: Partial<DTaskGroup>) => {
+    onUpdate((cur) => ({ ...cur, groups: (cur.groups ?? []).map((g) => g.id === id ? { ...g, ...patch } : g) }));
+  };
+  const removeGroup = (id: string) => {
+    onUpdate((cur) => ({
+      ...cur,
+      groups: (cur.groups ?? []).filter((g) => g.id !== id),
+      tasks: cur.tasks.map((t) => t.groupId === id ? { ...t, groupId: undefined } : t),
+    }));
+  };
+  const addTaskToGroup = (groupId: string) => {
+    onUpdate((cur) => ({
+      ...cur,
+      tasks: [
+        { id: `${Date.now()}`, name: "مهمة جديدة", platform: "", beneficiary: "", documentNo: "",
+          startDate: new Date().toISOString().slice(0,10), endDate: "", doneDate: "",
+          status: "جديد" as DStatus, priority: "لاشيء" as DPriority, progress: 0, groupId },
+        ...cur.tasks,
+      ],
+    }));
+  };
+  const exportGroupCSV = (groupId: string) => {
+    const g = groups.find((x) => x.id === groupId);
+    if (!g) return;
+    const rows = data.tasks.filter((t) => t.groupId === groupId);
+    const headers = ["اسم المهمة","المنصة","المستفيد","رقم المستند","من","إلى","الحالة","الأهمية","تاريخ الإنجاز"];
+    const lines = [headers.join(",")];
+    for (const t of rows) {
+      const cells = [t.name,t.platform,t.beneficiary,t.documentNo,t.startDate,t.endDate,t.status,t.priority,t.doneDate]
+        .map((v) => `"${(v ?? "").toString().replace(/"/g,'""')}"`);
+      lines.push(cells.join(","));
+    }
+    const blob = new Blob(["\uFEFF" + lines.join("\n")], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = `${g.title}.csv`; a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  };
+  const importGroupCSV = (groupId: string, file: File) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const text = String(reader.result || "");
+      const lines = text.split(/\r?\n/).filter((l) => l.trim().length > 0);
+      if (lines.length <= 1) return;
+      const parseRow = (s: string) => {
+        const out: string[] = []; let cur = ""; let q = false;
+        for (let i = 0; i < s.length; i++) {
+          const ch = s[i];
+          if (q) { if (ch === '"' && s[i+1] === '"') { cur += '"'; i++; } else if (ch === '"') { q = false; } else { cur += ch; } }
+          else { if (ch === '"') q = true; else if (ch === ',') { out.push(cur); cur = ""; } else cur += ch; }
+        }
+        out.push(cur); return out;
+      };
+      const newTasks: DTask[] = [];
+      for (let i = 1; i < lines.length; i++) {
+        const c = parseRow(lines[i]);
+        newTasks.push({
+          id: `${Date.now()}${i}`,
+          name: c[0] || "مهمة", platform: c[1] || "", beneficiary: c[2] || "", documentNo: c[3] || "",
+          startDate: c[4] || "", endDate: c[5] || "", doneDate: c[8] || "",
+          status: (c[6] as DStatus) || "جديد", priority: (c[7] as DPriority) || "لاشيء",
+          progress: 0, groupId,
+        });
+      }
+      onUpdate((cur) => ({ ...cur, tasks: [...newTasks, ...cur.tasks] }));
+    };
+    reader.readAsText(file, "utf-8");
+  };
+
+  // Order tasks: grouped (in group order) first, then ungrouped.
+  const sortedTasks: DTask[] = (() => {
+    const grouped = groups.flatMap((g) => data.tasks.filter((t) => t.groupId === g.id));
+    const ungrouped = data.tasks.filter((t) => !t.groupId || !groups.some((g) => g.id === t.groupId));
+    return [...grouped, ...ungrouped];
+  })();
+  const groupFirstTaskId: Record<string, string> = {};
+  for (const g of groups) {
+    const first = data.tasks.find((t) => t.groupId === g.id);
+    if (first) groupFirstTaskId[g.id] = first.id;
+  }
+  const collapsedGroupIds = new Set(groups.filter((g) => g.collapsed).map((g) => g.id));
+
   const onAttach = (id: string, file: File) => {
     const reader = new FileReader();
     reader.onload = () =>
@@ -5978,6 +6076,13 @@ function ProjectDetailOverlay({
     e.preventDefault();
     setColMenu({ x: e.clientX, y: e.clientY, insertAt });
   };
+  const openInsertAt = (insertAt: number) => {
+    const x = Math.max(40, window.innerWidth / 2 - 140);
+    const y = Math.max(80, window.innerHeight / 3);
+    setColMenu({ x, y, insertAt });
+  };
+  // Built-in headers can only insert a new column right after the built-in block.
+  const builtinColMenu = { onInsertAfter: () => openInsertAt(0) };
   const addColumn = (type: DColType, insertAt: number) => {
     const name = window.prompt("اسم العمود الجديد:", COL_TYPE_OPTIONS.find((o) => o.type === type)?.label ?? "عمود");
     if (!name) { setColMenu(null); return; }
@@ -6144,15 +6249,26 @@ function ProjectDetailOverlay({
             {/* Tasks table */}
             <div className="px-6 py-5">
               <div className="flex items-center justify-between mb-3">
-                {canEditOwn && (
-                  <button
-                    onClick={addTask}
-                    className="h-9 px-4 bg-[color:var(--eyenak-teal)] hover:opacity-90 text-white rounded text-sm font-semibold flex items-center gap-2"
-                  >
-                    <Plus className="w-4 h-4" />
-                    <span>إضافة مهمة</span>
-                  </button>
-                )}
+                <div className="flex items-center gap-2">
+                  {canEditOwn && (
+                    <button
+                      onClick={addTask}
+                      className="h-9 px-4 bg-[color:var(--eyenak-teal)] hover:opacity-90 text-white rounded text-sm font-semibold flex items-center gap-2"
+                    >
+                      <Plus className="w-4 h-4" />
+                      <span>إضافة مهمة</span>
+                    </button>
+                  )}
+                  {canEditAll && (
+                    <button
+                      onClick={addGroup}
+                      className="h-9 px-4 border border-slate-300 hover:bg-slate-100 text-slate-700 rounded text-sm font-semibold flex items-center gap-2"
+                    >
+                      <Plus className="w-4 h-4" />
+                      <span>إضافة مجموعة</span>
+                    </button>
+                  )}
+                </div>
                 <h3 className="text-base font-bold text-slate-800">المهام ({data.tasks.length})</h3>
               </div>
 
@@ -6166,28 +6282,33 @@ function ProjectDetailOverlay({
                         className="px-2 py-2 text-center font-semibold w-10"
                         title="محادثة المهمة الخاصة"
                       >💬</th>
-                      <th className="px-2 py-2 text-right font-semibold"><EditableHeaderLabel tableId="project.tasks" headerKey="name" defaultLabel="اسم المهمة" isAdmin={canEditAll} /></th>
-                      <th className="px-2 py-2 text-right font-semibold"><EditableHeaderLabel tableId="project.tasks" headerKey="platform" defaultLabel="المنصة" isAdmin={canEditAll} /></th>
-                      <th className="px-2 py-2 text-right font-semibold"><EditableHeaderLabel tableId="project.tasks" headerKey="beneficiary" defaultLabel="المستفيد" isAdmin={canEditAll} /></th>
-                      <th className="px-2 py-2 text-right font-semibold"><EditableHeaderLabel tableId="project.tasks" headerKey="doc" defaultLabel="رقم المستند" isAdmin={canEditAll} /></th>
-                      <th className="px-2 py-2 text-right font-semibold"><EditableHeaderLabel tableId="project.tasks" headerKey="period" defaultLabel="فترة المهمة" isAdmin={canEditAll} /></th>
-                      <th className="px-2 py-2 text-right font-semibold"><EditableHeaderLabel tableId="project.tasks" headerKey="count" defaultLabel="العد التنازلي" isAdmin={canEditAll} /></th>
-                      <th className="px-2 py-2 text-right font-semibold"><EditableHeaderLabel tableId="project.tasks" headerKey="done" defaultLabel="تاريخ الإنجاز" isAdmin={canEditAll} /></th>
-                      <th className="px-2 py-2 text-right font-semibold"><EditableHeaderLabel tableId="project.tasks" headerKey="status" defaultLabel="الحالة" isAdmin={canEditAll} /></th>
-                      <th className="px-2 py-2 text-right font-semibold"><EditableHeaderLabel tableId="project.tasks" headerKey="priority" defaultLabel="الأهمية" isAdmin={canEditAll} /></th>
-                      <th
-                        className="px-2 py-2 text-right font-semibold"
-                        onContextMenu={(e) => canEditAll && openColMenu(e, customCols.length)}
-                      ><EditableHeaderLabel tableId="project.tasks" headerKey="attach" defaultLabel="المرفق" isAdmin={canEditAll} /></th>
+                      <th className="px-2 py-2 text-right font-semibold"><EditableHeaderLabel tableId="project.tasks" headerKey="name" defaultLabel="اسم المهمة" isAdmin={canEditAll} colMenu={builtinColMenu} /></th>
+                      <th className="px-2 py-2 text-right font-semibold"><EditableHeaderLabel tableId="project.tasks" headerKey="platform" defaultLabel="المنصة" isAdmin={canEditAll} colMenu={builtinColMenu} /></th>
+                      <th className="px-2 py-2 text-right font-semibold"><EditableHeaderLabel tableId="project.tasks" headerKey="beneficiary" defaultLabel="المستفيد" isAdmin={canEditAll} colMenu={builtinColMenu} /></th>
+                      <th className="px-2 py-2 text-right font-semibold"><EditableHeaderLabel tableId="project.tasks" headerKey="doc" defaultLabel="رقم المستند" isAdmin={canEditAll} colMenu={builtinColMenu} /></th>
+                      <th className="px-2 py-2 text-right font-semibold"><EditableHeaderLabel tableId="project.tasks" headerKey="period" defaultLabel="فترة المهمة" isAdmin={canEditAll} colMenu={builtinColMenu} /></th>
+                      <th className="px-2 py-2 text-right font-semibold"><EditableHeaderLabel tableId="project.tasks" headerKey="count" defaultLabel="العد التنازلي" isAdmin={canEditAll} colMenu={builtinColMenu} /></th>
+                      <th className="px-2 py-2 text-right font-semibold"><EditableHeaderLabel tableId="project.tasks" headerKey="done" defaultLabel="تاريخ الإنجاز" isAdmin={canEditAll} colMenu={builtinColMenu} /></th>
+                      <th className="px-2 py-2 text-right font-semibold"><EditableHeaderLabel tableId="project.tasks" headerKey="status" defaultLabel="الحالة" isAdmin={canEditAll} colMenu={builtinColMenu} /></th>
+                      <th className="px-2 py-2 text-right font-semibold"><EditableHeaderLabel tableId="project.tasks" headerKey="priority" defaultLabel="الأهمية" isAdmin={canEditAll} colMenu={builtinColMenu} /></th>
+                      <th className="px-2 py-2 text-right font-semibold"><EditableHeaderLabel tableId="project.tasks" headerKey="attach" defaultLabel="المرفق" isAdmin={canEditAll} colMenu={builtinColMenu} /></th>
                       {customCols.map((c, idx) => (
                         <th
                           key={c.id}
                           className="px-2 py-2 text-right font-semibold whitespace-nowrap group"
-                          onContextMenu={(e) => canEditAll && openColMenu(e, idx + 1)}
                         >
                           <span className="inline-flex items-center gap-1">
                             <span>{COL_TYPE_OPTIONS.find((o) => o.type === c.type)?.icon}</span>
-                            <span>{c.name}</span>
+                            <span
+                              className={canEditAll ? "cursor-pointer hover:text-emerald-600" : ""}
+                              title={canEditAll ? "انقر مرتين لإعادة التسمية" : undefined}
+                              onDoubleClick={(e) => {
+                                if (!canEditAll) return;
+                                e.preventDefault();
+                                const next = window.prompt("اسم العمود:", c.name);
+                                if (next && next.trim()) onUpdateCustomCols((cur) => cur.map((x) => x.id === c.id ? { ...x, name: next.trim() } : x));
+                              }}
+                            >{c.name}</span>
                             {canEditAll && c.type === "select" && (
                               <button
                                 onClick={() => setEditingSelectCol(c.id)}
@@ -6196,11 +6317,11 @@ function ProjectDetailOverlay({
                               >⚙</button>
                             )}
                             {canEditAll && (
-                              <button
-                                onClick={() => removeColumn(c.id)}
-                                className="opacity-0 group-hover:opacity-100 text-red-500 hover:text-red-700 text-[10px] mr-1"
-                                title="حذف العمود"
-                              >✕</button>
+                              <HeaderMenu
+                                onInsertBefore={() => openInsertAt(idx)}
+                                onInsertAfter={() => openInsertAt(idx + 1)}
+                                onDelete={() => onUpdateCustomCols((cur) => cur.filter((x) => x.id !== c.id))}
+                              />
                             )}
                           </span>
                         </th>
@@ -6217,14 +6338,86 @@ function ProjectDetailOverlay({
                     </tr>
                   </thead>
                   <tbody>
-                    {data.tasks.length === 0 ? (
-                      <tr>
-                        <td colSpan={12 + customCols.length + (canEditAll ? 1 : 0)} className="py-12 text-center text-slate-400">
-                          لا توجد مهام بعد. اضغط "إضافة مهمة" للبدء.
-                        </td>
-                      </tr>
-                    ) : (
-                      data.tasks.map((t) => (
+                    {(() => {
+                      type Item = { type: "group"; g: DTaskGroup } | { type: "task"; t: DTask };
+                      const items: Item[] = [];
+                      for (const g of groups) {
+                        items.push({ type: "group", g });
+                        if (!g.collapsed) {
+                          for (const tk of data.tasks.filter((x) => x.groupId === g.id)) items.push({ type: "task", t: tk });
+                        }
+                      }
+                      for (const tk of data.tasks.filter((x) => !x.groupId || !groups.some((g) => g.id === x.groupId))) {
+                        items.push({ type: "task", t: tk });
+                      }
+                      const totalCols = 13 + customCols.length;
+                      if (items.length === 0) {
+                        return (
+                          <tr>
+                            <td colSpan={totalCols} className="py-12 text-center text-slate-400">
+                              لا توجد مهام بعد. اضغط "إضافة مهمة" للبدء.
+                            </td>
+                          </tr>
+                        );
+                      }
+                      return items.map((item) => {
+                        if (item.type === "group") {
+                          const g = item.g;
+                          const count = data.tasks.filter((x) => x.groupId === g.id).length;
+                          return (
+                            <tr key={`g-${g.id}`} style={{ background: g.color + "18" }} className="border-t border-slate-200">
+                              <td colSpan={totalCols} className="px-3 py-2">
+                                <div className="flex items-center gap-2">
+                                  <button
+                                    onClick={() => updateGroup(g.id, { collapsed: !g.collapsed })}
+                                    className="text-slate-500 hover:text-slate-700 text-xs font-bold w-5"
+                                    title={g.collapsed ? "توسيع" : "طي"}
+                                  >{g.collapsed ? "▸" : "▾"}</button>
+                                  <span className="w-2 h-4 rounded" style={{ background: g.color }} />
+                                  <input
+                                    value={g.title}
+                                    disabled={!canEditAll}
+                                    onChange={(e) => updateGroup(g.id, { title: e.target.value })}
+                                    className="bg-transparent font-bold text-sm text-slate-800 focus:outline-none focus:bg-white/60 px-1 rounded"
+                                  />
+                                  <span className="text-[11px] text-slate-500">({count} مهمة)</span>
+                                  <div className="flex-1" />
+                                  {canEditOwn && (
+                                    <button
+                                      onClick={() => addTaskToGroup(g.id)}
+                                      className="text-[11px] text-emerald-700 hover:underline flex items-center gap-1"
+                                    ><Plus className="w-3 h-3" />مهمة في المجموعة</button>
+                                  )}
+                                  {canEditAll && (
+                                    <HeaderMenu
+                                      extraItems={[
+                                        { label: "إضافة مجموعة", icon: "+", onClick: addGroup },
+                                        { label: g.collapsed ? "توسيع المجموعة" : "طي المجموعة", icon: g.collapsed ? "▸" : "▾", onClick: () => updateGroup(g.id, { collapsed: !g.collapsed }) },
+                                        { label: "تغيير اللون", icon: "🎨", onClick: () => {
+                                            const cur = GROUP_COLORS.indexOf(g.color);
+                                            const next = GROUP_COLORS[(cur + 1) % GROUP_COLORS.length];
+                                            updateGroup(g.id, { color: next });
+                                          } },
+                                        { label: "تصدير بصيغة إكسل (CSV)", icon: "📊", onClick: () => exportGroupCSV(g.id) },
+                                        { label: "استيراد مهام", icon: "📥", onClick: () => {
+                                            const inp = document.createElement("input");
+                                            inp.type = "file"; inp.accept = ".csv,text/csv";
+                                            inp.onchange = () => { const f = inp.files?.[0]; if (f) importGroupCSV(g.id, f); };
+                                            inp.click();
+                                          } },
+                                        { label: "حذف المجموعة", icon: "🗑", danger: true, onClick: () => {
+                                            if (window.confirm(`حذف المجموعة "${g.title}"؟ ستبقى المهام بدون مجموعة.`)) removeGroup(g.id);
+                                          } },
+                                      ]}
+                                    />
+                                  )}
+                                </div>
+                              </td>
+                            </tr>
+                          );
+                        }
+                        const t = item.t;
+                        return (
                         <tr key={t.id} className="border-t border-slate-100 hover:bg-slate-50">
                           <td className="px-1 py-1 text-center">
                             {canSeeChat(t.id) ? (
@@ -6505,26 +6698,19 @@ function ProjectDetailOverlay({
                               </td>
                             );
                           })}
-                          {canEditAll && <td className="px-1 py-1" />}
                           {canEditOwn && (
-                            <td className="px-1 py-1">
-                              <RowActions
-                                disabled={!canEditAll}
-                                onInsertAbove={() => insertTaskAt(data.tasks.findIndex((x) => x.id === t.id))}
-                                onInsertBelow={() => insertTaskAt(data.tasks.findIndex((x) => x.id === t.id) + 1)}
-                                onDelete={() => removeTask(t.id)}
-                                columnTools={canEditAll ? {
-                                  customCols: customCols.map((c) => ({ id: c.id, name: c.name })),
-                                  types: COL_TYPE_OPTIONS.map((o) => ({ type: o.type, label: o.label, icon: o.icon })),
-                                  onAddColumn: (type) => addColumn(type as DColType, customCols.length),
-                                  onDeleteColumn: (id) => onUpdateCustomCols((cur) => cur.filter((c) => c.id !== id)),
-                                } : undefined}
-                              />
+                            <td className="px-1 py-1 text-center">
+                              <button
+                                onClick={() => { if (window.confirm("حذف هذه المهمة؟")) removeTask(t.id); }}
+                                className="p-1 rounded hover:bg-red-50 text-red-500"
+                                title="حذف المهمة"
+                              ><Trash2 className="w-3.5 h-3.5" /></button>
                             </td>
                           )}
                         </tr>
-                      ))
-                    )}
+                        );
+                      });
+                    })()}
                   </tbody>
                 </table>
               </div>
