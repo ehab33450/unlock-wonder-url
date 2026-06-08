@@ -5786,9 +5786,11 @@ function ProjectDetailOverlay({
       cur: { allowed: string[]; msgs: { id: string; author: string; text: string; ts: number }[] }
     ) => { allowed: string[]; msgs: { id: string; author: string; text: string; ts: number }[] }
   ) => void;
-  customCols: { id: string; name: string; type: DColType }[];
+  customCols: { id: string; name: string; type: DColType; options?: { id: string; label: string; color: string }[] }[];
   onUpdateCustomCols: (
-    updater: (cur: { id: string; name: string; type: DColType }[]) => { id: string; name: string; type: DColType }[]
+    updater: (
+      cur: { id: string; name: string; type: DColType; options?: { id: string; label: string; color: string }[] }[]
+    ) => { id: string; name: string; type: DColType; options?: { id: string; label: string; color: string }[] }[]
   ) => void;
   customCells: Record<string, string>;
   onSetCustomCell: (taskId: string, colId: string, val: string) => void;
