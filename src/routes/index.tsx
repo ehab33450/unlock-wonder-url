@@ -1406,6 +1406,8 @@ function Index() {
     setNpRespPhone("");
     setNpAssignee("");
     setNpPayments([]);
+    setNpServices([]);
+    setNpServiceInput("");
   };
   const toggle = (name: string) =>
     setOpenProjects((s) => ({ ...s, [name]: !s[name] }));
