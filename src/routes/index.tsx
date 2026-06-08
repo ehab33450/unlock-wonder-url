@@ -1363,6 +1363,54 @@ function Index() {
       : currentProject.files
     : [];
 
+  // ============ صلاحيات تنزيل الملفات ============
+  const canDownloadFile = (f: FileItem) =>
+    isAdmin || (f.allowedDownload ?? []).includes(currentUser);
+
+  const downloadFile = (f: FileItem) => {
+    if (!canDownloadFile(f)) {
+      alert("لا تملك صلاحية تنزيل هذا الملف");
+      return;
+    }
+    const mime =
+      f.kind === "excel"
+        ? "text/csv;charset=utf-8;"
+        : f.kind === "word"
+        ? "application/msword"
+        : "text/plain;charset=utf-8;";
+    const blob = new Blob(["\uFEFF" + (f.content || "")], { type: mime });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = f.name;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  };
+
+  const updateFileAllowed = (fileId: string, names: string[]) => {
+    if (!folderViewProject) return;
+    setProjectData((d) => {
+      const cur = d[folderViewProject];
+      if (!cur) return d;
+      const mapArr = (arr: FileItem[]) =>
+        arr.map((x) => (x.id === fileId ? { ...x, allowedDownload: names } : x));
+      if (currentSubfolder) {
+        return {
+          ...d,
+          [folderViewProject]: {
+            ...cur,
+            folders: cur.folders.map((sf) =>
+              sf.name === currentSubfolder ? { ...sf, files: mapArr(sf.files) } : sf,
+            ),
+          },
+        };
+      }
+      return { ...d, [folderViewProject]: { ...cur, files: mapArr(cur.files) } };
+    });
+  };
+
+  const [downloadPermsFor, setDownloadPermsFor] = useState<FileItem | null>(null);
+
   const closeNewProject = () => {
     setNewProjectOpen(false);
     setNpStep(1);
