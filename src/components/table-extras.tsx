@@ -869,18 +869,25 @@ export function RowChatButton({
 ============================================================ */
 
 export function RowActions({
-  onInsertAbove, onInsertBelow, onDelete, disabled,
+  onInsertAbove, onInsertBelow, onDelete, disabled, columnTools,
 }: {
   onInsertAbove?: () => void;
   onInsertBelow?: () => void;
   onDelete?: () => void;
   disabled?: boolean;
+  columnTools?: {
+    customCols: { id: string; name: string }[];
+    types: { type: string; label: string; icon?: string }[];
+    onAddColumn: (type: string) => void;
+    onDeleteColumn: (id: string) => void;
+  };
 }) {
   const [open, setOpen] = useState(false);
+  const [sub, setSub] = useState<null | "addCol" | "delCol">(null);
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (!open) return;
-    const h = (e: MouseEvent) => { if (!ref.current?.contains(e.target as Node)) setOpen(false); };
+    const h = (e: MouseEvent) => { if (!ref.current?.contains(e.target as Node)) { setOpen(false); setSub(null); } };
     document.addEventListener("mousedown", h);
     return () => document.removeEventListener("mousedown", h);
   }, [open]);
@@ -888,29 +895,72 @@ export function RowActions({
   return (
     <div ref={ref} className="relative inline-block">
       <button
-        onClick={() => setOpen((v) => !v)}
+        onClick={() => { setOpen((v) => !v); setSub(null); }}
         className="p-1 rounded hover:bg-slate-200 text-slate-500"
         title="إجراءات الصف"
       ><MoreVertical className="w-3.5 h-3.5" /></button>
       {open && (
-        <div className="absolute z-50 left-0 mt-1 w-44 bg-white rounded-lg shadow-xl border border-slate-200 py-1 text-xs" dir="rtl">
+        <div className="absolute z-50 left-0 mt-1 w-52 bg-white rounded-lg shadow-xl border border-slate-200 py-1 text-xs" dir="rtl">
           {onInsertAbove && (
             <button
-              onClick={() => { onInsertAbove(); setOpen(false); }}
+              onClick={() => { onInsertAbove(); setOpen(false); setSub(null); }}
               className="w-full px-3 py-1.5 text-right hover:bg-slate-50 flex items-center gap-2"
             ><ArrowUp className="w-3.5 h-3.5 text-emerald-600" /><span>إدراج صف فوق</span></button>
           )}
           {onInsertBelow && (
             <button
-              onClick={() => { onInsertBelow(); setOpen(false); }}
+              onClick={() => { onInsertBelow(); setOpen(false); setSub(null); }}
               className="w-full px-3 py-1.5 text-right hover:bg-slate-50 flex items-center gap-2"
             ><ArrowDown className="w-3.5 h-3.5 text-emerald-600" /><span>إدراج صف تحت</span></button>
           )}
           {onDelete && (
             <button
-              onClick={() => { if (window.confirm("حذف هذا الصف؟")) { onDelete(); setOpen(false); } }}
+              onClick={() => { if (window.confirm("حذف هذا الصف؟")) { onDelete(); setOpen(false); setSub(null); } }}
               className="w-full px-3 py-1.5 text-right hover:bg-red-50 flex items-center gap-2 text-red-600"
             ><Trash2 className="w-3.5 h-3.5" /><span>حذف الصف</span></button>
+          )}
+          {columnTools && (
+            <>
+              <div className="my-1 border-t border-slate-100" />
+              <button
+                onClick={() => setSub(sub === "addCol" ? null : "addCol")}
+                className="w-full px-3 py-1.5 text-right hover:bg-slate-50 flex items-center gap-2"
+              ><span className="text-emerald-600">＋</span><span>إدراج عمود</span></button>
+              {sub === "addCol" && (
+                <div className="max-h-56 overflow-y-auto border-y border-slate-100 bg-slate-50/50">
+                  {columnTools.types.map((t) => (
+                    <button
+                      key={t.type}
+                      onClick={() => { columnTools.onAddColumn(t.type); setOpen(false); setSub(null); }}
+                      className="w-full px-4 py-1.5 text-right hover:bg-white flex items-center gap-2"
+                    >
+                      {t.icon && <span>{t.icon}</span>}<span>{t.label}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+              <button
+                onClick={() => setSub(sub === "delCol" ? null : "delCol")}
+                disabled={columnTools.customCols.length === 0}
+                className="w-full px-3 py-1.5 text-right hover:bg-red-50 flex items-center gap-2 text-red-600 disabled:text-slate-300 disabled:hover:bg-transparent"
+              ><Trash2 className="w-3.5 h-3.5" /><span>حذف عمود</span></button>
+              {sub === "delCol" && columnTools.customCols.length > 0 && (
+                <div className="max-h-56 overflow-y-auto border-y border-slate-100 bg-slate-50/50">
+                  {columnTools.customCols.map((c) => (
+                    <button
+                      key={c.id}
+                      onClick={() => {
+                        if (window.confirm(`حذف العمود "${c.name}"؟`)) {
+                          columnTools.onDeleteColumn(c.id);
+                          setOpen(false); setSub(null);
+                        }
+                      }}
+                      className="w-full px-4 py-1.5 text-right hover:bg-white flex items-center gap-2 text-red-600"
+                    ><span>{c.name}</span></button>
+                  ))}
+                </div>
+              )}
+            </>
           )}
         </div>
       )}
