@@ -6399,7 +6399,7 @@ function ProjectDetailOverlay({
               <HiddenColsRestore tableId={projectTableId} isAdmin={canEditAll} />
 
               <div className="overflow-auto bg-white rounded-lg border border-slate-200">
-                <table className="w-full text-sm">
+                <table className="w-full text-sm border-collapse [&_th]:border [&_th]:border-slate-200 [&_td]:border [&_td]:border-slate-200">
                   <thead className="bg-slate-100 text-slate-600 text-xs sticky top-0 z-20 shadow-sm">
                     <tr>
                       <th
