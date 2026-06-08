@@ -6425,15 +6425,12 @@ function ProjectDetailOverlay({
                           {canEditAll && <td className="px-1 py-1" />}
                           {canEditOwn && (
                             <td className="px-1 py-1">
-                              {isAdmin && (
-                                <button
-                                  onClick={() => removeTask(t.id)}
-                                  className="p-1 rounded hover:bg-red-50 text-slate-400 hover:text-red-500"
-                                  title="حذف المهمة"
-                                >
-                                  <Trash2 className="w-3.5 h-3.5" />
-                                </button>
-                              )}
+                              <RowActions
+                                disabled={!canEditAll}
+                                onInsertAbove={() => insertTaskAt(data.tasks.findIndex((x) => x.id === t.id))}
+                                onInsertBelow={() => insertTaskAt(data.tasks.findIndex((x) => x.id === t.id) + 1)}
+                                onDelete={() => removeTask(t.id)}
+                              />
                             </td>
                           )}
                         </tr>
