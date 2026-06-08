@@ -6566,7 +6566,7 @@ function ProjectDetailOverlay({
                               value={t.name}
                               disabled={!canEditOwn}
                               onChange={(e) => updateTask(t.id, { name: e.target.value })}
-                              className="w-32 px-2 py-1 text-right text-xs rounded focus:outline-none focus:bg-emerald-50"
+                              className="w-full px-2 py-1 text-right text-xs rounded focus:outline-none focus:bg-emerald-50"
                             />
                           </td>
                           <td className="px-1 py-1">
@@ -6574,7 +6574,7 @@ function ProjectDetailOverlay({
                               value={t.platform}
                               disabled={!canEditOwn}
                               onChange={(e) => updateTask(t.id, { platform: e.target.value })}
-                              className="w-28 px-2 py-1 text-right text-xs rounded focus:outline-none focus:bg-emerald-50"
+                              className="w-full px-2 py-1 text-right text-xs rounded focus:outline-none focus:bg-emerald-50"
                             />
                           </td>
                           <td className="px-1 py-1">
@@ -6582,7 +6582,7 @@ function ProjectDetailOverlay({
                               value={t.beneficiary}
                               disabled={!canEditOwn}
                               onChange={(e) => updateTask(t.id, { beneficiary: e.target.value })}
-                              className="w-28 px-2 py-1 text-right text-xs rounded focus:outline-none focus:bg-emerald-50"
+                              className="w-full px-2 py-1 text-right text-xs rounded focus:outline-none focus:bg-emerald-50"
                             />
                           </td>
                           <td className="px-1 py-1">
@@ -6590,7 +6590,7 @@ function ProjectDetailOverlay({
                               value={t.documentNo}
                               disabled={!canEditOwn}
                               onChange={(e) => updateTask(t.id, { documentNo: e.target.value })}
-                              className="w-24 px-2 py-1 text-right text-xs rounded focus:outline-none focus:bg-emerald-50"
+                              className="w-full px-2 py-1 text-right text-xs rounded focus:outline-none focus:bg-emerald-50"
                             />
                           </td>
                           <td className="px-1 py-1">
