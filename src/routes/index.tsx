@@ -5837,6 +5837,7 @@ function ProjectDetailOverlay({
     "جاري العمل": "bg-amber-100 text-amber-700",
     "تم الانجاز": "bg-emerald-100 text-emerald-700",
     "معلق": "bg-rose-100 text-rose-700",
+    "ملغي": "bg-zinc-200 text-zinc-500 line-through",
   };
   const priorityColors: Record<DPriority, string> = {
     "لاشيء": "bg-slate-100 text-slate-500",
