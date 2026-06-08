@@ -1192,6 +1192,7 @@ function Index() {
             responsibleName: npRespName,
             responsiblePhone: npRespPhone,
             assignee: npAssignee || (npMembers[0] ?? ""),
+            services: npServices,
           },
           tasks: [],
         },
