@@ -2125,6 +2125,7 @@ function Index() {
                 </div>
               ) : (
                 <div className="overflow-x-auto">
+                  <HiddenColsRestore tableId="dashboard.tasks" isAdmin={isAdmin} />
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="text-slate-500 border-b border-slate-200">
