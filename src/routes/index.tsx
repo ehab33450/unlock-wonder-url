@@ -6708,8 +6708,9 @@ function ProjectDetailOverlay({
                             </td>
                           )}
                         </tr>
-                      ))
-                    )}
+                        );
+                      });
+                    })()}
                   </tbody>
                 </table>
               </div>
