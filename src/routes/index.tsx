@@ -7487,9 +7487,9 @@ function SplitContractButton({
       </button>
       {open && (
         <div className="absolute top-10 right-0 z-30 bg-white border border-slate-200 shadow-xl rounded-lg p-4 w-72 space-y-3" dir="rtl">
-          <div className="text-xs font-bold text-slate-700">عدد الأقساط (2 / 4 / 8 فقط)</div>
+          <div className="text-xs font-bold text-slate-700">عدد الأقساط (1 / 2 / 4 / 12)</div>
           <div className="flex gap-1.5 flex-wrap">
-            {([2, 4, 8] as const).map((n) => (
+            {([1, 2, 4, 12] as const).map((n) => (
               <button
                 key={n}
                 onClick={() => setCount(n)}
