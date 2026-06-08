@@ -6099,7 +6099,7 @@ function ProjectDetailOverlay({
                   <tbody>
                     {data.tasks.length === 0 ? (
                       <tr>
-                        <td colSpan={14 + customCols.length + (canEditAll ? 1 : 0)} className="py-12 text-center text-slate-400">
+                        <td colSpan={12 + customCols.length + (canEditAll ? 1 : 0)} className="py-12 text-center text-slate-400">
                           لا توجد مهام بعد. اضغط "إضافة مهمة" للبدء.
                         </td>
                       </tr>
