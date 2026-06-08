@@ -3525,6 +3525,25 @@ function Index() {
                               <Trash2 className="w-4 h-4" />
                             </button>
                           )}
+                          {isAdmin && (
+                            <button
+                              onClick={() => setDownloadPermsFor(f)}
+                              className="text-slate-300 hover:text-[color:var(--eyenak-teal)]"
+                              title="صلاحيات التنزيل"
+                              aria-label="صلاحيات التنزيل"
+                            >
+                              <Users className="w-4 h-4" />
+                            </button>
+                          )}
+                          <button
+                            onClick={() => downloadFile(f)}
+                            disabled={!canDownloadFile(f)}
+                            className={`${canDownloadFile(f) ? "text-[color:var(--eyenak-teal)] hover:opacity-80" : "text-slate-300 cursor-not-allowed"}`}
+                            title={canDownloadFile(f) ? "تنزيل" : "لا تملك صلاحية التنزيل"}
+                            aria-label="تنزيل"
+                          >
+                            <Download className="w-4 h-4" />
+                          </button>
                           <span className="text-xs text-slate-400">{todayLabel}</span>
                         </div>
                         <button
