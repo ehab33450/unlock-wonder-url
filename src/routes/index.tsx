@@ -5815,7 +5815,6 @@ function ProjectDetailOverlay({
     onUpdate((cur) => ({
       ...cur,
       tasks: [
-        ...cur.tasks,
         {
           id: `${Date.now()}`,
           name: "مهمة جديدة",
@@ -5829,6 +5828,7 @@ function ProjectDetailOverlay({
           priority: "لاشيء",
           progress: 0,
         },
+        ...cur.tasks,
       ],
     }));
   };
