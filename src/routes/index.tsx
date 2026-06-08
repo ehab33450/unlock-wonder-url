@@ -2339,11 +2339,19 @@ function Index() {
 
           {/* Tabs */}
           <div className="flex items-center gap-4 px-4 text-sm border-b border-slate-200">
-            <button className="py-2 text-slate-500">أنا فقط</button>
-            <button className="py-2 text-slate-500">بها</button>
-            <button className="py-2 text-[color:var(--eyenak-dark)] font-semibold border-b-2 border-[color:var(--eyenak-teal)]">
-              الجميع
-            </button>
+            {(["mine","shared","all"] as const).map((k) => {
+              const label = k === "mine" ? "أنا فقط" : k === "shared" ? "المشترك بها" : "الجميع";
+              const active = taskScope === k;
+              return (
+                <button
+                  key={k}
+                  onClick={() => setTaskScope(k)}
+                  className={`py-2 ${active ? "text-[color:var(--eyenak-dark)] font-semibold border-b-2 border-[color:var(--eyenak-teal)]" : "text-slate-500 hover:text-slate-700"}`}
+                >
+                  {label}
+                </button>
+              );
+            })}
           </div>
 
           {/* Projects list */}
