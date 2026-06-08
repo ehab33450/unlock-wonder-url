@@ -189,18 +189,85 @@ function Index() {
   const [isAdmin, setIsAdmin] = useState(true);
   const [permsOpen, setPermsOpen] = useState(false);
 
-  // ====== نظام الصلاحيات الكامل ======
-  type PermKey =
-    | "files_view" | "files_add" | "files_edit" | "files_delete"
-    | "projects_view" | "projects_create" | "projects_edit"
-    | "tasks_edit"
-    | "services_view" | "services_manage"
-    | "bookings_view" | "bookings_manage"
-    | "notes_view" | "notes_manage"
-    | "chat_view" | "chat_send"
-    | "calendar_view" | "calendar_edit"
-    | "members_view";
-  const PERMS: { key: PermKey; label: string; group: string }[] = [
+  // ====== نظام الصلاحيات الكامل (مقسّم لتبويبات) ======
+  type PermKey = string;
+  const PERMS: { key: PermKey; label: string; group: string; desc?: string }[] = [
+    // ===== المشرف =====
+    { key: "sup_stats_status",   label: "إحصائيات حالة المشاريع",  group: "المشرف", desc: "ملخص حول حالة اللوحات والمهام المكتملة والجارية." },
+    { key: "sup_stats_perf",     label: "إحصائيات أداء الموظفين", group: "المشرف", desc: "أداء الموظفين، الالتزام بالمواعيد، توزيع العمل." },
+    { key: "sup_stats_projects", label: "إحصائيات المشاريع",      group: "المشرف", desc: "نسب الإنجاز والمراحل والاتجاهات الزمنية." },
+    { key: "sup_company_data",   label: "التحكم ببيانات الشركة",  group: "المشرف", desc: "الاسم، الشعار، الألوان، بيانات التواصل." },
+    { key: "sup_users_manage",   label: "إدارة المستخدمين",        group: "المشرف", desc: "إنشاء/تعديل الحسابات وكلمات المرور والصلاحيات." },
+    { key: "sup_plan_manage",    label: "التحكم بخطة الاشتراك",   group: "المشرف", desc: "الترقية، التسعير، تفعيل/إيقاف الميزات." },
+    { key: "sup_drinks_manage",  label: "إدارة المشروبات",         group: "المشرف", desc: "تصنيف المشروبات، التوفر، تعديل الأسعار." },
+    { key: "sup_dashboard_stats",label: "إحصائيات المشاريع للوحة", group: "المشرف", desc: "لوحات بيانات المشاريع والمستخدمين." },
+
+    // ===== إدارة المشاريع =====
+    { key: "pm_chat",            label: "نظام المحادثة",          group: "إدارة المشاريع" },
+    { key: "pm_notes",           label: "المذكرات",                group: "إدارة المشاريع" },
+    { key: "pm_private_projects",label: "المشاريع الخاصة",        group: "إدارة المشاريع" },
+    { key: "pm_private_tasks",   label: "المهام الخاصة",          group: "إدارة المشاريع" },
+    { key: "pm_calendar",        label: "التقويم",                 group: "إدارة المشاريع" },
+    { key: "pm_files",           label: "نظام الملفات",           group: "إدارة المشاريع" },
+    { key: "pm_client_system",   label: "نظام العميل",            group: "إدارة المشاريع" },
+    { key: "pm_project_files",   label: "ملفات المشروع",          group: "إدارة المشاريع" },
+    { key: "pm_live_chat",       label: "المحادثة المباشرة",      group: "إدارة المشاريع" },
+    { key: "pm_kanban",          label: "الحالات داخل المشاريع",   group: "إدارة المشاريع" },
+    { key: "pm_task_priority",   label: "أهمية المهمة",           group: "إدارة المشاريع" },
+    { key: "pm_task_period",     label: "الفترة الزمنية للمهمة",  group: "إدارة المشاريع" },
+    { key: "pm_export_excel",    label: "تصدير المهام بصيغة اكسل", group: "إدارة المشاريع" },
+    { key: "pm_project_status",  label: "حالة المشروع",           group: "إدارة المشاريع" },
+    { key: "pm_gantt",           label: "Gantt Chart",             group: "إدارة المشاريع" },
+    { key: "pm_share_users",     label: "مشاركة الملفات مع المستخدمين", group: "إدارة المشاريع" },
+    { key: "pm_share_link",      label: "مشاركة الملفات بالرابط", group: "إدارة المشاريع" },
+    { key: "pm_share_password",  label: "مشاركة الملفات بكلمة مرور", group: "إدارة المشاريع" },
+    { key: "pm_client_calendar", label: "إضافة العملاء في التقويم", group: "إدارة المشاريع" },
+    { key: "pm_subtasks",        label: "المهام الفرعية للمشروع", group: "إدارة المشاريع" },
+    { key: "pm_chat_groups",     label: "مجموعات المحادثة",       group: "إدارة المشاريع" },
+    { key: "pm_voice",           label: "التسجيل الصوتي في المحادثة", group: "إدارة المشاريع" },
+    { key: "pm_video",           label: "ملفات الفيديو داخل المحادثة", group: "إدارة المشاريع" },
+    { key: "pm_dropbox",         label: "ملفات دروب بوكس",         group: "إدارة المشاريع" },
+    { key: "pm_eyenak_files",    label: "ملفات عيناك في المحادثة", group: "إدارة المشاريع" },
+    { key: "pm_google_drive",    label: "ملفات جوجل درايف",        group: "إدارة المشاريع" },
+    { key: "pm_cafe_eyenak",     label: "كافيه عيناك",             group: "إدارة المشاريع" },
+    { key: "pm_projects_count",  label: "عدد المشاريع",           group: "إدارة المشاريع" },
+    { key: "pm_tasks_count",     label: "عدد المهام",             group: "إدارة المشاريع" },
+    { key: "pm_team",            label: "الفريق",                 group: "إدارة المشاريع" },
+    { key: "pm_activity_log",    label: "سجل النشاطات",           group: "إدارة المشاريع" },
+    { key: "pm_office_worker",   label: "عامل المكتب",            group: "إدارة المشاريع" },
+    { key: "pm_control_panel",   label: "لوحة التحكم",            group: "إدارة المشاريع" },
+    { key: "pm_articles",        label: "المقالات",                group: "إدارة المشاريع" },
+    { key: "pm_invite_user",     label: "إضافة مستخدم",           group: "إدارة المشاريع" },
+    { key: "pm_deadline",        label: "الموعد النهائي للمشروع", group: "إدارة المشاريع" },
+    { key: "pm_clone_projects",  label: "نسخ / نقل المشاريع",     group: "إدارة المشاريع" },
+    { key: "pm_clone_tasks",     label: "نسخ / نقل المهام",       group: "إدارة المشاريع" },
+    { key: "pm_mindmap",         label: "الخريطة الذهنية",        group: "إدارة المشاريع" },
+    { key: "pm_public_calendar", label: "التقويم العام",          group: "إدارة المشاريع" },
+    { key: "pm_finished_tasks",  label: "المهام المنتهية",        group: "إدارة المشاريع" },
+
+    // ===== موظف الموارد البشرية =====
+    { key: "hr_emp_attendance", label: "حضور وانصراف الموظفين", group: "موظف الموارد البشرية" },
+    { key: "hr_emp_payroll",    label: "إعداد الرواتب",          group: "موظف الموارد البشرية" },
+    { key: "hr_emp_leaves",     label: "إدارة الإجازات",         group: "موظف الموارد البشرية" },
+    { key: "hr_emp_contracts",  label: "عقود الموظفين",          group: "موظف الموارد البشرية" },
+
+    // ===== النظام المحاسبي =====
+    { key: "acc_invoices",      label: "الفواتير",                group: "النظام المحاسبي" },
+    { key: "acc_payments",      label: "المدفوعات",               group: "النظام المحاسبي" },
+    { key: "acc_reports",       label: "التقارير المالية",        group: "النظام المحاسبي" },
+    { key: "acc_tax",           label: "الفاتورة الضريبية",       group: "النظام المحاسبي" },
+
+    // ===== عيناك للاجتماعات =====
+    { key: "meet_create",       label: "إنشاء اجتماع",            group: "عيناك للاجتماعات" },
+    { key: "meet_join",         label: "الانضمام للاجتماعات",     group: "عيناك للاجتماعات" },
+    { key: "meet_record",       label: "تسجيل الاجتماعات",        group: "عيناك للاجتماعات" },
+
+    // ===== الموارد البشرية =====
+    { key: "hr_dept",           label: "إدارة الأقسام",           group: "الموارد البشرية" },
+    { key: "hr_jobs",           label: "المسميات الوظيفية",       group: "الموارد البشرية" },
+    { key: "hr_evaluations",    label: "تقييمات الأداء",          group: "الموارد البشرية" },
+
+    // ===== الملفات (legacy keys مستخدمة في المنصة) =====
     { key: "files_view",      label: "عرض الملفات",         group: "الملفات" },
     { key: "files_add",       label: "إضافة ملفات/مجلدات",  group: "الملفات" },
     { key: "files_edit",      label: "تعديل الملفات",        group: "الملفات" },
@@ -209,12 +276,6 @@ function Index() {
     { key: "projects_create", label: "إنشاء مشروع",          group: "المشاريع" },
     { key: "projects_edit",   label: "تعديل المشاريع",       group: "المشاريع" },
     { key: "tasks_edit",      label: "تعديل المهام",         group: "المهام" },
-    { key: "services_view",   label: "عرض خدمات الكتاب",     group: "الخدمات" },
-    { key: "services_manage", label: "إدارة خدمات الكتاب",   group: "الخدمات" },
-    { key: "bookings_view",   label: "عرض الحجوزات",         group: "الحجز" },
-    { key: "bookings_manage", label: "إدارة الحجوزات",       group: "الحجز" },
-    { key: "notes_view",      label: "عرض المذكرات",         group: "المذكرات" },
-    { key: "notes_manage",    label: "إدارة المذكرات",       group: "المذكرات" },
     { key: "chat_view",       label: "عرض المحادثة",         group: "المحادثة" },
     { key: "chat_send",       label: "إرسال رسائل",          group: "المحادثة" },
     { key: "calendar_view",   label: "عرض التقويم",          group: "التقويم" },
