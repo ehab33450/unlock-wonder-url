@@ -390,9 +390,10 @@ function Index() {
     responsibleName: string;
     responsiblePhone: string;
     assignee: string;
+    services?: string[];
   };
   type TaskStatus = "جديد" | "جاري العمل" | "تم الانجاز" | "معلق" | "ملغي";
-  type Priority = "لاشيء" | "منخفض" | "متوسط" | "عالي";
+  type Priority = "عادي" | "متوسط" | "عالي";
   type TaskRow = {
     id: string;
     name: string;
