@@ -7554,6 +7554,23 @@ function ExcelEditor({
   );
 }
 
+type PayStatus = "paid" | "partial" | "not_due" | "overdue";
+function computePayStatus(p: { amount: string; paidAmount?: string; paid: boolean; date: string }): PayStatus {
+  const amt = Number(p.amount || 0);
+  const paidN = Number((p.paidAmount ?? (p.paid ? p.amount : "0")) || 0);
+  if (amt > 0 && paidN >= amt) return "paid";
+  if (paidN > 0) return "partial";
+  if (!p.date) return "not_due";
+  const dueTs = new Date(p.date + "T23:59:59").getTime();
+  return Date.now() > dueTs ? "overdue" : "not_due";
+}
+const PAY_STATUS_META: Record<PayStatus, { label: string; cls: string }> = {
+  paid:    { label: "مدفوع",        cls: "bg-emerald-100 text-emerald-700" },
+  partial: { label: "مدفوع جزئي",   cls: "bg-sky-100 text-sky-700" },
+  not_due: { label: "غير مستحق",    cls: "bg-slate-100 text-slate-600" },
+  overdue: { label: "غير مدفوع",    cls: "bg-red-100 text-red-700" },
+};
+
 function PaymentCountdown({ date, paid }: { date: string; paid: boolean }) {
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
