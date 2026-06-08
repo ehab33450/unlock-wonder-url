@@ -5642,6 +5642,11 @@ type DPayment = {
   paid: boolean;
   receiptName?: string;
   receiptData?: string;
+  paidAmount?: string;          // المبلغ المدفوع من القسط
+  periodStart?: string;         // بداية فترة الاستحقاق
+  periodEnd?: string;           // نهاية فترة الاستحقاق
+  taxInvoiceName?: string;      // الفاتورة الضريبية
+  taxInvoiceData?: string;
 };
 type DContract = {
   startDate: string;
@@ -6924,7 +6929,10 @@ function SplitContractButton({
     const payments: DPayment[] = Array.from({ length: n }, (_, i) => ({
       id: `pay-${Date.now()}-${i}`,
       amount: String(per),
-      date: new Date(start + step * (i + 1)).toISOString().slice(0, 10),
+      // أول قسط من اليوم الأول للعقد، ثم كل قسط في بداية فترته
+      date: new Date(start + step * i).toISOString().slice(0, 10),
+      periodStart: new Date(start + step * i).toISOString().slice(0, 10),
+      periodEnd: new Date(start + step * (i + 1)).toISOString().slice(0, 10),
       paid: false,
     }));
     onSplit(payments);
@@ -7280,9 +7288,13 @@ function FinanceModal({
                   <th className="px-3 py-2 text-right font-bold"><EditableHeaderLabel tableId="finance.payments" headerKey="project" defaultLabel="المشروع" isAdmin={isAdmin} /></th>
                   <th className="px-3 py-2 text-right font-bold"><EditableHeaderLabel tableId="finance.payments" headerKey="assignee" defaultLabel="الموظف" isAdmin={isAdmin} /></th>
                   <th className="px-3 py-2 text-right font-bold"><EditableHeaderLabel tableId="finance.payments" headerKey="amount" defaultLabel="المبلغ" isAdmin={isAdmin} /></th>
+                  <th className="px-3 py-2 text-right font-bold"><EditableHeaderLabel tableId="finance.payments" headerKey="paidAmount" defaultLabel="المبلغ المدفوع" isAdmin={isAdmin} /></th>
+                  <th className="px-3 py-2 text-right font-bold"><EditableHeaderLabel tableId="finance.payments" headerKey="remaining" defaultLabel="المبلغ المتبقي" isAdmin={isAdmin} /></th>
+                  <th className="px-3 py-2 text-right font-bold"><EditableHeaderLabel tableId="finance.payments" headerKey="period" defaultLabel="فترة الاستحقاق" isAdmin={isAdmin} /></th>
                   <th className="px-3 py-2 text-right font-bold"><EditableHeaderLabel tableId="finance.payments" headerKey="date" defaultLabel="تاريخ الاستحقاق" isAdmin={isAdmin} /></th>
                   <th className="px-3 py-2 text-right font-bold"><EditableHeaderLabel tableId="finance.payments" headerKey="count" defaultLabel="العد التنازلي" isAdmin={isAdmin} /></th>
                   <th className="px-3 py-2 text-right font-bold"><EditableHeaderLabel tableId="finance.payments" headerKey="receipt" defaultLabel="الإيصال" isAdmin={isAdmin} /></th>
+                  <th className="px-3 py-2 text-right font-bold"><EditableHeaderLabel tableId="finance.payments" headerKey="taxInvoice" defaultLabel="الفاتورة الضريبية" isAdmin={isAdmin} /></th>
                   <th className="px-3 py-2 text-right font-bold"><EditableHeaderLabel tableId="finance.payments" headerKey="status" defaultLabel="الحالة" isAdmin={isAdmin} /></th>
                   <ExtraColHeaders tableId="finance.payments" isAdmin={isAdmin} thClass="px-3 py-2 text-right font-bold whitespace-nowrap" />
                   {isAdmin && <th className="px-3 py-2"></th>}
@@ -7307,6 +7319,57 @@ function FinanceModal({
                         className="w-24 h-8 border border-slate-200 rounded px-2 text-sm text-right"
                       />
                       <span className="text-[10px] text-slate-500 mr-1">ر.س</span>
+                    </td>
+                    <td className="px-3 py-2">
+                      <input
+                        type="number"
+                        value={p.paidAmount ?? (p.paid ? p.amount : "")}
+                        disabled={!isAdmin}
+                        onChange={(e) => {
+                          const v = e.target.value;
+                          const amt = Number(p.amount || 0);
+                          const paidN = Number(v || 0);
+                          onUpdatePayment(p.project, p.id, {
+                            paidAmount: v,
+                            paid: paidN >= amt && amt > 0,
+                          });
+                        }}
+                        className="w-24 h-8 border border-slate-200 rounded px-2 text-sm text-right"
+                        placeholder="0"
+                      />
+                      <span className="text-[10px] text-slate-500 mr-1">ر.س</span>
+                    </td>
+                    <td className="px-3 py-2">
+                      {(() => {
+                        const amt = Number(p.amount || 0);
+                        const paidN = Number((p.paidAmount ?? (p.paid ? p.amount : "0")) || 0);
+                        const remaining = Math.max(0, amt - paidN);
+                        return (
+                          <span className={`text-xs font-bold ${remaining === 0 ? "text-emerald-600" : "text-amber-700"}`}>
+                            {remaining.toLocaleString()} ر.س
+                          </span>
+                        );
+                      })()}
+                    </td>
+                    <td className="px-3 py-2">
+                      <div className="flex flex-col gap-1">
+                        <input
+                          type="date"
+                          value={p.periodStart ?? ""}
+                          disabled={!isAdmin}
+                          onChange={(e) => onUpdatePayment(p.project, p.id, { periodStart: e.target.value })}
+                          className="h-7 border border-slate-200 rounded px-1 text-[11px]"
+                          title="من"
+                        />
+                        <input
+                          type="date"
+                          value={p.periodEnd ?? ""}
+                          disabled={!isAdmin}
+                          onChange={(e) => onUpdatePayment(p.project, p.id, { periodEnd: e.target.value })}
+                          className="h-7 border border-slate-200 rounded px-1 text-[11px]"
+                          title="إلى"
+                        />
+                      </div>
                     </td>
                     <td className="px-3 py-2">
                       <input
@@ -7352,6 +7415,49 @@ function FinanceModal({
                               htmlFor={`receipt-${p.project}-${p.id}`}
                               className="cursor-pointer p-1 rounded hover:bg-slate-100 text-slate-500"
                               title="رفع إيصال"
+                            >
+                              <Upload className="w-3.5 h-3.5" />
+                            </label>
+                          </>
+                        )}
+                      </div>
+                    </td>
+                    <td className="px-3 py-2">
+                      <div className="flex items-center gap-1.5">
+                        {p.taxInvoiceName ? (
+                          <a
+                            href={p.taxInvoiceData}
+                            download={p.taxInvoiceName}
+                            className="text-xs text-emerald-700 hover:underline truncate max-w-[120px] flex items-center gap-1"
+                          >
+                            <Receipt className="w-3 h-3" />
+                            {p.taxInvoiceName}
+                          </a>
+                        ) : (
+                          <span className="text-[10px] text-slate-400">لا يوجد</span>
+                        )}
+                        {isAdmin && (
+                          <>
+                            <input
+                              type="file"
+                              className="hidden"
+                              id={`tax-${p.project}-${p.id}`}
+                              accept="image/*,.pdf"
+                              onChange={(e) => {
+                                const f = e.target.files?.[0];
+                                if (!f) return;
+                                const reader = new FileReader();
+                                reader.onload = () => onUpdatePayment(p.project, p.id, {
+                                  taxInvoiceName: f.name,
+                                  taxInvoiceData: typeof reader.result === "string" ? reader.result : "",
+                                });
+                                reader.readAsDataURL(f);
+                              }}
+                            />
+                            <label
+                              htmlFor={`tax-${p.project}-${p.id}`}
+                              className="cursor-pointer p-1 rounded hover:bg-slate-100 text-slate-500"
+                              title="رفع فاتورة ضريبية"
                             >
                               <Upload className="w-3.5 h-3.5" />
                             </label>
