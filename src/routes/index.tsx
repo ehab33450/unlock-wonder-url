@@ -246,23 +246,6 @@ function Index() {
     { key: "pm_public_calendar", label: "التقويم العام",          group: "إدارة المشاريع" },
     { key: "pm_finished_tasks",  label: "المهام المنتهية",        group: "إدارة المشاريع" },
 
-    // ===== موظف الموارد البشرية =====
-    { key: "hr_emp_attendance", label: "حضور وانصراف الموظفين", group: "موظف الموارد البشرية" },
-    { key: "hr_emp_payroll",    label: "إعداد الرواتب",          group: "موظف الموارد البشرية" },
-    { key: "hr_emp_leaves",     label: "إدارة الإجازات",         group: "موظف الموارد البشرية" },
-    { key: "hr_emp_contracts",  label: "عقود الموظفين",          group: "موظف الموارد البشرية" },
-
-    // ===== النظام المحاسبي =====
-    { key: "acc_invoices",      label: "الفواتير",                group: "النظام المحاسبي" },
-    { key: "acc_payments",      label: "المدفوعات",               group: "النظام المحاسبي" },
-    { key: "acc_reports",       label: "التقارير المالية",        group: "النظام المحاسبي" },
-    { key: "acc_tax",           label: "الفاتورة الضريبية",       group: "النظام المحاسبي" },
-
-    // ===== الموارد البشرية =====
-    { key: "hr_dept",           label: "إدارة الأقسام",           group: "الموارد البشرية" },
-    { key: "hr_jobs",           label: "المسميات الوظيفية",       group: "الموارد البشرية" },
-    { key: "hr_evaluations",    label: "تقييمات الأداء",          group: "الموارد البشرية" },
-
     // ===== الملفات (legacy keys مستخدمة في المنصة) =====
     { key: "files_view",      label: "عرض الملفات",         group: "الملفات" },
     { key: "files_add",       label: "إضافة ملفات/مجلدات",  group: "الملفات" },
