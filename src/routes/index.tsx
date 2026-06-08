@@ -2563,7 +2563,7 @@ function Index() {
                       endDate: newTaskEnd || today,
                       doneDate: "",
                       status: "جديد",
-                      priority: "لاشيء",
+                      priority: "عادي",
                       progress: 0,
                     };
                     setProjectMeta((m) => {
@@ -5945,7 +5945,7 @@ function ProjectDetailOverlay({
           endDate: "",
           doneDate: "",
           status: "جديد",
-          priority: "لاشيء",
+          priority: "عادي",
           progress: 0,
         },
         ...cur.tasks,
@@ -5964,7 +5964,7 @@ function ProjectDetailOverlay({
         endDate: "",
         doneDate: "",
         status: "جديد",
-        priority: "لاشيء",
+        priority: "عادي",
         progress: 0,
       };
       const arr = [...cur.tasks];
@@ -6012,7 +6012,7 @@ function ProjectDetailOverlay({
       tasks: [
         { id: `${Date.now()}`, name: "مهمة جديدة", platform: "", beneficiary: "", documentNo: "",
           startDate: new Date().toISOString().slice(0,10), endDate: "", doneDate: "",
-          status: "جديد" as DStatus, priority: "لاشيء" as DPriority, progress: 0, groupId },
+          status: "جديد" as DStatus, priority: "عادي" as DPriority, progress: 0, groupId },
         ...cur.tasks,
       ],
     }));
@@ -6056,7 +6056,7 @@ function ProjectDetailOverlay({
           id: `${Date.now()}${i}`,
           name: c[0] || "مهمة", platform: c[1] || "", beneficiary: c[2] || "", documentNo: c[3] || "",
           startDate: c[4] || "", endDate: c[5] || "", doneDate: c[8] || "",
-          status: (c[6] as DStatus) || "جديد", priority: (c[7] as DPriority) || "لاشيء",
+          status: (c[6] as DStatus) || "جديد", priority: (c[7] as DPriority) || "عادي",
           progress: 0, groupId,
         });
       }
