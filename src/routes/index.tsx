@@ -444,7 +444,7 @@ function Index() {
 
     const assignees = ["ايهاب فاتح", "محمد علي", "سارة أحمد", "أ. أروى الجعدي"];
     const platforms = ["نظام أبشر", "منصة اعتماد", "بوابة العميل", "البريد المؤسسي"];
-    const statuses: TaskStatus[] = ["جديد", "جاري العمل", "تم", "معلق"];
+    const statuses: TaskStatus[] = ["جديد", "جاري العمل", "تم الانجاز", "معلق"];
     const priorities: Priority[] = ["متوسط", "عالي", "منخفض"];
 
     setProjectMeta((m) => {
@@ -634,7 +634,7 @@ function Index() {
     const out: Notif[] = [];
     for (const [project, meta] of Object.entries(projectMeta)) {
       for (const t of meta.tasks) {
-        if (!t.endDate || t.status === "تم") continue;
+        if (!t.endDate || t.status === "تم الانجاز") continue;
         const end = new Date(t.endDate).getTime();
         if (Number.isNaN(end)) continue;
         const diff = end - nowTs;
@@ -1352,7 +1352,7 @@ function Index() {
     }
     return list;
   }, [projectMeta, isAdmin, currentUser]);
-  const completed = visibleTasks.filter((t) => t.status === "تم").length;
+  const completed = visibleTasks.filter((t) => t.status === "تم الانجاز").length;
   const inProgress = visibleTasks.filter((t) => t.status === "جاري العمل").length;
   const pending = visibleTasks.filter((t) => t.status === "معلق").length;
   const newCount = visibleTasks.filter((t) => t.status === "جديد").length;
@@ -1395,7 +1395,7 @@ function Index() {
       case "المهام المعلقة":
         return visibleTasks.filter((t) => t.status === "معلق");
       case "المهام المنتهية":
-        return visibleTasks.filter((t) => t.status === "تم");
+        return visibleTasks.filter((t) => t.status === "تم الانجاز");
       case "المؤقتات النشطة":
         return visibleTasks.filter((t) => t.status === "جاري العمل");
       case "المفضلة":
@@ -1933,7 +1933,7 @@ function Index() {
                     {w.key === "projectStatus" && (
                       <ul className="space-y-1.5 text-xs">
                         {Object.entries(projectMeta).slice(0, 4).map(([p, meta]) => {
-                          const done = meta.tasks.filter((t) => t.status === "تم").length;
+                          const done = meta.tasks.filter((t) => t.status === "تم الانجاز").length;
                           const pct = meta.tasks.length ? Math.round((done / meta.tasks.length) * 100) : 0;
                           return (
                             <li key={p}>
@@ -2106,7 +2106,7 @@ function Index() {
                 <div className="space-y-2">
                   {Object.entries(projectMeta).map(([proj, meta]) => {
                     const ts = meta.tasks;
-                    const done = ts.filter((t) => t.status === "تم").length;
+                    const done = ts.filter((t) => t.status === "تم الانجاز").length;
                     const pct = ts.length ? Math.round((done / ts.length) * 100) : 0;
                     return (
                       <div key={proj} className="p-3 border border-slate-200 rounded-md">
@@ -5657,7 +5657,7 @@ type DContract = {
   responsiblePhone: string;
   assignee: string;
 };
-type DStatus = "جديد" | "جاري العمل" | "تم" | "معلق";
+type DStatus = "جديد" | "جاري العمل" | "تم الانجاز" | "معلق";
 type DPriority = "لاشيء" | "منخفض" | "متوسط" | "عالي";
 type DTask = {
   id: string;
@@ -5701,7 +5701,7 @@ function Countdown({ end, status }: { end: string; status: DStatus }) {
     const id = setInterval(() => setNow(Date.now()), 60_000);
     return () => clearInterval(id);
   }, []);
-  if (status === "تم") {
+  if (status === "تم الانجاز") {
     return <span className="text-xs text-emerald-600 font-semibold">مكتملة</span>;
   }
   if (!end) {
@@ -5829,7 +5829,7 @@ function ProjectDetailOverlay({
   const statusColors: Record<DStatus, string> = {
     "جديد": "bg-slate-200 text-slate-700",
     "جاري العمل": "bg-amber-100 text-amber-700",
-    "تم": "bg-emerald-100 text-emerald-700",
+    "تم الانجاز": "bg-emerald-100 text-emerald-700",
     "معلق": "bg-rose-100 text-rose-700",
   };
   const priorityColors: Record<DPriority, string> = {
@@ -6171,7 +6171,7 @@ function ProjectDetailOverlay({
                             >
                               <option value="جديد">جديد</option>
                               <option value="جاري العمل">جاري العمل</option>
-                              <option value="تم">تم</option>
+                              <option value="تم الانجاز">تم</option>
                               <option value="معلق">معلق</option>
                             </select>
                           </td>
@@ -6184,7 +6184,7 @@ function ProjectDetailOverlay({
                                   const v = Number(e.target.value);
                                   updateTask(t.id, {
                                     progress: v,
-                                    ...(v === 100 && t.status !== "تم" ? { status: "تم" as DStatus } : {}),
+                                    ...(v === 100 && t.status !== "تم الانجاز" ? { status: "تم الانجاز" as DStatus } : {}),
                                   });
                                 }}
                                 className="text-xs font-semibold rounded px-1 py-1 bg-slate-50 border border-slate-200 focus:outline-none"
