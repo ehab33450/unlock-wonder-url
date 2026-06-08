@@ -505,7 +505,7 @@ function Index() {
     const assignees = ["ايهاب فاتح", "محمد علي", "سارة أحمد", "أ. أروى الجعدي"];
     const platforms = ["نظام أبشر", "منصة اعتماد", "بوابة العميل", "البريد المؤسسي"];
     const statuses: TaskStatus[] = ["جديد", "جاري العمل", "تم الانجاز", "معلق"];
-    const priorities: Priority[] = ["متوسط", "عالي", "منخفض"];
+    const priorities: Priority[] = ["متوسط", "عالي", "عادي"];
 
     setProjectMeta((m) => {
       const next = { ...m };
