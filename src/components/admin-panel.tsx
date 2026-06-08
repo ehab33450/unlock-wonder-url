@@ -14,6 +14,7 @@ export type AdminEmployee = {
 
 type RoleRow = {
   id: string; name: string; isDefault: boolean; system?: boolean;
+  perms?: Record<string, boolean>;
 };
 
 type Props = {
@@ -46,6 +47,8 @@ export function AdminPanel({ open, onClose, employees, setEmployees, perms, defa
   const [addOpen, setAddOpen] = useState(false);
   const [editEmp, setEditEmp] = useState<AdminEmployee | null>(null);
   const [permsEmp, setPermsEmp] = useState<AdminEmployee | null>(null);
+  const [addRoleOpen, setAddRoleOpen] = useState(false);
+  const [editRolePerms, setEditRolePerms] = useState<RoleRow | null>(null);
 
   const [roles, setRoles] = useState<RoleRow[]>([
     { id: "r1", name: "Admin", isDefault: true, system: true },
@@ -117,7 +120,12 @@ export function AdminPanel({ open, onClose, employees, setEmployees, perms, defa
             />
           )}
           {section === "roles" && (
-            <RolesSection roles={roles} setRoles={setRoles} />
+            <RolesSection
+              roles={roles}
+              setRoles={setRoles}
+              onAdd={() => setAddRoleOpen(true)}
+              onEditPerms={(r) => setEditRolePerms(r)}
+            />
           )}
           {section === "company" && (
             <PlaceholderSection title="بيانات الشركة" subtitle="اسم الشركة، الشعار، العنوان، السجل التجاري." />
@@ -175,6 +183,27 @@ export function AdminPanel({ open, onClose, employees, setEmployees, perms, defa
           onSave={(u) => {
             setEmployees((arr: AdminEmployee[]) => arr.map((x) => (x.id === u.id ? u : x)));
             setPermsEmp(null);
+          }}
+        />
+      )}
+      {addRoleOpen && (
+        <AddRoleModal
+          perms={perms}
+          onClose={() => setAddRoleOpen(false)}
+          onCreate={(role) => {
+            setRoles((rs) => [...rs, role]);
+            setAddRoleOpen(false);
+          }}
+        />
+      )}
+      {editRolePerms && (
+        <RolePermsModal
+          role={editRolePerms}
+          perms={perms}
+          onClose={() => setEditRolePerms(null)}
+          onSave={(r) => {
+            setRoles((rs) => rs.map((x) => (x.id === r.id ? r : x)));
+            setEditRolePerms(null);
           }}
         />
       )}
@@ -299,24 +328,18 @@ function UsersSection({
 }
 
 /* ============== Roles Section ============== */
-function RolesSection({ roles, setRoles }: { roles: RoleRow[]; setRoles: React.Dispatch<React.SetStateAction<RoleRow[]>> }) {
-  const [name, setName] = useState("");
+function RolesSection({ roles, setRoles, onAdd, onEditPerms }: {
+  roles: RoleRow[];
+  setRoles: React.Dispatch<React.SetStateAction<RoleRow[]>>;
+  onAdd: () => void;
+  onEditPerms: (r: RoleRow) => void;
+}) {
   return (
     <div className="p-6">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
-          <input
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="اسم الدور الجديد"
-            className="h-10 px-3 border border-slate-300 rounded-lg text-sm text-right"
-          />
           <button
-            onClick={() => {
-              const v = name.trim(); if (!v) return;
-              setRoles((r) => [...r, { id: `r${Date.now()}`, name: v, isDefault: false }]);
-              setName("");
-            }}
+            onClick={onAdd}
             className="h-10 px-4 rounded-lg bg-[color:var(--eyenak-teal)] text-white text-sm flex items-center gap-2"
           >
             <Plus className="w-4 h-4" /> إضافة أدوار
@@ -340,7 +363,10 @@ function RolesSection({ roles, setRoles }: { roles: RoleRow[]; setRoles: React.D
                 <td className="px-4 py-3 text-slate-600">{r.isDefault ? "نعم" : "لا"}</td>
                 <td className="px-4 py-3">
                   <div className="flex items-center gap-2">
-                    <button className="text-xs px-3 py-1.5 rounded-full border border-slate-200 text-slate-600 hover:bg-slate-50 flex items-center gap-1">
+                    <button
+                      onClick={() => onEditPerms(r)}
+                      className="text-xs px-3 py-1.5 rounded-full border border-slate-200 text-slate-600 hover:bg-slate-50 flex items-center gap-1"
+                    >
                       <ShieldCheck className="w-3.5 h-3.5" />
                       {r.system ? "معاينة الصلاحيات" : "تحديث الصلاحيات"}
                     </button>
@@ -522,36 +548,166 @@ function PermsModal({ emp, perms, onClose, onSave }: {
   emp: AdminEmployee; perms: { key: string; label: string; group: string }[]; onClose: () => void; onSave: (e: AdminEmployee) => void;
 }) {
   const [u, setU] = useState(emp);
-  const groups = Array.from(new Set(perms.map((p) => p.group)));
   return (
     <div dir="rtl" className="fixed inset-0 z-[70] bg-slate-900/60 flex items-center justify-center p-4" onClick={onClose}>
-      <div onClick={(e) => e.stopPropagation()} className="bg-white rounded-xl shadow-2xl w-full max-w-2xl p-6 max-h-[85vh] overflow-y-auto">
+      <div onClick={(e) => e.stopPropagation()} className="bg-white rounded-xl shadow-2xl w-full max-w-5xl p-6 max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-bold text-slate-800">صلاحيات: {emp.name}</h3>
           <button onClick={onClose} className="p-1 rounded hover:bg-slate-100"><X className="w-5 h-5" /></button>
         </div>
-        <div className="space-y-4">
-          {groups.map((g) => (
-            <div key={g} className="border border-slate-200 rounded-lg p-3">
-              <div className="font-bold text-sm text-slate-700 text-right mb-2">{g}</div>
-              <div className="grid grid-cols-2 gap-2">
-                {perms.filter((p) => p.group === g).map((p) => (
-                  <label key={p.key} className="flex items-center justify-end gap-2 text-xs cursor-pointer">
-                    <span>{p.label}</span>
-                    <input
-                      type="checkbox"
-                      checked={!!u.perms[p.key]}
-                      onChange={(e) => setU({ ...u, perms: { ...u.perms, [p.key]: e.target.checked } })}
-                    />
-                  </label>
-                ))}
-              </div>
-            </div>
-          ))}
-        </div>
+        <PermsTabs
+          perms={perms}
+          value={u.perms}
+          onChange={(next) => setU({ ...u, perms: next })}
+        />
         <div className="mt-5 flex justify-end">
           <button onClick={() => onSave(u)} className="h-10 px-6 rounded-lg bg-[color:var(--eyenak-teal)] text-white text-sm font-semibold">حفظ</button>
         </div>
+      </div>
+    </div>
+  );
+}
+
+/* ============== Tabbed Permissions UI (shared) ============== */
+function PermsTabs({ perms, value, onChange }: {
+  perms: { key: string; label: string; group: string; desc?: string }[];
+  value: Record<string, boolean>;
+  onChange: (v: Record<string, boolean>) => void;
+}) {
+  const groups = Array.from(new Set(perms.map((p) => p.group)));
+  const [tab, setTab] = useState<string>(groups[0] ?? "");
+  const list = perms.filter((p) => p.group === tab);
+  const allChecked = list.length > 0 && list.every((p) => !!value[p.key]);
+  const toggleAll = (on: boolean) => {
+    const next = { ...value };
+    for (const p of list) next[p.key] = on;
+    onChange(next);
+  };
+  return (
+    <div>
+      <div className="flex flex-wrap gap-1 border-b border-slate-200 mb-4 overflow-x-auto">
+        {groups.map((g) => (
+          <button
+            key={g}
+            onClick={() => setTab(g)}
+            className={`px-4 py-2 text-sm whitespace-nowrap border-b-2 -mb-px transition ${
+              tab === g
+                ? "border-[color:var(--eyenak-teal)] text-[color:var(--eyenak-teal)] font-bold"
+                : "border-transparent text-slate-500 hover:text-slate-700"
+            }`}
+          >
+            {g}
+          </button>
+        ))}
+      </div>
+      <label className="flex items-center justify-end gap-2 text-xs mb-3 cursor-pointer">
+        <span className="font-semibold">تحديد الكل</span>
+        <input type="checkbox" checked={allChecked} onChange={(e) => toggleAll(e.target.checked)} />
+      </label>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+        {list.map((p) => (
+          <label key={p.key} className="border border-slate-200 rounded-lg p-3 text-right cursor-pointer hover:border-[color:var(--eyenak-teal)] transition">
+            <div className="flex items-start justify-between gap-2 mb-1">
+              <span className="font-semibold text-sm text-slate-800">{p.label}</span>
+              <input
+                type="checkbox"
+                checked={!!value[p.key]}
+                onChange={(e) => onChange({ ...value, [p.key]: e.target.checked })}
+                className="mt-1"
+              />
+            </div>
+            {p.desc && <div className="text-[11px] text-slate-500 leading-relaxed">{p.desc}</div>}
+          </label>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ============== Add Role Modal ============== */
+function AddRoleModal({ perms, onClose, onCreate }: {
+  perms: { key: string; label: string; group: string; desc?: string }[];
+  onClose: () => void;
+  onCreate: (r: RoleRow) => void;
+}) {
+  const [name, setName] = useState("");
+  const [step, setStep] = useState<1 | 2>(1);
+  const empty = perms.reduce((a, p) => ({ ...a, [p.key]: false }), {} as Record<string, boolean>);
+  const [rp, setRp] = useState<Record<string, boolean>>(empty);
+  return (
+    <div dir="rtl" className="fixed inset-0 z-[70] bg-slate-900/60 flex items-center justify-center p-4" onClick={onClose}>
+      <div onClick={(e) => e.stopPropagation()} className="bg-white rounded-xl shadow-2xl w-full max-w-5xl p-6 max-h-[90vh] overflow-y-auto">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-bold text-slate-800">إضافة دور</h3>
+          <button onClick={onClose} className="p-1 rounded hover:bg-slate-100"><X className="w-5 h-5" /></button>
+        </div>
+        {step === 1 ? (
+          <>
+            <label className="text-xs text-slate-600 block mb-1 text-right">الاسم</label>
+            <input
+              autoFocus
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className="w-full h-10 px-3 border border-slate-300 rounded-lg text-sm text-right mb-4"
+            />
+            <button
+              disabled={!name.trim()}
+              onClick={() => setStep(2)}
+              className="w-full h-11 rounded-lg bg-[color:var(--eyenak-teal)] disabled:bg-slate-200 disabled:text-slate-500 text-white font-semibold"
+            >
+              التالي — تحديد الصلاحيات
+            </button>
+          </>
+        ) : (
+          <>
+            <div className="text-sm text-slate-600 mb-3 text-right">الدور: <span className="font-bold text-slate-800">{name}</span></div>
+            <PermsTabs perms={perms} value={rp} onChange={setRp} />
+            <div className="mt-5 flex items-center justify-between">
+              <button onClick={() => setStep(1)} className="h-10 px-4 rounded-lg border border-slate-200 text-slate-700 text-sm">رجوع</button>
+              <button
+                onClick={() => onCreate({ id: `r${Date.now()}`, name: name.trim(), isDefault: false, perms: rp })}
+                className="h-10 px-6 rounded-lg bg-[color:var(--eyenak-teal)] text-white text-sm font-semibold"
+              >
+                إضافة
+              </button>
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/* ============== Role Permissions Modal (edit/preview) ============== */
+function RolePermsModal({ role, perms, onClose, onSave }: {
+  role: RoleRow;
+  perms: { key: string; label: string; group: string; desc?: string }[];
+  onClose: () => void;
+  onSave: (r: RoleRow) => void;
+}) {
+  const empty = perms.reduce((a, p) => ({ ...a, [p.key]: false }), {} as Record<string, boolean>);
+  const [rp, setRp] = useState<Record<string, boolean>>({ ...empty, ...(role.perms || {}) });
+  const readOnly = !!role.system;
+  return (
+    <div dir="rtl" className="fixed inset-0 z-[70] bg-slate-900/60 flex items-center justify-center p-4" onClick={onClose}>
+      <div onClick={(e) => e.stopPropagation()} className="bg-white rounded-xl shadow-2xl w-full max-w-5xl p-6 max-h-[90vh] overflow-y-auto">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-bold text-slate-800">
+            {readOnly ? "معاينة صلاحيات: " : "صلاحيات الدور: "}{role.name}
+          </h3>
+          <button onClick={onClose} className="p-1 rounded hover:bg-slate-100"><X className="w-5 h-5" /></button>
+        </div>
+        <PermsTabs perms={perms} value={rp} onChange={(v) => !readOnly && setRp(v)} />
+        {!readOnly && (
+          <div className="mt-5 flex justify-end">
+            <button
+              onClick={() => onSave({ ...role, perms: rp })}
+              className="h-10 px-6 rounded-lg bg-[color:var(--eyenak-teal)] text-white text-sm font-semibold"
+            >
+              حفظ
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
