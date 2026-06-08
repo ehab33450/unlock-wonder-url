@@ -5834,6 +5834,26 @@ function ProjectDetailOverlay({
       ],
     }));
   };
+  const insertTaskAt = (index: number) => {
+    onUpdate((cur) => {
+      const fresh: DTask = {
+        id: `${Date.now()}`,
+        name: "مهمة جديدة",
+        platform: "",
+        beneficiary: "",
+        documentNo: "",
+        startDate: new Date().toISOString().slice(0, 10),
+        endDate: "",
+        doneDate: "",
+        status: "جديد",
+        priority: "لاشيء",
+        progress: 0,
+      };
+      const arr = [...cur.tasks];
+      arr.splice(Math.max(0, Math.min(index, arr.length)), 0, fresh);
+      return { ...cur, tasks: arr };
+    });
+  };
   const updateTask = (id: string, patch: Partial<DTask>) => {
     onUpdate((cur) => ({
       ...cur,
