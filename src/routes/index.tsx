@@ -5949,6 +5949,102 @@ function ProjectDetailOverlay({
     onUpdate((cur) => ({ ...cur, tasks: cur.tasks.filter((t) => t.id !== id) }));
   };
 
+  // ===== Task groups =====
+  const groups: DTaskGroup[] = data.groups ?? [];
+  const GROUP_COLORS = ["#ef4444","#f97316","#f59e0b","#10b981","#14b8a6","#06b6d4","#3b82f6","#6366f1","#8b5cf6","#ec4899","#64748b"];
+  const addGroup = () => {
+    const title = window.prompt("اسم المجموعة الجديدة:", "مجموعة جديدة");
+    if (!title || !title.trim()) return;
+    const g: DTaskGroup = {
+      id: `g${Date.now()}`,
+      title: title.trim(),
+      color: GROUP_COLORS[(groups.length) % GROUP_COLORS.length],
+      collapsed: false,
+    };
+    onUpdate((cur) => ({ ...cur, groups: [...(cur.groups ?? []), g] }));
+  };
+  const updateGroup = (id: string, patch: Partial<DTaskGroup>) => {
+    onUpdate((cur) => ({ ...cur, groups: (cur.groups ?? []).map((g) => g.id === id ? { ...g, ...patch } : g) }));
+  };
+  const removeGroup = (id: string) => {
+    onUpdate((cur) => ({
+      ...cur,
+      groups: (cur.groups ?? []).filter((g) => g.id !== id),
+      tasks: cur.tasks.map((t) => t.groupId === id ? { ...t, groupId: undefined } : t),
+    }));
+  };
+  const addTaskToGroup = (groupId: string) => {
+    onUpdate((cur) => ({
+      ...cur,
+      tasks: [
+        { id: `${Date.now()}`, name: "مهمة جديدة", platform: "", beneficiary: "", documentNo: "",
+          startDate: new Date().toISOString().slice(0,10), endDate: "", doneDate: "",
+          status: "جديد" as DStatus, priority: "لاشيء" as DPriority, progress: 0, groupId },
+        ...cur.tasks,
+      ],
+    }));
+  };
+  const exportGroupCSV = (groupId: string) => {
+    const g = groups.find((x) => x.id === groupId);
+    if (!g) return;
+    const rows = data.tasks.filter((t) => t.groupId === groupId);
+    const headers = ["اسم المهمة","المنصة","المستفيد","رقم المستند","من","إلى","الحالة","الأهمية","تاريخ الإنجاز"];
+    const lines = [headers.join(",")];
+    for (const t of rows) {
+      const cells = [t.name,t.platform,t.beneficiary,t.documentNo,t.startDate,t.endDate,t.status,t.priority,t.doneDate]
+        .map((v) => `"${(v ?? "").toString().replace(/"/g,'""')}"`);
+      lines.push(cells.join(","));
+    }
+    const blob = new Blob(["\uFEFF" + lines.join("\n")], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = `${g.title}.csv`; a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  };
+  const importGroupCSV = (groupId: string, file: File) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const text = String(reader.result || "");
+      const lines = text.split(/\r?\n/).filter((l) => l.trim().length > 0);
+      if (lines.length <= 1) return;
+      const parseRow = (s: string) => {
+        const out: string[] = []; let cur = ""; let q = false;
+        for (let i = 0; i < s.length; i++) {
+          const ch = s[i];
+          if (q) { if (ch === '"' && s[i+1] === '"') { cur += '"'; i++; } else if (ch === '"') { q = false; } else { cur += ch; } }
+          else { if (ch === '"') q = true; else if (ch === ',') { out.push(cur); cur = ""; } else cur += ch; }
+        }
+        out.push(cur); return out;
+      };
+      const newTasks: DTask[] = [];
+      for (let i = 1; i < lines.length; i++) {
+        const c = parseRow(lines[i]);
+        newTasks.push({
+          id: `${Date.now()}${i}`,
+          name: c[0] || "مهمة", platform: c[1] || "", beneficiary: c[2] || "", documentNo: c[3] || "",
+          startDate: c[4] || "", endDate: c[5] || "", doneDate: c[8] || "",
+          status: (c[6] as DStatus) || "جديد", priority: (c[7] as DPriority) || "لاشيء",
+          progress: 0, groupId,
+        });
+      }
+      onUpdate((cur) => ({ ...cur, tasks: [...newTasks, ...cur.tasks] }));
+    };
+    reader.readAsText(file, "utf-8");
+  };
+
+  // Order tasks: grouped (in group order) first, then ungrouped.
+  const sortedTasks: DTask[] = (() => {
+    const grouped = groups.flatMap((g) => data.tasks.filter((t) => t.groupId === g.id));
+    const ungrouped = data.tasks.filter((t) => !t.groupId || !groups.some((g) => g.id === t.groupId));
+    return [...grouped, ...ungrouped];
+  })();
+  const groupFirstTaskId: Record<string, string> = {};
+  for (const g of groups) {
+    const first = data.tasks.find((t) => t.groupId === g.id);
+    if (first) groupFirstTaskId[g.id] = first.id;
+  }
+  const collapsedGroupIds = new Set(groups.filter((g) => g.collapsed).map((g) => g.id));
+
   const onAttach = (id: string, file: File) => {
     const reader = new FileReader();
     reader.onload = () =>
