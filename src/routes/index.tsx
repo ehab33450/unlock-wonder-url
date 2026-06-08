@@ -1388,30 +1388,6 @@ function Index() {
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   };
 
-  const updateFileAllowed = (fileId: string, names: string[]) => {
-    if (!folderViewProject) return;
-    setProjectData((d) => {
-      const cur = d[folderViewProject];
-      if (!cur) return d;
-      const mapArr = (arr: FileItem[]) =>
-        arr.map((x) => (x.id === fileId ? { ...x, allowedDownload: names } : x));
-      if (currentSubfolder) {
-        return {
-          ...d,
-          [folderViewProject]: {
-            ...cur,
-            folders: cur.folders.map((sf) =>
-              sf.name === currentSubfolder ? { ...sf, files: mapArr(sf.files) } : sf,
-            ),
-          },
-        };
-      }
-      return { ...d, [folderViewProject]: { ...cur, files: mapArr(cur.files) } };
-    });
-  };
-
-  const [downloadPermsFor, setDownloadPermsFor] = useState<FileItem | null>(null);
-
   const closeNewProject = () => {
     setNewProjectOpen(false);
     setNpStep(1);
