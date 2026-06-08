@@ -328,24 +328,18 @@ function UsersSection({
 }
 
 /* ============== Roles Section ============== */
-function RolesSection({ roles, setRoles }: { roles: RoleRow[]; setRoles: React.Dispatch<React.SetStateAction<RoleRow[]>> }) {
-  const [name, setName] = useState("");
+function RolesSection({ roles, setRoles, onAdd, onEditPerms }: {
+  roles: RoleRow[];
+  setRoles: React.Dispatch<React.SetStateAction<RoleRow[]>>;
+  onAdd: () => void;
+  onEditPerms: (r: RoleRow) => void;
+}) {
   return (
     <div className="p-6">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
-          <input
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="اسم الدور الجديد"
-            className="h-10 px-3 border border-slate-300 rounded-lg text-sm text-right"
-          />
           <button
-            onClick={() => {
-              const v = name.trim(); if (!v) return;
-              setRoles((r) => [...r, { id: `r${Date.now()}`, name: v, isDefault: false }]);
-              setName("");
-            }}
+            onClick={onAdd}
             className="h-10 px-4 rounded-lg bg-[color:var(--eyenak-teal)] text-white text-sm flex items-center gap-2"
           >
             <Plus className="w-4 h-4" /> إضافة أدوار
@@ -369,7 +363,10 @@ function RolesSection({ roles, setRoles }: { roles: RoleRow[]; setRoles: React.D
                 <td className="px-4 py-3 text-slate-600">{r.isDefault ? "نعم" : "لا"}</td>
                 <td className="px-4 py-3">
                   <div className="flex items-center gap-2">
-                    <button className="text-xs px-3 py-1.5 rounded-full border border-slate-200 text-slate-600 hover:bg-slate-50 flex items-center gap-1">
+                    <button
+                      onClick={() => onEditPerms(r)}
+                      className="text-xs px-3 py-1.5 rounded-full border border-slate-200 text-slate-600 hover:bg-slate-50 flex items-center gap-1"
+                    >
                       <ShieldCheck className="w-3.5 h-3.5" />
                       {r.system ? "معاينة الصلاحيات" : "تحديث الصلاحيات"}
                     </button>
