@@ -8,7 +8,7 @@ import guideFinanceImg from "@/assets/guide-finance.png";
 import guideMeetingsImg from "@/assets/guide-meetings.png";
 import guideUsersImg from "@/assets/guide-users.png";
 import guideAssistantImg from "@/assets/guide-assistant.png";
-import { ExtraColHeaders, ExtraCells, RowChatButton, EditableHeaderLabel } from "@/components/table-extras";
+import { ExtraColHeaders, ExtraCells, RowChatButton, EditableHeaderLabel, RowActions, HiddenColsRestore } from "@/components/table-extras";
 import { AdminPanel } from "@/components/admin-panel";
 import {
   Calendar,
