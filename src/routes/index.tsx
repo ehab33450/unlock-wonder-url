@@ -252,6 +252,7 @@ function Index() {
     { key: "files_add",       label: "إضافة ملفات/مجلدات",  group: "الملفات" },
     { key: "files_edit",      label: "تعديل الملفات",        group: "الملفات" },
     { key: "files_delete",    label: "حذف الملفات",          group: "الملفات" },
+    { key: "files_download",  label: "تنزيل الملفات",        group: "الملفات", desc: "السماح للمستخدم بتنزيل الملفات من المشاريع." },
     { key: "projects_view",   label: "عرض المشاريع",         group: "المشاريع" },
     { key: "projects_create", label: "إنشاء مشروع",          group: "المشاريع" },
     { key: "projects_edit",   label: "تعديل المشاريع",       group: "المشاريع" },
