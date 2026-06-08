@@ -252,6 +252,7 @@ function Index() {
     { key: "files_add",       label: "إضافة ملفات/مجلدات",  group: "الملفات" },
     { key: "files_edit",      label: "تعديل الملفات",        group: "الملفات" },
     { key: "files_delete",    label: "حذف الملفات",          group: "الملفات" },
+    { key: "files_download",  label: "تنزيل الملفات",        group: "الملفات", desc: "السماح للمستخدم بتنزيل الملفات من المشاريع." },
     { key: "projects_view",   label: "عرض المشاريع",         group: "المشاريع" },
     { key: "projects_create", label: "إنشاء مشروع",          group: "المشاريع" },
     { key: "projects_edit",   label: "تعديل المشاريع",       group: "المشاريع" },
@@ -1365,8 +1366,7 @@ function Index() {
     : [];
 
   // ============ صلاحيات تنزيل الملفات ============
-  const canDownloadFile = (f: FileItem) =>
-    isAdmin || (f.allowedDownload ?? []).includes(currentUser);
+  const canDownloadFile = (_f: FileItem) => hasPerm("files_download");
 
   const downloadFile = (f: FileItem) => {
     if (!canDownloadFile(f)) {
@@ -1387,30 +1387,6 @@ function Index() {
     a.click();
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   };
-
-  const updateFileAllowed = (fileId: string, names: string[]) => {
-    if (!folderViewProject) return;
-    setProjectData((d) => {
-      const cur = d[folderViewProject];
-      if (!cur) return d;
-      const mapArr = (arr: FileItem[]) =>
-        arr.map((x) => (x.id === fileId ? { ...x, allowedDownload: names } : x));
-      if (currentSubfolder) {
-        return {
-          ...d,
-          [folderViewProject]: {
-            ...cur,
-            folders: cur.folders.map((sf) =>
-              sf.name === currentSubfolder ? { ...sf, files: mapArr(sf.files) } : sf,
-            ),
-          },
-        };
-      }
-      return { ...d, [folderViewProject]: { ...cur, files: mapArr(cur.files) } };
-    });
-  };
-
-  const [downloadPermsFor, setDownloadPermsFor] = useState<FileItem | null>(null);
 
   const closeNewProject = () => {
     setNewProjectOpen(false);
@@ -3526,16 +3502,6 @@ function Index() {
                               <Trash2 className="w-4 h-4" />
                             </button>
                           )}
-                          {isAdmin && (
-                            <button
-                              onClick={() => setDownloadPermsFor(f)}
-                              className="text-slate-300 hover:text-[color:var(--eyenak-teal)]"
-                              title="صلاحيات التنزيل"
-                              aria-label="صلاحيات التنزيل"
-                            >
-                              <Users className="w-4 h-4" />
-                            </button>
-                          )}
                           <button
                             onClick={() => downloadFile(f)}
                             disabled={!canDownloadFile(f)}
@@ -3605,71 +3571,6 @@ function Index() {
               className="w-full h-11 bg-[color:var(--eyenak-teal)] disabled:bg-slate-200 disabled:text-slate-500 hover:opacity-90 text-white rounded text-sm font-semibold"
             >
               إنشاء
-            </button>
-          </div>
-        </div>
-      )}
-
-      {downloadPermsFor && (
-        <div
-          className="fixed inset-0 z-[70] bg-black/40 flex items-center justify-center p-4"
-          onClick={() => setDownloadPermsFor(null)}
-        >
-          <div
-            className="bg-white rounded-md shadow-xl w-full max-w-md p-6"
-            onClick={(e) => e.stopPropagation()}
-            dir="rtl"
-          >
-            <div className="flex items-center justify-between mb-4">
-              <button
-                onClick={() => setDownloadPermsFor(null)}
-                className="text-slate-400 hover:text-slate-700"
-              >
-                <X className="w-5 h-5" />
-              </button>
-              <h3 className="text-base font-bold text-slate-800">صلاحيات تنزيل الملف</h3>
-            </div>
-            <p className="text-xs text-slate-500 mb-3 text-right">
-              اختر الموظفين الذين يحق لهم تنزيل: <span className="font-semibold text-slate-700">{downloadPermsFor.name}</span>
-            </p>
-            <div className="max-h-72 overflow-y-auto border border-slate-200 rounded mb-4">
-              {employees.length === 0 ? (
-                <div className="p-4 text-sm text-slate-400 text-center">لا يوجد موظفون</div>
-              ) : (
-                employees.map((emp) => {
-                  const allowed = downloadPermsFor.allowedDownload ?? [];
-                  const checked = allowed.includes(emp.name);
-                  return (
-                    <label
-                      key={emp.username || emp.name}
-                      className="flex items-center justify-between gap-2 px-3 py-2 border-b border-slate-100 last:border-0 cursor-pointer hover:bg-slate-50"
-                    >
-                      <span className="text-sm text-slate-700">{emp.name}</span>
-                      <input
-                        type="checkbox"
-                        checked={checked}
-                        onChange={(e) => {
-                          const next = e.target.checked
-                            ? [...allowed.filter((n) => n !== emp.name), emp.name]
-                            : allowed.filter((n) => n !== emp.name);
-                          updateFileAllowed(downloadPermsFor.id, next);
-                          setDownloadPermsFor({ ...downloadPermsFor, allowedDownload: next });
-                        }}
-                        className="w-4 h-4 accent-[color:var(--eyenak-teal)]"
-                      />
-                    </label>
-                  );
-                })
-              )}
-            </div>
-            <div className="text-[11px] text-slate-500 text-right mb-3">
-              المدير يستطيع التنزيل دائمًا. باقي المستخدمين لا يستطيعون التنزيل إلا إذا تم تفعيلهم هنا.
-            </div>
-            <button
-              onClick={() => setDownloadPermsFor(null)}
-              className="w-full h-10 bg-[color:var(--eyenak-teal)] hover:opacity-90 text-white rounded text-sm font-semibold"
-            >
-              تم
             </button>
           </div>
         </div>
@@ -6498,7 +6399,7 @@ function ProjectDetailOverlay({
               <HiddenColsRestore tableId={projectTableId} isAdmin={canEditAll} />
 
               <div className="overflow-auto bg-white rounded-lg border border-slate-200">
-                <table className="w-full text-sm">
+                <table className="w-full text-sm border-collapse [&_th]:border [&_th]:border-slate-200 [&_td]:border [&_td]:border-slate-200">
                   <thead className="bg-slate-100 text-slate-600 text-xs sticky top-0 z-20 shadow-sm">
                     <tr>
                       <th
