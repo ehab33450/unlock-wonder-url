@@ -2051,7 +2051,7 @@ function Index() {
                 <div className="flex items-center justify-end gap-1 mb-3">
                   {([
                     { k: "mine" as TaskScope, label: "أنا فقط", icon: User },
-                    { k: "shared" as TaskScope, label: "المشترك بها", icon: Users },
+                    { k: "shared" as TaskScope, label: "بها", icon: Users },
                     { k: "all" as TaskScope, label: "الجميع", icon: List },
                   ]).map((o) => {
                     const Icon = o.icon;
