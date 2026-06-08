@@ -6929,7 +6929,10 @@ function SplitContractButton({
     const payments: DPayment[] = Array.from({ length: n }, (_, i) => ({
       id: `pay-${Date.now()}-${i}`,
       amount: String(per),
-      date: new Date(start + step * (i + 1)).toISOString().slice(0, 10),
+      // أول قسط من اليوم الأول للعقد، ثم كل قسط في بداية فترته
+      date: new Date(start + step * i).toISOString().slice(0, 10),
+      periodStart: new Date(start + step * i).toISOString().slice(0, 10),
+      periodEnd: new Date(start + step * (i + 1)).toISOString().slice(0, 10),
       paid: false,
     }));
     onSplit(payments);
