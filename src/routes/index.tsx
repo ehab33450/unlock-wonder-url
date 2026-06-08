@@ -412,6 +412,8 @@ function Index() {
   const [npRespPhone, setNpRespPhone] = useState("");
   const [npAssignee, setNpAssignee] = useState("");
   const [npPayments, setNpPayments] = useState<Payment[]>([]);
+  const [npServices, setNpServices] = useState<string[]>([]);
+  const [npServiceInput, setNpServiceInput] = useState("");
 
   // Project detail overlay
   const [detailProject, setDetailProject] = useState<string | null>(null);
