@@ -66,6 +66,7 @@ import {
   Receipt,
   PlayCircle,
   BookOpen,
+  Download,
 } from "lucide-react";
 
 export const Route = createFileRoute("/")({
@@ -164,7 +165,7 @@ function Index() {
   const [memberSearch, setMemberSearch] = useState("");
 
   // Project folders/files store
-  type FileItem = { id: string; name: string; content: string; kind: "text" | "word" | "excel" };
+  type FileItem = { id: string; name: string; content: string; kind: "text" | "word" | "excel"; allowedDownload?: string[] };
   type SubFolder = { name: string; createdAt: string; files: FileItem[]; locked?: boolean };
   type ProjectData = { folders: SubFolder[]; files: FileItem[] };
   const [projectData, setProjectData] = useState<Record<string, ProjectData>>({});
@@ -245,23 +246,6 @@ function Index() {
     { key: "pm_mindmap",         label: "الخريطة الذهنية",        group: "إدارة المشاريع" },
     { key: "pm_public_calendar", label: "التقويم العام",          group: "إدارة المشاريع" },
     { key: "pm_finished_tasks",  label: "المهام المنتهية",        group: "إدارة المشاريع" },
-
-    // ===== موظف الموارد البشرية =====
-    { key: "hr_emp_attendance", label: "حضور وانصراف الموظفين", group: "موظف الموارد البشرية" },
-    { key: "hr_emp_payroll",    label: "إعداد الرواتب",          group: "موظف الموارد البشرية" },
-    { key: "hr_emp_leaves",     label: "إدارة الإجازات",         group: "موظف الموارد البشرية" },
-    { key: "hr_emp_contracts",  label: "عقود الموظفين",          group: "موظف الموارد البشرية" },
-
-    // ===== النظام المحاسبي =====
-    { key: "acc_invoices",      label: "الفواتير",                group: "النظام المحاسبي" },
-    { key: "acc_payments",      label: "المدفوعات",               group: "النظام المحاسبي" },
-    { key: "acc_reports",       label: "التقارير المالية",        group: "النظام المحاسبي" },
-    { key: "acc_tax",           label: "الفاتورة الضريبية",       group: "النظام المحاسبي" },
-
-    // ===== الموارد البشرية =====
-    { key: "hr_dept",           label: "إدارة الأقسام",           group: "الموارد البشرية" },
-    { key: "hr_jobs",           label: "المسميات الوظيفية",       group: "الموارد البشرية" },
-    { key: "hr_evaluations",    label: "تقييمات الأداء",          group: "الموارد البشرية" },
 
     // ===== الملفات (legacy keys مستخدمة في المنصة) =====
     { key: "files_view",      label: "عرض الملفات",         group: "الملفات" },
@@ -1379,6 +1363,54 @@ function Index() {
       ? currentProject.folders.find((f) => f.name === currentSubfolder)?.files ?? []
       : currentProject.files
     : [];
+
+  // ============ صلاحيات تنزيل الملفات ============
+  const canDownloadFile = (f: FileItem) =>
+    isAdmin || (f.allowedDownload ?? []).includes(currentUser);
+
+  const downloadFile = (f: FileItem) => {
+    if (!canDownloadFile(f)) {
+      alert("لا تملك صلاحية تنزيل هذا الملف");
+      return;
+    }
+    const mime =
+      f.kind === "excel"
+        ? "text/csv;charset=utf-8;"
+        : f.kind === "word"
+        ? "application/msword"
+        : "text/plain;charset=utf-8;";
+    const blob = new Blob(["\uFEFF" + (f.content || "")], { type: mime });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = f.name;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  };
+
+  const updateFileAllowed = (fileId: string, names: string[]) => {
+    if (!folderViewProject) return;
+    setProjectData((d) => {
+      const cur = d[folderViewProject];
+      if (!cur) return d;
+      const mapArr = (arr: FileItem[]) =>
+        arr.map((x) => (x.id === fileId ? { ...x, allowedDownload: names } : x));
+      if (currentSubfolder) {
+        return {
+          ...d,
+          [folderViewProject]: {
+            ...cur,
+            folders: cur.folders.map((sf) =>
+              sf.name === currentSubfolder ? { ...sf, files: mapArr(sf.files) } : sf,
+            ),
+          },
+        };
+      }
+      return { ...d, [folderViewProject]: { ...cur, files: mapArr(cur.files) } };
+    });
+  };
+
+  const [downloadPermsFor, setDownloadPermsFor] = useState<FileItem | null>(null);
 
   const closeNewProject = () => {
     setNewProjectOpen(false);
@@ -3494,6 +3526,25 @@ function Index() {
                               <Trash2 className="w-4 h-4" />
                             </button>
                           )}
+                          {isAdmin && (
+                            <button
+                              onClick={() => setDownloadPermsFor(f)}
+                              className="text-slate-300 hover:text-[color:var(--eyenak-teal)]"
+                              title="صلاحيات التنزيل"
+                              aria-label="صلاحيات التنزيل"
+                            >
+                              <Users className="w-4 h-4" />
+                            </button>
+                          )}
+                          <button
+                            onClick={() => downloadFile(f)}
+                            disabled={!canDownloadFile(f)}
+                            className={`${canDownloadFile(f) ? "text-[color:var(--eyenak-teal)] hover:opacity-80" : "text-slate-300 cursor-not-allowed"}`}
+                            title={canDownloadFile(f) ? "تنزيل" : "لا تملك صلاحية التنزيل"}
+                            aria-label="تنزيل"
+                          >
+                            <Download className="w-4 h-4" />
+                          </button>
                           <span className="text-xs text-slate-400">{todayLabel}</span>
                         </div>
                         <button
@@ -3554,6 +3605,71 @@ function Index() {
               className="w-full h-11 bg-[color:var(--eyenak-teal)] disabled:bg-slate-200 disabled:text-slate-500 hover:opacity-90 text-white rounded text-sm font-semibold"
             >
               إنشاء
+            </button>
+          </div>
+        </div>
+      )}
+
+      {downloadPermsFor && (
+        <div
+          className="fixed inset-0 z-[70] bg-black/40 flex items-center justify-center p-4"
+          onClick={() => setDownloadPermsFor(null)}
+        >
+          <div
+            className="bg-white rounded-md shadow-xl w-full max-w-md p-6"
+            onClick={(e) => e.stopPropagation()}
+            dir="rtl"
+          >
+            <div className="flex items-center justify-between mb-4">
+              <button
+                onClick={() => setDownloadPermsFor(null)}
+                className="text-slate-400 hover:text-slate-700"
+              >
+                <X className="w-5 h-5" />
+              </button>
+              <h3 className="text-base font-bold text-slate-800">صلاحيات تنزيل الملف</h3>
+            </div>
+            <p className="text-xs text-slate-500 mb-3 text-right">
+              اختر الموظفين الذين يحق لهم تنزيل: <span className="font-semibold text-slate-700">{downloadPermsFor.name}</span>
+            </p>
+            <div className="max-h-72 overflow-y-auto border border-slate-200 rounded mb-4">
+              {employees.length === 0 ? (
+                <div className="p-4 text-sm text-slate-400 text-center">لا يوجد موظفون</div>
+              ) : (
+                employees.map((emp) => {
+                  const allowed = downloadPermsFor.allowedDownload ?? [];
+                  const checked = allowed.includes(emp.name);
+                  return (
+                    <label
+                      key={emp.username || emp.name}
+                      className="flex items-center justify-between gap-2 px-3 py-2 border-b border-slate-100 last:border-0 cursor-pointer hover:bg-slate-50"
+                    >
+                      <span className="text-sm text-slate-700">{emp.name}</span>
+                      <input
+                        type="checkbox"
+                        checked={checked}
+                        onChange={(e) => {
+                          const next = e.target.checked
+                            ? [...allowed.filter((n) => n !== emp.name), emp.name]
+                            : allowed.filter((n) => n !== emp.name);
+                          updateFileAllowed(downloadPermsFor.id, next);
+                          setDownloadPermsFor({ ...downloadPermsFor, allowedDownload: next });
+                        }}
+                        className="w-4 h-4 accent-[color:var(--eyenak-teal)]"
+                      />
+                    </label>
+                  );
+                })
+              )}
+            </div>
+            <div className="text-[11px] text-slate-500 text-right mb-3">
+              المدير يستطيع التنزيل دائمًا. باقي المستخدمين لا يستطيعون التنزيل إلا إذا تم تفعيلهم هنا.
+            </div>
+            <button
+              onClick={() => setDownloadPermsFor(null)}
+              className="w-full h-10 bg-[color:var(--eyenak-teal)] hover:opacity-90 text-white rounded text-sm font-semibold"
+            >
+              تم
             </button>
           </div>
         </div>
