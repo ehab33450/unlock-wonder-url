@@ -66,6 +66,7 @@ import {
   Receipt,
   PlayCircle,
   BookOpen,
+  Download,
 } from "lucide-react";
 
 export const Route = createFileRoute("/")({
