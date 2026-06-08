@@ -5559,13 +5559,41 @@ function Index() {
               setAiInput("");
               setAiLoading(true);
               try {
-                const ctx = isAdmin
-                  ? `الدور: مدير. عدد الموظفين: ${employees.length}.`
+                const projectsList = Object.entries(projectMeta).map(([name, m]) => {
+                  const tasks = m.tasks || [];
+                  const done = tasks.filter((t) => t.status === "تم").length;
+                  const overdue = tasks.filter((t) => {
+                    if (!t.endDate || t.status === "تم") return false;
+                    return new Date(t.endDate).getTime() < Date.now();
+                  }).length;
+                  return `• ${name}: مهام ${tasks.length} (منجزة ${done}، متأخرة ${overdue})، الموظف المُكلَّف: ${m.contract?.assignee || "—"}، قيمة العقد: ${m.contract?.value ?? "—"}`;
+                }).join("\n") || "لا توجد مشاريع بعد.";
+                const upcomingTasks = Object.entries(projectMeta)
+                  .flatMap(([pname, m]) => (m.tasks || []).map((t) => ({ ...t, pname })))
+                  .filter((t) => t.status !== "تم" && t.endDate)
+                  .sort((a, b) => new Date(a.endDate).getTime() - new Date(b.endDate).getTime())
+                  .slice(0, 8)
+                  .map((t) => `• [${t.pname}] ${t.name} — ينتهي ${t.endDate} — ${t.status} — أهمية ${t.priority}`)
+                  .join("\n") || "لا مهام قادمة.";
+                const roleLine = isAdmin
+                  ? `الدور: مدير عام. عدد الموظفين: ${employees.length}.`
                   : `الدور: موظف باسم ${currentUser}. الصلاحيات المفتوحة: ${
                       currentEmployee
                         ? PERMS.filter((p) => currentEmployee.perms[p.key]).map((p) => p.label).join("، ") || "لا توجد"
                         : "—"
                     }.`;
+                const today = new Date().toISOString().slice(0, 10);
+                const ctx = [
+                  `التاريخ اليوم: ${today}`,
+                  roleLine,
+                  `عدد المذكرات: ${notes.length} — الحجوزات: ${bookings.length}.`,
+                  "",
+                  "ملخص المشاريع:",
+                  projectsList,
+                  "",
+                  "أقرب المهام نهاية:",
+                  upcomingTasks,
+                ].join("\n");
                 const res = await callAssistant({
                   data: {
                     messages: nextMsgs.map((m) => ({ role: m.role, content: m.content })),
