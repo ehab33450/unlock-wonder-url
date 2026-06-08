@@ -6389,20 +6389,20 @@ function ProjectDetailOverlay({
                         className="px-2 py-2 text-center font-semibold w-10"
                         title="محادثة المهمة الخاصة"
                       >💬</th>
-                      <th className="px-2 py-2 text-right font-semibold"><EditableHeaderLabel tableId={projectTableId} headerKey="name" defaultLabel="اسم المهمة" isAdmin={canEditAll} colMenu={builtinColMenu} /></th>
-                      <th className="px-2 py-2 text-right font-semibold"><EditableHeaderLabel tableId={projectTableId} headerKey="platform" defaultLabel="المنصة" isAdmin={canEditAll} colMenu={builtinColMenu} /></th>
-                      <th className="px-2 py-2 text-right font-semibold"><EditableHeaderLabel tableId={projectTableId} headerKey="beneficiary" defaultLabel="المستفيد" isAdmin={canEditAll} colMenu={builtinColMenu} /></th>
-                      <th className="px-2 py-2 text-right font-semibold"><EditableHeaderLabel tableId={projectTableId} headerKey="doc" defaultLabel="رقم المستند" isAdmin={canEditAll} colMenu={builtinColMenu} /></th>
-                      <th className="px-2 py-2 text-right font-semibold"><EditableHeaderLabel tableId={projectTableId} headerKey="period" defaultLabel="فترة المهمة" isAdmin={canEditAll} colMenu={builtinColMenu} /></th>
-                      <th className="px-2 py-2 text-right font-semibold"><EditableHeaderLabel tableId={projectTableId} headerKey="count" defaultLabel="العد التنازلي" isAdmin={canEditAll} colMenu={builtinColMenu} /></th>
-                      <th className="px-2 py-2 text-right font-semibold"><EditableHeaderLabel tableId={projectTableId} headerKey="done" defaultLabel="تاريخ الإنجاز" isAdmin={canEditAll} colMenu={builtinColMenu} /></th>
-                      <th className="px-2 py-2 text-right font-semibold"><EditableHeaderLabel tableId={projectTableId} headerKey="status" defaultLabel="الحالة" isAdmin={canEditAll} colMenu={builtinColMenu} /></th>
-                      <th className="px-2 py-2 text-right font-semibold"><EditableHeaderLabel tableId={projectTableId} headerKey="priority" defaultLabel="الأهمية" isAdmin={canEditAll} colMenu={builtinColMenu} /></th>
-                      <th className="px-2 py-2 text-right font-semibold"><EditableHeaderLabel tableId={projectTableId} headerKey="attach" defaultLabel="المرفق" isAdmin={canEditAll} colMenu={builtinColMenu} /></th>
+                      <th className="px-2 py-2 text-center font-semibold"><EditableHeaderLabel tableId={projectTableId} headerKey="name" defaultLabel="اسم المهمة" isAdmin={canEditAll} colMenu={builtinColMenu} /></th>
+                      <th className="px-2 py-2 text-center font-semibold"><EditableHeaderLabel tableId={projectTableId} headerKey="platform" defaultLabel="المنصة" isAdmin={canEditAll} colMenu={builtinColMenu} /></th>
+                      <th className="px-2 py-2 text-center font-semibold"><EditableHeaderLabel tableId={projectTableId} headerKey="beneficiary" defaultLabel="المستفيد" isAdmin={canEditAll} colMenu={builtinColMenu} /></th>
+                      <th className="px-2 py-2 text-center font-semibold"><EditableHeaderLabel tableId={projectTableId} headerKey="doc" defaultLabel="رقم المستند" isAdmin={canEditAll} colMenu={builtinColMenu} /></th>
+                      <th className="px-2 py-2 text-center font-semibold"><EditableHeaderLabel tableId={projectTableId} headerKey="period" defaultLabel="فترة المهمة" isAdmin={canEditAll} colMenu={builtinColMenu} /></th>
+                      <th className="px-2 py-2 text-center font-semibold"><EditableHeaderLabel tableId={projectTableId} headerKey="count" defaultLabel="العد التنازلي" isAdmin={canEditAll} colMenu={builtinColMenu} /></th>
+                      <th className="px-2 py-2 text-center font-semibold"><EditableHeaderLabel tableId={projectTableId} headerKey="done" defaultLabel="تاريخ الإنجاز" isAdmin={canEditAll} colMenu={builtinColMenu} /></th>
+                      <th className="px-2 py-2 text-center font-semibold"><EditableHeaderLabel tableId={projectTableId} headerKey="status" defaultLabel="الحالة" isAdmin={canEditAll} colMenu={builtinColMenu} /></th>
+                      <th className="px-2 py-2 text-center font-semibold"><EditableHeaderLabel tableId={projectTableId} headerKey="priority" defaultLabel="الأهمية" isAdmin={canEditAll} colMenu={builtinColMenu} /></th>
+                      <th className="px-2 py-2 text-center font-semibold"><EditableHeaderLabel tableId={projectTableId} headerKey="attach" defaultLabel="المرفق" isAdmin={canEditAll} colMenu={builtinColMenu} /></th>
                       {customCols.map((c, idx) => (
                         <th
                           key={c.id}
-                          className="px-2 py-2 text-right font-semibold whitespace-nowrap group"
+                          className="px-2 py-2 text-center font-semibold whitespace-nowrap group"
                         >
                           <span className="inline-flex items-center gap-1">
                             <span>{COL_TYPE_OPTIONS.find((o) => o.type === c.type)?.icon}</span>
@@ -6534,10 +6534,10 @@ function ProjectDetailOverlay({
                             {!g.collapsed && (
                               <tr className="bg-slate-50/80 border-t border-slate-200 text-[11px] text-slate-500">
                                 {subHeaders.map((h, i) => (
-                                  <th key={i} className="px-2 py-1.5 text-right font-semibold whitespace-nowrap">{h}</th>
+                                  <th key={i} className="px-2 py-1.5 text-center font-semibold whitespace-nowrap">{h}</th>
                                 ))}
                                 {customCols.map((c) => (
-                                  <th key={c.id} className="px-2 py-1.5 text-right font-semibold whitespace-nowrap">{c.name}</th>
+                                  <th key={c.id} className="px-2 py-1.5 text-center font-semibold whitespace-nowrap">{c.name}</th>
                                 ))}
                                 {canEditAll && <th className="px-2 py-1.5"></th>}
                                 {canEditOwn && <th className="px-2 py-1.5"></th>}
@@ -6572,7 +6572,7 @@ function ProjectDetailOverlay({
                               value={t.name}
                               disabled={!canEditOwn}
                               onChange={(e) => updateTask(t.id, { name: e.target.value })}
-                              className="w-full px-2 py-1 text-right text-xs rounded focus:outline-none focus:bg-emerald-50"
+                              className="w-full px-2 py-1 text-center text-xs rounded focus:outline-none focus:bg-emerald-50"
                             />
                           </td>
                           <td className="px-1 py-1">
@@ -6580,7 +6580,7 @@ function ProjectDetailOverlay({
                               value={t.platform}
                               disabled={!canEditOwn}
                               onChange={(e) => updateTask(t.id, { platform: e.target.value })}
-                              className="w-full px-2 py-1 text-right text-xs rounded focus:outline-none focus:bg-emerald-50"
+                              className="w-full px-2 py-1 text-center text-xs rounded focus:outline-none focus:bg-emerald-50"
                             />
                           </td>
                           <td className="px-1 py-1">
@@ -6588,7 +6588,7 @@ function ProjectDetailOverlay({
                               value={t.beneficiary}
                               disabled={!canEditOwn}
                               onChange={(e) => updateTask(t.id, { beneficiary: e.target.value })}
-                              className="w-full px-2 py-1 text-right text-xs rounded focus:outline-none focus:bg-emerald-50"
+                              className="w-full px-2 py-1 text-center text-xs rounded focus:outline-none focus:bg-emerald-50"
                             />
                           </td>
                           <td className="px-1 py-1">
@@ -6596,7 +6596,7 @@ function ProjectDetailOverlay({
                               value={t.documentNo}
                               disabled={!canEditOwn}
                               onChange={(e) => updateTask(t.id, { documentNo: e.target.value })}
-                              className="w-full px-2 py-1 text-right text-xs rounded focus:outline-none focus:bg-emerald-50"
+                              className="w-full px-2 py-1 text-center text-xs rounded focus:outline-none focus:bg-emerald-50"
                             />
                           </td>
                           <td className="px-1 py-1">
@@ -6705,7 +6705,7 @@ function ProjectDetailOverlay({
                             const key = `${t.id}::${c.id}`;
                             const val = customCells[key] ?? "";
                             const setVal = (v: string) => onSetCustomCell(t.id, c.id, v);
-                            const baseCls = "w-full px-2 py-1 text-right text-xs rounded bg-transparent focus:outline-none focus:bg-emerald-50";
+                            const baseCls = "w-full px-2 py-1 text-center text-xs rounded bg-transparent focus:outline-none focus:bg-emerald-50";
                             return (
                               <td key={c.id} className="px-1 py-1 min-w-[110px]">
                                 {c.type === "text" && (
