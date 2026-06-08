@@ -7342,7 +7342,7 @@ function FinanceModal({
                     <td className="px-3 py-2">
                       {(() => {
                         const amt = Number(p.amount || 0);
-                        const paidN = Number(p.paidAmount ?? (p.paid ? p.amount : "0") || 0);
+                        const paidN = Number((p.paidAmount ?? (p.paid ? p.amount : "0")) || 0);
                         const remaining = Math.max(0, amt - paidN);
                         return (
                           <span className={`text-xs font-bold ${remaining === 0 ? "text-emerald-600" : "text-amber-700"}`}>
