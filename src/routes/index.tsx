@@ -6318,6 +6318,70 @@ function ProjectDetailOverlay({
                                     <span>{val === "1" ? "موافق" : "—"}</span>
                                   </label>
                                 )}
+                                {c.type === "file" && (() => {
+                                  const [fn, fd] = val ? val.split("|::|") : ["", ""];
+                                  const inputId = `pf-${t.id}-${c.id}`;
+                                  return (
+                                    <div className="flex items-center gap-1 justify-end">
+                                      {fn ? (
+                                        <a href={fd} download={fn} className="text-[11px] text-emerald-700 hover:underline truncate max-w-[120px]">📎 {fn}</a>
+                                      ) : (
+                                        <span className="text-[10px] text-slate-400">لا يوجد</span>
+                                      )}
+                                      {canEditOwn && (
+                                        <>
+                                          <input id={inputId} type="file" className="hidden" onChange={(e) => {
+                                            const f = e.target.files?.[0]; if (!f) return;
+                                            const r = new FileReader();
+                                            r.onload = () => setVal(`${f.name}|::|${r.result as string}`);
+                                            r.readAsDataURL(f);
+                                          }} />
+                                          <label htmlFor={inputId} className="cursor-pointer p-1 rounded hover:bg-slate-100 text-slate-500" title="رفع ملف">
+                                            <Upload className="w-3.5 h-3.5" />
+                                          </label>
+                                          {fn && <button onClick={() => setVal("")} className="p-1 text-red-400 hover:bg-red-50 rounded" title="حذف"><X className="w-3 h-3" /></button>}
+                                        </>
+                                      )}
+                                    </div>
+                                  );
+                                })()}
+                                {c.type === "daterange" && (() => {
+                                  const [from, to] = val ? val.split("|") : ["", ""];
+                                  const setRange = (f: string, tt: string) => setVal(f || tt ? `${f}|${tt}` : "");
+                                  const left = to ? Math.ceil((new Date(to + "T23:59:59").getTime() - Date.now()) / 86_400_000) : null;
+                                  const tone = left == null ? "border-slate-200" : left < 0 ? "border-red-300 bg-red-50" : left <= 3 ? "border-amber-300 bg-amber-50" : "border-slate-200";
+                                  return (
+                                    <div className={`flex flex-col gap-0.5 p-1 rounded border ${tone}`} title={left == null ? "" : left >= 0 ? `باقي ${left} يوم` : `متأخر ${Math.abs(left)} يوم`}>
+                                      <div className="flex items-center gap-1 text-[10px]"><span>من</span>
+                                        <input type="date" value={from} disabled={!canEditOwn} onChange={(e) => setRange(e.target.value, to)} className="text-[11px] flex-1 rounded border border-slate-200 px-1" />
+                                      </div>
+                                      <div className="flex items-center gap-1 text-[10px]"><span>إلى</span>
+                                        <input type="date" value={to} disabled={!canEditOwn} onChange={(e) => setRange(from, e.target.value)} className="text-[11px] flex-1 rounded border border-slate-200 px-1" />
+                                      </div>
+                                      {left !== null && (
+                                        <div className={`text-[9px] text-center font-bold ${left < 0 ? "text-red-600" : left <= 3 ? "text-amber-600" : "text-emerald-700"}`}>
+                                          {left >= 0 ? `باقي ${left} يوم` : `متأخر ${Math.abs(left)} يوم`}
+                                        </div>
+                                      )}
+                                    </div>
+                                  );
+                                })()}
+                                {c.type === "select" && (() => {
+                                  const opts = c.options ?? [];
+                                  const cur = opts.find((o) => o.id === val);
+                                  return (
+                                    <select
+                                      value={val}
+                                      disabled={!canEditOwn}
+                                      onChange={(e) => setVal(e.target.value)}
+                                      className={`${baseCls} font-semibold`}
+                                      style={cur ? { background: cur.color + "22", color: cur.color } : undefined}
+                                    >
+                                      <option value="">—</option>
+                                      {opts.map((o) => <option key={o.id} value={o.id} style={{ color: o.color }}>{o.label}</option>)}
+                                    </select>
+                                  );
+                                })()}
                               </td>
                             );
                           })}
