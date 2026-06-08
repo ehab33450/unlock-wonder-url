@@ -6475,7 +6475,7 @@ function ProjectDetailOverlay({
                             "الحالة", "الأهمية", "المرفق",
                           ];
                           return (
-                            <React.Fragment key={`g-${g.id}`}>
+                            <Fragment key={`g-${g.id}`}>
                             <tr style={{ background: g.color + "18" }} className="border-t border-slate-200">
                               <td colSpan={totalCols} className="px-3 py-2">
                                 <div className="flex items-center gap-2">
@@ -6537,7 +6537,7 @@ function ProjectDetailOverlay({
                                 {canEditOwn && <th className="px-2 py-1.5"></th>}
                               </tr>
                             )}
-                            </React.Fragment>
+                            </Fragment>
                           );
                         }
                         const t = item.t;
