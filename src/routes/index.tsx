@@ -6101,6 +6101,8 @@ function ProjectDetailOverlay({
     "متوسط": "bg-amber-100 text-amber-700",
     "عالي": "bg-red-100 text-red-700",
   };
+  const normPriority = (p: unknown): DPriority =>
+    p === "عالي" ? "عالي" : p === "متوسط" ? "متوسط" : "عادي";
 
   // Right-click column menu state
   const [colMenu, setColMenu] = useState<{ x: number; y: number; insertAt: number } | null>(null);
