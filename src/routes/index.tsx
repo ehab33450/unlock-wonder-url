@@ -5701,32 +5701,53 @@ const COL_TYPE_OPTIONS: { type: DColType; label: string; icon: string }[] = [
   { type: "file",     label: "رفع مستند",     icon: "📎" },
 ];
 
-function Countdown({ end, status }: { end: string; status: DStatus }) {
+function Countdown({ start, end, status }: { start: string; end: string; status: DStatus }) {
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
     const id = setInterval(() => setNow(Date.now()), 60_000);
     return () => clearInterval(id);
   }, []);
   if (status === "تم الانجاز") {
-    return <span className="text-xs text-emerald-600 font-semibold">مكتملة</span>;
+    return (
+      <div className="w-28">
+        <div className="h-2 rounded-full bg-emerald-500" />
+        <div className="text-[10px] text-emerald-600 font-bold text-center mt-0.5">مكتملة</div>
+      </div>
+    );
   }
-  if (!end) {
-    return <span className="text-xs text-slate-400">—</span>;
+  if (status === "ملغي") {
+    return (
+      <div className="w-28">
+        <div className="h-2 rounded-full bg-zinc-300" />
+        <div className="text-[10px] text-zinc-500 font-bold text-center mt-0.5">ملغية</div>
+      </div>
+    );
   }
-  const target = new Date(end + "T23:59:59").getTime();
-  const diff = target - now;
-  if (diff <= 0) {
-    return <span className="text-xs text-red-600 font-semibold">متأخر</span>;
-  }
-  const days = Math.floor(diff / 86_400_000);
-  const hours = Math.floor((diff % 86_400_000) / 3_600_000);
-  const urgent = diff < 86_400_000;
+  if (!end) return <span className="text-xs text-slate-400">—</span>;
+  const endMs = new Date(end + "T23:59:59").getTime();
+  const startMs = start ? new Date(start).getTime() : endMs - 7 * 86_400_000;
+  const total = Math.max(1, endMs - startMs);
+  const elapsed = Math.max(0, now - startMs);
+  const pct = Math.min(100, Math.round((elapsed / total) * 100));
+  const diff = endMs - now;
+  const overdue = diff <= 0;
+  // green -> yellow -> red gradient by percent
+  let barColor = "bg-emerald-500";
+  if (pct >= 80) barColor = "bg-red-500";
+  else if (pct >= 60) barColor = "bg-amber-500";
+  else if (pct >= 40) barColor = "bg-yellow-400";
+  if (overdue) barColor = "bg-red-600";
+  const days = Math.floor(Math.abs(diff) / 86_400_000);
+  const label = overdue ? `متأخر ${days}ي` : `باقي ${days}ي`;
   return (
-    <span
-      className={`text-xs font-mono font-semibold ${urgent ? "text-red-600" : "text-slate-700"}`}
-    >
-      {days > 0 ? `${days}ي ${hours}س` : `${hours}س`}
-    </span>
+    <div className="w-28" title={label}>
+      <div className="h-2 rounded-full bg-slate-200 overflow-hidden">
+        <div className={`h-full ${barColor} transition-all`} style={{ width: `${overdue ? 100 : pct}%` }} />
+      </div>
+      <div className={`text-[10px] font-bold text-center mt-0.5 ${overdue ? "text-red-600" : pct >= 80 ? "text-red-600" : pct >= 60 ? "text-amber-600" : "text-emerald-700"}`}>
+        {label}
+      </div>
+    </div>
   );
 }
 
