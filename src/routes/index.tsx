@@ -1550,14 +1550,7 @@ function Index() {
       <header className="h-14 bg-gradient-to-l from-white via-white to-slate-50 border-b border-slate-200 flex items-center justify-between px-4 shadow-sm">
         {/* Right: logo */}
         <div className="flex items-center gap-2" dir="ltr">
-          <div className="flex items-baseline">
-            <span className="text-2xl font-extrabold tracking-tight text-[color:var(--eyenak-dark)]">
-              EYE
-            </span>
-            <span className="text-2xl font-extrabold tracking-tight text-[color:var(--eyenak-teal)]">
-              NAK
-            </span>
-          </div>
+          <img src={yaseerLogo.url} alt="يسير" className="h-9 w-auto" />
         </div>
 
         {/* Left: user controls */}
