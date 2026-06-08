@@ -6274,7 +6274,7 @@ function ProjectDetailOverlay({
 
               <div className="overflow-auto bg-white rounded-lg border border-slate-200">
                 <table className="w-full text-sm">
-                  <thead className="bg-slate-100 text-slate-600 text-xs">
+                  <thead className="bg-slate-100 text-slate-600 text-xs sticky top-0 z-20 shadow-sm">
                     <tr>
                       <th
                         className="px-2 py-2 text-center font-semibold w-10"
