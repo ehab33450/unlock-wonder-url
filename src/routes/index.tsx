@@ -6275,7 +6275,7 @@ function ProjectDetailOverlay({
                 <h3 className="text-base font-bold text-slate-800">المهام ({data.tasks.length})</h3>
               </div>
 
-              <HiddenColsRestore tableId="project.tasks" isAdmin={canEditAll} />
+              <HiddenColsRestore tableId={projectTableId} isAdmin={canEditAll} />
 
               <div className="overflow-auto bg-white rounded-lg border border-slate-200">
                 <table className="w-full text-sm">
@@ -6285,16 +6285,16 @@ function ProjectDetailOverlay({
                         className="px-2 py-2 text-center font-semibold w-10"
                         title="محادثة المهمة الخاصة"
                       >💬</th>
-                      <th className="px-2 py-2 text-right font-semibold"><EditableHeaderLabel tableId="project.tasks" headerKey="name" defaultLabel="اسم المهمة" isAdmin={canEditAll} colMenu={builtinColMenu} /></th>
-                      <th className="px-2 py-2 text-right font-semibold"><EditableHeaderLabel tableId="project.tasks" headerKey="platform" defaultLabel="المنصة" isAdmin={canEditAll} colMenu={builtinColMenu} /></th>
-                      <th className="px-2 py-2 text-right font-semibold"><EditableHeaderLabel tableId="project.tasks" headerKey="beneficiary" defaultLabel="المستفيد" isAdmin={canEditAll} colMenu={builtinColMenu} /></th>
-                      <th className="px-2 py-2 text-right font-semibold"><EditableHeaderLabel tableId="project.tasks" headerKey="doc" defaultLabel="رقم المستند" isAdmin={canEditAll} colMenu={builtinColMenu} /></th>
-                      <th className="px-2 py-2 text-right font-semibold"><EditableHeaderLabel tableId="project.tasks" headerKey="period" defaultLabel="فترة المهمة" isAdmin={canEditAll} colMenu={builtinColMenu} /></th>
-                      <th className="px-2 py-2 text-right font-semibold"><EditableHeaderLabel tableId="project.tasks" headerKey="count" defaultLabel="العد التنازلي" isAdmin={canEditAll} colMenu={builtinColMenu} /></th>
-                      <th className="px-2 py-2 text-right font-semibold"><EditableHeaderLabel tableId="project.tasks" headerKey="done" defaultLabel="تاريخ الإنجاز" isAdmin={canEditAll} colMenu={builtinColMenu} /></th>
-                      <th className="px-2 py-2 text-right font-semibold"><EditableHeaderLabel tableId="project.tasks" headerKey="status" defaultLabel="الحالة" isAdmin={canEditAll} colMenu={builtinColMenu} /></th>
-                      <th className="px-2 py-2 text-right font-semibold"><EditableHeaderLabel tableId="project.tasks" headerKey="priority" defaultLabel="الأهمية" isAdmin={canEditAll} colMenu={builtinColMenu} /></th>
-                      <th className="px-2 py-2 text-right font-semibold"><EditableHeaderLabel tableId="project.tasks" headerKey="attach" defaultLabel="المرفق" isAdmin={canEditAll} colMenu={builtinColMenu} /></th>
+                      <th className="px-2 py-2 text-right font-semibold"><EditableHeaderLabel tableId={projectTableId} headerKey="name" defaultLabel="اسم المهمة" isAdmin={canEditAll} colMenu={builtinColMenu} /></th>
+                      <th className="px-2 py-2 text-right font-semibold"><EditableHeaderLabel tableId={projectTableId} headerKey="platform" defaultLabel="المنصة" isAdmin={canEditAll} colMenu={builtinColMenu} /></th>
+                      <th className="px-2 py-2 text-right font-semibold"><EditableHeaderLabel tableId={projectTableId} headerKey="beneficiary" defaultLabel="المستفيد" isAdmin={canEditAll} colMenu={builtinColMenu} /></th>
+                      <th className="px-2 py-2 text-right font-semibold"><EditableHeaderLabel tableId={projectTableId} headerKey="doc" defaultLabel="رقم المستند" isAdmin={canEditAll} colMenu={builtinColMenu} /></th>
+                      <th className="px-2 py-2 text-right font-semibold"><EditableHeaderLabel tableId={projectTableId} headerKey="period" defaultLabel="فترة المهمة" isAdmin={canEditAll} colMenu={builtinColMenu} /></th>
+                      <th className="px-2 py-2 text-right font-semibold"><EditableHeaderLabel tableId={projectTableId} headerKey="count" defaultLabel="العد التنازلي" isAdmin={canEditAll} colMenu={builtinColMenu} /></th>
+                      <th className="px-2 py-2 text-right font-semibold"><EditableHeaderLabel tableId={projectTableId} headerKey="done" defaultLabel="تاريخ الإنجاز" isAdmin={canEditAll} colMenu={builtinColMenu} /></th>
+                      <th className="px-2 py-2 text-right font-semibold"><EditableHeaderLabel tableId={projectTableId} headerKey="status" defaultLabel="الحالة" isAdmin={canEditAll} colMenu={builtinColMenu} /></th>
+                      <th className="px-2 py-2 text-right font-semibold"><EditableHeaderLabel tableId={projectTableId} headerKey="priority" defaultLabel="الأهمية" isAdmin={canEditAll} colMenu={builtinColMenu} /></th>
+                      <th className="px-2 py-2 text-right font-semibold"><EditableHeaderLabel tableId={projectTableId} headerKey="attach" defaultLabel="المرفق" isAdmin={canEditAll} colMenu={builtinColMenu} /></th>
                       {customCols.map((c, idx) => (
                         <th
                           key={c.id}
