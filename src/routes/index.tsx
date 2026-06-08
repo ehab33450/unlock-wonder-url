@@ -5770,9 +5770,10 @@ type DContract = {
   responsibleName: string;
   responsiblePhone: string;
   assignee: string;
+  services?: string[];
 };
 type DStatus = "جديد" | "جاري العمل" | "تم الانجاز" | "معلق" | "ملغي";
-type DPriority = "لاشيء" | "منخفض" | "متوسط" | "عالي";
+type DPriority = "عادي" | "متوسط" | "عالي";
 type DTask = {
   id: string;
   name: string;
