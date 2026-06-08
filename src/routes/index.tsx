@@ -6448,6 +6448,54 @@ function ProjectDetailOverlay({
           </div>
         )}
 
+        {/* Select-column options editor */}
+        {editingSelectCol && (() => {
+          const col = customCols.find((c) => c.id === editingSelectCol);
+          if (!col) return null;
+          const opts = col.options ?? [];
+          const update = (next: { id: string; label: string; color: string }[]) => updateColOptions(col.id, next);
+          return (
+            <div className="fixed inset-0 z-[95] bg-black/40 flex items-center justify-center" onClick={() => setEditingSelectCol(null)}>
+              <div className="bg-white rounded-xl shadow-2xl w-[420px] max-w-[95vw] p-4" dir="rtl" onClick={(e) => e.stopPropagation()}>
+                <div className="flex items-center justify-between mb-3">
+                  <button onClick={() => setEditingSelectCol(null)} className="text-slate-400 hover:text-slate-700"><X className="w-4 h-4" /></button>
+                  <div className="text-sm font-bold text-slate-800">خيارات «{col.name}»</div>
+                </div>
+                <div className="space-y-2 max-h-[50vh] overflow-auto">
+                  {opts.length === 0 && <div className="text-xs text-slate-400 text-center py-4">القائمة فارغة. أضف خياراتك الخاصة (مثل: مهم جدًا، غير مهم...).</div>}
+                  {opts.map((o, i) => (
+                    <div key={o.id} className="flex items-center gap-2">
+                      <button onClick={() => update(opts.filter((_, k) => k !== i))} className="p-1.5 rounded hover:bg-red-50 text-red-500" title="حذف">
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                      <input
+                        value={o.label}
+                        onChange={(e) => { const n = [...opts]; n[i] = { ...o, label: e.target.value }; update(n); }}
+                        className="flex-1 h-8 px-2 border border-slate-200 rounded text-xs text-right"
+                        placeholder="اسم الخيار"
+                      />
+                      <div className="flex flex-wrap gap-0.5 justify-end max-w-[180px]">
+                        {SELECT_PALETTE.map((cl) => (
+                          <button
+                            key={cl}
+                            onClick={() => { const n = [...opts]; n[i] = { ...o, color: cl }; update(n); }}
+                            className={`w-4 h-4 rounded-full border ${o.color === cl ? "ring-2 ring-offset-1 ring-slate-700" : "border-white"}`}
+                            style={{ background: cl }}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <button
+                  onClick={() => update([...opts, { id: `o${Date.now()}${Math.floor(Math.random()*1000)}`, label: "خيار جديد", color: SELECT_PALETTE[opts.length % SELECT_PALETTE.length] }])}
+                  className="mt-3 w-full h-8 rounded border border-dashed border-slate-300 text-xs text-slate-600 hover:bg-slate-50"
+                >+ إضافة خيار</button>
+              </div>
+            </div>
+          );
+        })()}
+
         {/* Per-task internal chat panel */}
         {chatTaskId && (() => {
           const task = data.tasks.find((x) => x.id === chatTaskId);
