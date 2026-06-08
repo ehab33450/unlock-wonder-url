@@ -6057,12 +6057,10 @@ function ProjectDetailOverlay({
                       <th className="px-2 py-2 text-right font-semibold"><EditableHeaderLabel tableId="project.tasks" headerKey="platform" defaultLabel="المنصة" isAdmin={canEditAll} /></th>
                       <th className="px-2 py-2 text-right font-semibold"><EditableHeaderLabel tableId="project.tasks" headerKey="beneficiary" defaultLabel="المستفيد" isAdmin={canEditAll} /></th>
                       <th className="px-2 py-2 text-right font-semibold"><EditableHeaderLabel tableId="project.tasks" headerKey="doc" defaultLabel="رقم المستند" isAdmin={canEditAll} /></th>
-                      <th className="px-2 py-2 text-right font-semibold"><EditableHeaderLabel tableId="project.tasks" headerKey="start" defaultLabel="البداية" isAdmin={canEditAll} /></th>
-                      <th className="px-2 py-2 text-right font-semibold"><EditableHeaderLabel tableId="project.tasks" headerKey="end" defaultLabel="الانتهاء" isAdmin={canEditAll} /></th>
-                      <th className="px-2 py-2 text-right font-semibold"><EditableHeaderLabel tableId="project.tasks" headerKey="count" defaultLabel="عد تنازلي" isAdmin={canEditAll} /></th>
+                      <th className="px-2 py-2 text-right font-semibold"><EditableHeaderLabel tableId="project.tasks" headerKey="period" defaultLabel="فترة المهمة" isAdmin={canEditAll} /></th>
+                      <th className="px-2 py-2 text-right font-semibold"><EditableHeaderLabel tableId="project.tasks" headerKey="count" defaultLabel="العد التنازلي" isAdmin={canEditAll} /></th>
                       <th className="px-2 py-2 text-right font-semibold"><EditableHeaderLabel tableId="project.tasks" headerKey="done" defaultLabel="تاريخ الإنجاز" isAdmin={canEditAll} /></th>
                       <th className="px-2 py-2 text-right font-semibold"><EditableHeaderLabel tableId="project.tasks" headerKey="status" defaultLabel="الحالة" isAdmin={canEditAll} /></th>
-                      <th className="px-2 py-2 text-right font-semibold"><EditableHeaderLabel tableId="project.tasks" headerKey="progress" defaultLabel="نسبة الإنجاز" isAdmin={canEditAll} /></th>
                       <th className="px-2 py-2 text-right font-semibold"><EditableHeaderLabel tableId="project.tasks" headerKey="priority" defaultLabel="الأهمية" isAdmin={canEditAll} /></th>
                       <th
                         className="px-2 py-2 text-right font-semibold"
