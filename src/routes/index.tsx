@@ -6344,14 +6344,18 @@ function ProjectDetailOverlay({
                     {(() => {
                       type Item = { type: "group"; g: DTaskGroup } | { type: "task"; t: DTask };
                       const items: Item[] = [];
+                      // 1) Ungrouped tasks render first (newest at top — addTask prepends).
+                      for (const tk of data.tasks.filter((x) => !x.groupId || !groups.some((g) => g.id === x.groupId))) {
+                        items.push({ type: "task", t: tk });
+                      }
+                      // 2) Groups render AFTER ungrouped tasks, in creation order
+                      //    (newest group at the bottom). Each group is followed by
+                      //    its own tasks (unless collapsed).
                       for (const g of groups) {
                         items.push({ type: "group", g });
                         if (!g.collapsed) {
                           for (const tk of data.tasks.filter((x) => x.groupId === g.id)) items.push({ type: "task", t: tk });
                         }
-                      }
-                      for (const tk of data.tasks.filter((x) => !x.groupId || !groups.some((g) => g.id === x.groupId))) {
-                        items.push({ type: "task", t: tk });
                       }
                       const totalCols = 13 + customCols.length;
                       if (items.length === 0) {
