@@ -334,7 +334,7 @@ function Index() {
     responsiblePhone: string;
     assignee: string;
   };
-  type TaskStatus = "جديد" | "جاري العمل" | "تم" | "معلق";
+  type TaskStatus = "جديد" | "جاري العمل" | "تم الانجاز" | "معلق" | "ملغي";
   type Priority = "لاشيء" | "منخفض" | "متوسط" | "عالي";
   type TaskRow = {
     id: string;
@@ -382,8 +382,10 @@ function Index() {
   // ============ Flexible task columns (right-click to add) ============
   type CustomColType =
     | "text" | "number" | "date" | "link" | "phone" | "email"
-    | "rating" | "tags" | "location" | "timer" | "people" | "vote";
-  type CustomCol = { id: string; name: string; type: CustomColType };
+    | "rating" | "tags" | "location" | "timer" | "people" | "vote"
+    | "daterange" | "select" | "file";
+  type CustomColOption = { id: string; label: string; color: string };
+  type CustomCol = { id: string; name: string; type: CustomColType; options?: CustomColOption[] };
   // Keyed by project name
   const [customCols, setCustomCols] = useState<Record<string, CustomCol[]>>({});
   // Keyed by `${taskId}::${colId}`
@@ -444,7 +446,7 @@ function Index() {
 
     const assignees = ["ايهاب فاتح", "محمد علي", "سارة أحمد", "أ. أروى الجعدي"];
     const platforms = ["نظام أبشر", "منصة اعتماد", "بوابة العميل", "البريد المؤسسي"];
-    const statuses: TaskStatus[] = ["جديد", "جاري العمل", "تم", "معلق"];
+    const statuses: TaskStatus[] = ["جديد", "جاري العمل", "تم الانجاز", "معلق"];
     const priorities: Priority[] = ["متوسط", "عالي", "منخفض"];
 
     setProjectMeta((m) => {
@@ -634,7 +636,7 @@ function Index() {
     const out: Notif[] = [];
     for (const [project, meta] of Object.entries(projectMeta)) {
       for (const t of meta.tasks) {
-        if (!t.endDate || t.status === "تم") continue;
+        if (!t.endDate || t.status === "تم الانجاز") continue;
         const end = new Date(t.endDate).getTime();
         if (Number.isNaN(end)) continue;
         const diff = end - nowTs;
@@ -1352,7 +1354,7 @@ function Index() {
     }
     return list;
   }, [projectMeta, isAdmin, currentUser]);
-  const completed = visibleTasks.filter((t) => t.status === "تم").length;
+  const completed = visibleTasks.filter((t) => t.status === "تم الانجاز").length;
   const inProgress = visibleTasks.filter((t) => t.status === "جاري العمل").length;
   const pending = visibleTasks.filter((t) => t.status === "معلق").length;
   const newCount = visibleTasks.filter((t) => t.status === "جديد").length;
@@ -1395,7 +1397,7 @@ function Index() {
       case "المهام المعلقة":
         return visibleTasks.filter((t) => t.status === "معلق");
       case "المهام المنتهية":
-        return visibleTasks.filter((t) => t.status === "تم");
+        return visibleTasks.filter((t) => t.status === "تم الانجاز");
       case "المؤقتات النشطة":
         return visibleTasks.filter((t) => t.status === "جاري العمل");
       case "المفضلة":
@@ -1933,7 +1935,7 @@ function Index() {
                     {w.key === "projectStatus" && (
                       <ul className="space-y-1.5 text-xs">
                         {Object.entries(projectMeta).slice(0, 4).map(([p, meta]) => {
-                          const done = meta.tasks.filter((t) => t.status === "تم").length;
+                          const done = meta.tasks.filter((t) => t.status === "تم الانجاز").length;
                           const pct = meta.tasks.length ? Math.round((done / meta.tasks.length) * 100) : 0;
                           return (
                             <li key={p}>
@@ -2106,7 +2108,7 @@ function Index() {
                 <div className="space-y-2">
                   {Object.entries(projectMeta).map(([proj, meta]) => {
                     const ts = meta.tasks;
-                    const done = ts.filter((t) => t.status === "تم").length;
+                    const done = ts.filter((t) => t.status === "تم الانجاز").length;
                     const pct = ts.length ? Math.round((done / ts.length) * 100) : 0;
                     return (
                       <div key={proj} className="p-3 border border-slate-200 rounded-md">
@@ -5657,7 +5659,7 @@ type DContract = {
   responsiblePhone: string;
   assignee: string;
 };
-type DStatus = "جديد" | "جاري العمل" | "تم" | "معلق";
+type DStatus = "جديد" | "جاري العمل" | "تم الانجاز" | "معلق" | "ملغي";
 type DPriority = "لاشيء" | "منخفض" | "متوسط" | "عالي";
 type DTask = {
   id: string;
@@ -5678,13 +5680,16 @@ type DMeta = { contract: DContract; tasks: DTask[] };
 
 type DColType =
   | "text" | "number" | "date" | "link" | "phone" | "email"
-  | "rating" | "tags" | "location" | "timer" | "people" | "vote";
+  | "rating" | "tags" | "location" | "timer" | "people" | "vote"
+  | "daterange" | "select" | "file";
 
 const COL_TYPE_OPTIONS: { type: DColType; label: string; icon: string }[] = [
   { type: "people",   label: "الأشخاص",       icon: "👥" },
   { type: "text",     label: "نص",            icon: "T"  },
   { type: "date",     label: "التاريخ",       icon: "📅" },
+  { type: "daterange",label: "مؤقت زمني (من/إلى)", icon: "⏳" },
   { type: "number",   label: "رقم",           icon: "#"  },
+  { type: "select",   label: "قائمة منسدلة",  icon: "▾"  },
   { type: "tags",     label: "وسوم",          icon: "🏷️" },
   { type: "link",     label: "الرابط",        icon: "🔗" },
   { type: "phone",    label: "رقم التواصل",   icon: "📱" },
@@ -5693,34 +5698,56 @@ const COL_TYPE_OPTIONS: { type: DColType; label: string; icon: string }[] = [
   { type: "rating",   label: "التقييم",       icon: "⭐" },
   { type: "timer",    label: "متابعة الوقت",  icon: "⏱️" },
   { type: "vote",     label: "التصويت",       icon: "✅" },
+  { type: "file",     label: "رفع مستند",     icon: "📎" },
 ];
 
-function Countdown({ end, status }: { end: string; status: DStatus }) {
+function Countdown({ start, end, status }: { start: string; end: string; status: DStatus }) {
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
     const id = setInterval(() => setNow(Date.now()), 60_000);
     return () => clearInterval(id);
   }, []);
-  if (status === "تم") {
-    return <span className="text-xs text-emerald-600 font-semibold">مكتملة</span>;
+  if (status === "تم الانجاز") {
+    return (
+      <div className="w-28">
+        <div className="h-2 rounded-full bg-emerald-500" />
+        <div className="text-[10px] text-emerald-600 font-bold text-center mt-0.5">مكتملة</div>
+      </div>
+    );
   }
-  if (!end) {
-    return <span className="text-xs text-slate-400">—</span>;
+  if (status === "ملغي") {
+    return (
+      <div className="w-28">
+        <div className="h-2 rounded-full bg-zinc-300" />
+        <div className="text-[10px] text-zinc-500 font-bold text-center mt-0.5">ملغية</div>
+      </div>
+    );
   }
-  const target = new Date(end + "T23:59:59").getTime();
-  const diff = target - now;
-  if (diff <= 0) {
-    return <span className="text-xs text-red-600 font-semibold">متأخر</span>;
-  }
-  const days = Math.floor(diff / 86_400_000);
-  const hours = Math.floor((diff % 86_400_000) / 3_600_000);
-  const urgent = diff < 86_400_000;
+  if (!end) return <span className="text-xs text-slate-400">—</span>;
+  const endMs = new Date(end + "T23:59:59").getTime();
+  const startMs = start ? new Date(start).getTime() : endMs - 7 * 86_400_000;
+  const total = Math.max(1, endMs - startMs);
+  const elapsed = Math.max(0, now - startMs);
+  const pct = Math.min(100, Math.round((elapsed / total) * 100));
+  const diff = endMs - now;
+  const overdue = diff <= 0;
+  // green -> yellow -> red gradient by percent
+  let barColor = "bg-emerald-500";
+  if (pct >= 80) barColor = "bg-red-500";
+  else if (pct >= 60) barColor = "bg-amber-500";
+  else if (pct >= 40) barColor = "bg-yellow-400";
+  if (overdue) barColor = "bg-red-600";
+  const days = Math.floor(Math.abs(diff) / 86_400_000);
+  const label = overdue ? `متأخر ${days}ي` : `باقي ${days}ي`;
   return (
-    <span
-      className={`text-xs font-mono font-semibold ${urgent ? "text-red-600" : "text-slate-700"}`}
-    >
-      {days > 0 ? `${days}ي ${hours}س` : `${hours}س`}
-    </span>
+    <div className="w-28" title={label}>
+      <div className="h-2 rounded-full bg-slate-200 overflow-hidden">
+        <div className={`h-full ${barColor} transition-all`} style={{ width: `${overdue ? 100 : pct}%` }} />
+      </div>
+      <div className={`text-[10px] font-bold text-center mt-0.5 ${overdue ? "text-red-600" : pct >= 80 ? "text-red-600" : pct >= 60 ? "text-amber-600" : "text-emerald-700"}`}>
+        {label}
+      </div>
+    </div>
   );
 }
 
@@ -5759,9 +5786,11 @@ function ProjectDetailOverlay({
       cur: { allowed: string[]; msgs: { id: string; author: string; text: string; ts: number }[] }
     ) => { allowed: string[]; msgs: { id: string; author: string; text: string; ts: number }[] }
   ) => void;
-  customCols: { id: string; name: string; type: DColType }[];
+  customCols: { id: string; name: string; type: DColType; options?: { id: string; label: string; color: string }[] }[];
   onUpdateCustomCols: (
-    updater: (cur: { id: string; name: string; type: DColType }[]) => { id: string; name: string; type: DColType }[]
+    updater: (
+      cur: { id: string; name: string; type: DColType; options?: { id: string; label: string; color: string }[] }[]
+    ) => { id: string; name: string; type: DColType; options?: { id: string; label: string; color: string }[] }[]
   ) => void;
   customCells: Record<string, string>;
   onSetCustomCell: (taskId: string, colId: string, val: string) => void;
@@ -5788,7 +5817,6 @@ function ProjectDetailOverlay({
     onUpdate((cur) => ({
       ...cur,
       tasks: [
-        ...cur.tasks,
         {
           id: `${Date.now()}`,
           name: "مهمة جديدة",
@@ -5802,6 +5830,7 @@ function ProjectDetailOverlay({
           priority: "لاشيء",
           progress: 0,
         },
+        ...cur.tasks,
       ],
     }));
   };
@@ -5829,8 +5858,9 @@ function ProjectDetailOverlay({
   const statusColors: Record<DStatus, string> = {
     "جديد": "bg-slate-200 text-slate-700",
     "جاري العمل": "bg-amber-100 text-amber-700",
-    "تم": "bg-emerald-100 text-emerald-700",
+    "تم الانجاز": "bg-emerald-100 text-emerald-700",
     "معلق": "bg-rose-100 text-rose-700",
+    "ملغي": "bg-zinc-200 text-zinc-500 line-through",
   };
   const priorityColors: Record<DPriority, string> = {
     "لاشيء": "bg-slate-100 text-slate-500",
@@ -5863,6 +5893,12 @@ function ProjectDetailOverlay({
 
   // Per-task chat panel state
   const [chatTaskId, setChatTaskId] = useState<string | null>(null);
+  // Select-column options editor
+  const [editingSelectCol, setEditingSelectCol] = useState<string | null>(null);
+  const SELECT_PALETTE = ["#ef4444","#f97316","#f59e0b","#eab308","#84cc16","#10b981","#14b8a6","#06b6d4","#3b82f6","#6366f1","#8b5cf6","#d946ef","#ec4899","#64748b"];
+  const updateColOptions = (colId: string, opts: { id: string; label: string; color: string }[]) => {
+    onUpdateCustomCols((cur) => cur.map((c) => c.id === colId ? { ...c, options: opts } : c));
+  };
   const [chatDraft, setChatDraft] = useState("");
   const [memberPickOpen, setMemberPickOpen] = useState(false);
   const activeChat = chatTaskId ? (taskChats[chatTaskId] ?? { allowed: [], msgs: [] }) : null;
@@ -6029,12 +6065,10 @@ function ProjectDetailOverlay({
                       <th className="px-2 py-2 text-right font-semibold"><EditableHeaderLabel tableId="project.tasks" headerKey="platform" defaultLabel="المنصة" isAdmin={canEditAll} /></th>
                       <th className="px-2 py-2 text-right font-semibold"><EditableHeaderLabel tableId="project.tasks" headerKey="beneficiary" defaultLabel="المستفيد" isAdmin={canEditAll} /></th>
                       <th className="px-2 py-2 text-right font-semibold"><EditableHeaderLabel tableId="project.tasks" headerKey="doc" defaultLabel="رقم المستند" isAdmin={canEditAll} /></th>
-                      <th className="px-2 py-2 text-right font-semibold"><EditableHeaderLabel tableId="project.tasks" headerKey="start" defaultLabel="البداية" isAdmin={canEditAll} /></th>
-                      <th className="px-2 py-2 text-right font-semibold"><EditableHeaderLabel tableId="project.tasks" headerKey="end" defaultLabel="الانتهاء" isAdmin={canEditAll} /></th>
-                      <th className="px-2 py-2 text-right font-semibold"><EditableHeaderLabel tableId="project.tasks" headerKey="count" defaultLabel="عد تنازلي" isAdmin={canEditAll} /></th>
+                      <th className="px-2 py-2 text-right font-semibold"><EditableHeaderLabel tableId="project.tasks" headerKey="period" defaultLabel="فترة المهمة" isAdmin={canEditAll} /></th>
+                      <th className="px-2 py-2 text-right font-semibold"><EditableHeaderLabel tableId="project.tasks" headerKey="count" defaultLabel="العد التنازلي" isAdmin={canEditAll} /></th>
                       <th className="px-2 py-2 text-right font-semibold"><EditableHeaderLabel tableId="project.tasks" headerKey="done" defaultLabel="تاريخ الإنجاز" isAdmin={canEditAll} /></th>
                       <th className="px-2 py-2 text-right font-semibold"><EditableHeaderLabel tableId="project.tasks" headerKey="status" defaultLabel="الحالة" isAdmin={canEditAll} /></th>
-                      <th className="px-2 py-2 text-right font-semibold"><EditableHeaderLabel tableId="project.tasks" headerKey="progress" defaultLabel="نسبة الإنجاز" isAdmin={canEditAll} /></th>
                       <th className="px-2 py-2 text-right font-semibold"><EditableHeaderLabel tableId="project.tasks" headerKey="priority" defaultLabel="الأهمية" isAdmin={canEditAll} /></th>
                       <th
                         className="px-2 py-2 text-right font-semibold"
@@ -6049,6 +6083,13 @@ function ProjectDetailOverlay({
                           <span className="inline-flex items-center gap-1">
                             <span>{COL_TYPE_OPTIONS.find((o) => o.type === c.type)?.icon}</span>
                             <span>{c.name}</span>
+                            {canEditAll && c.type === "select" && (
+                              <button
+                                onClick={() => setEditingSelectCol(c.id)}
+                                className="opacity-0 group-hover:opacity-100 text-slate-500 hover:text-emerald-600"
+                                title="تعديل خيارات القائمة"
+                              >⚙</button>
+                            )}
                             {canEditAll && (
                               <button
                                 onClick={() => removeColumn(c.id)}
@@ -6073,7 +6114,7 @@ function ProjectDetailOverlay({
                   <tbody>
                     {data.tasks.length === 0 ? (
                       <tr>
-                        <td colSpan={14 + customCols.length + (canEditAll ? 1 : 0)} className="py-12 text-center text-slate-400">
+                        <td colSpan={12 + customCols.length + (canEditAll ? 1 : 0)} className="py-12 text-center text-slate-400">
                           لا توجد مهام بعد. اضغط "إضافة مهمة" للبدء.
                         </td>
                       </tr>
@@ -6131,25 +6172,31 @@ function ProjectDetailOverlay({
                             />
                           </td>
                           <td className="px-1 py-1">
-                            <input
-                              type="date"
-                              value={t.startDate}
-                              disabled={!canEditOwn}
-                              onChange={(e) => updateTask(t.id, { startDate: e.target.value })}
-                              className="px-1 py-1 text-xs rounded focus:outline-none focus:bg-emerald-50"
-                            />
-                          </td>
-                          <td className="px-1 py-1">
-                            <input
-                              type="date"
-                              value={t.endDate}
-                              disabled={!canEditOwn}
-                              onChange={(e) => updateTask(t.id, { endDate: e.target.value })}
-                              className="px-1 py-1 text-xs rounded focus:outline-none focus:bg-emerald-50"
-                            />
+                            <div className="flex flex-col gap-1">
+                              <div className="flex items-center gap-1 text-[10px] text-slate-500">
+                                <span>من</span>
+                                <input
+                                  type="date"
+                                  value={t.startDate}
+                                  disabled={!canEditOwn}
+                                  onChange={(e) => updateTask(t.id, { startDate: e.target.value })}
+                                  className="px-1 py-0.5 text-[11px] rounded border border-slate-200 focus:outline-none focus:border-emerald-400"
+                                />
+                              </div>
+                              <div className="flex items-center gap-1 text-[10px] text-slate-500">
+                                <span>إلى</span>
+                                <input
+                                  type="date"
+                                  value={t.endDate}
+                                  disabled={!canEditOwn}
+                                  onChange={(e) => updateTask(t.id, { endDate: e.target.value })}
+                                  className="px-1 py-0.5 text-[11px] rounded border border-slate-200 focus:outline-none focus:border-emerald-400"
+                                />
+                              </div>
+                            </div>
                           </td>
                           <td className="px-2 py-1 whitespace-nowrap">
-                            <Countdown end={t.endDate} status={t.status} />
+                            <Countdown start={t.startDate} end={t.endDate} status={t.status} />
                           </td>
                           <td className="px-1 py-1">
                             <input
@@ -6171,35 +6218,10 @@ function ProjectDetailOverlay({
                             >
                               <option value="جديد">جديد</option>
                               <option value="جاري العمل">جاري العمل</option>
-                              <option value="تم">تم</option>
+                              <option value="تم الانجاز">تم الانجاز</option>
                               <option value="معلق">معلق</option>
+                              <option value="ملغي">ملغي</option>
                             </select>
-                          </td>
-                          <td className="px-1 py-1">
-                            <div className="flex items-center gap-1.5">
-                              <select
-                                value={t.progress}
-                                disabled={!canEditOwn}
-                                onChange={(e) => {
-                                  const v = Number(e.target.value);
-                                  updateTask(t.id, {
-                                    progress: v,
-                                    ...(v === 100 && t.status !== "تم" ? { status: "تم" as DStatus } : {}),
-                                  });
-                                }}
-                                className="text-xs font-semibold rounded px-1 py-1 bg-slate-50 border border-slate-200 focus:outline-none"
-                              >
-                                {[0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100].map((n) => (
-                                  <option key={n} value={n}>{n}%</option>
-                                ))}
-                              </select>
-                              <div className="w-12 h-1.5 bg-slate-200 rounded-full overflow-hidden">
-                                <div
-                                  className={`h-full ${t.progress === 100 ? "bg-emerald-500" : t.progress >= 50 ? "bg-amber-500" : "bg-sky-500"}`}
-                                  style={{ width: `${t.progress}%` }}
-                                />
-                              </div>
-                            </div>
                           </td>
                           <td className="px-1 py-1">
                             <select
@@ -6311,6 +6333,70 @@ function ProjectDetailOverlay({
                                     <span>{val === "1" ? "موافق" : "—"}</span>
                                   </label>
                                 )}
+                                {c.type === "file" && (() => {
+                                  const [fn, fd] = val ? val.split("|::|") : ["", ""];
+                                  const inputId = `pf-${t.id}-${c.id}`;
+                                  return (
+                                    <div className="flex items-center gap-1 justify-end">
+                                      {fn ? (
+                                        <a href={fd} download={fn} className="text-[11px] text-emerald-700 hover:underline truncate max-w-[120px]">📎 {fn}</a>
+                                      ) : (
+                                        <span className="text-[10px] text-slate-400">لا يوجد</span>
+                                      )}
+                                      {canEditOwn && (
+                                        <>
+                                          <input id={inputId} type="file" className="hidden" onChange={(e) => {
+                                            const f = e.target.files?.[0]; if (!f) return;
+                                            const r = new FileReader();
+                                            r.onload = () => setVal(`${f.name}|::|${r.result as string}`);
+                                            r.readAsDataURL(f);
+                                          }} />
+                                          <label htmlFor={inputId} className="cursor-pointer p-1 rounded hover:bg-slate-100 text-slate-500" title="رفع ملف">
+                                            <Upload className="w-3.5 h-3.5" />
+                                          </label>
+                                          {fn && <button onClick={() => setVal("")} className="p-1 text-red-400 hover:bg-red-50 rounded" title="حذف"><X className="w-3 h-3" /></button>}
+                                        </>
+                                      )}
+                                    </div>
+                                  );
+                                })()}
+                                {c.type === "daterange" && (() => {
+                                  const [from, to] = val ? val.split("|") : ["", ""];
+                                  const setRange = (f: string, tt: string) => setVal(f || tt ? `${f}|${tt}` : "");
+                                  const left = to ? Math.ceil((new Date(to + "T23:59:59").getTime() - Date.now()) / 86_400_000) : null;
+                                  const tone = left == null ? "border-slate-200" : left < 0 ? "border-red-300 bg-red-50" : left <= 3 ? "border-amber-300 bg-amber-50" : "border-slate-200";
+                                  return (
+                                    <div className={`flex flex-col gap-0.5 p-1 rounded border ${tone}`} title={left == null ? "" : left >= 0 ? `باقي ${left} يوم` : `متأخر ${Math.abs(left)} يوم`}>
+                                      <div className="flex items-center gap-1 text-[10px]"><span>من</span>
+                                        <input type="date" value={from} disabled={!canEditOwn} onChange={(e) => setRange(e.target.value, to)} className="text-[11px] flex-1 rounded border border-slate-200 px-1" />
+                                      </div>
+                                      <div className="flex items-center gap-1 text-[10px]"><span>إلى</span>
+                                        <input type="date" value={to} disabled={!canEditOwn} onChange={(e) => setRange(from, e.target.value)} className="text-[11px] flex-1 rounded border border-slate-200 px-1" />
+                                      </div>
+                                      {left !== null && (
+                                        <div className={`text-[9px] text-center font-bold ${left < 0 ? "text-red-600" : left <= 3 ? "text-amber-600" : "text-emerald-700"}`}>
+                                          {left >= 0 ? `باقي ${left} يوم` : `متأخر ${Math.abs(left)} يوم`}
+                                        </div>
+                                      )}
+                                    </div>
+                                  );
+                                })()}
+                                {c.type === "select" && (() => {
+                                  const opts = c.options ?? [];
+                                  const cur = opts.find((o) => o.id === val);
+                                  return (
+                                    <select
+                                      value={val}
+                                      disabled={!canEditOwn}
+                                      onChange={(e) => setVal(e.target.value)}
+                                      className={`${baseCls} font-semibold`}
+                                      style={cur ? { background: cur.color + "22", color: cur.color } : undefined}
+                                    >
+                                      <option value="">—</option>
+                                      {opts.map((o) => <option key={o.id} value={o.id} style={{ color: o.color }}>{o.label}</option>)}
+                                    </select>
+                                  );
+                                })()}
                               </td>
                             );
                           })}
@@ -6361,6 +6447,54 @@ function ProjectDetailOverlay({
             </div>
           </div>
         )}
+
+        {/* Select-column options editor */}
+        {editingSelectCol && (() => {
+          const col = customCols.find((c) => c.id === editingSelectCol);
+          if (!col) return null;
+          const opts = col.options ?? [];
+          const update = (next: { id: string; label: string; color: string }[]) => updateColOptions(col.id, next);
+          return (
+            <div className="fixed inset-0 z-[95] bg-black/40 flex items-center justify-center" onClick={() => setEditingSelectCol(null)}>
+              <div className="bg-white rounded-xl shadow-2xl w-[420px] max-w-[95vw] p-4" dir="rtl" onClick={(e) => e.stopPropagation()}>
+                <div className="flex items-center justify-between mb-3">
+                  <button onClick={() => setEditingSelectCol(null)} className="text-slate-400 hover:text-slate-700"><X className="w-4 h-4" /></button>
+                  <div className="text-sm font-bold text-slate-800">خيارات «{col.name}»</div>
+                </div>
+                <div className="space-y-2 max-h-[50vh] overflow-auto">
+                  {opts.length === 0 && <div className="text-xs text-slate-400 text-center py-4">القائمة فارغة. أضف خياراتك الخاصة (مثل: مهم جدًا، غير مهم...).</div>}
+                  {opts.map((o, i) => (
+                    <div key={o.id} className="flex items-center gap-2">
+                      <button onClick={() => update(opts.filter((_, k) => k !== i))} className="p-1.5 rounded hover:bg-red-50 text-red-500" title="حذف">
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                      <input
+                        value={o.label}
+                        onChange={(e) => { const n = [...opts]; n[i] = { ...o, label: e.target.value }; update(n); }}
+                        className="flex-1 h-8 px-2 border border-slate-200 rounded text-xs text-right"
+                        placeholder="اسم الخيار"
+                      />
+                      <div className="flex flex-wrap gap-0.5 justify-end max-w-[180px]">
+                        {SELECT_PALETTE.map((cl) => (
+                          <button
+                            key={cl}
+                            onClick={() => { const n = [...opts]; n[i] = { ...o, color: cl }; update(n); }}
+                            className={`w-4 h-4 rounded-full border ${o.color === cl ? "ring-2 ring-offset-1 ring-slate-700" : "border-white"}`}
+                            style={{ background: cl }}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <button
+                  onClick={() => update([...opts, { id: `o${Date.now()}${Math.floor(Math.random()*1000)}`, label: "خيار جديد", color: SELECT_PALETTE[opts.length % SELECT_PALETTE.length] }])}
+                  className="mt-3 w-full h-8 rounded border border-dashed border-slate-300 text-xs text-slate-600 hover:bg-slate-50"
+                >+ إضافة خيار</button>
+              </div>
+            </div>
+          );
+        })()}
 
         {/* Per-task internal chat panel */}
         {chatTaskId && (() => {
