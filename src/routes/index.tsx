@@ -8,6 +8,7 @@ import guideFinanceImg from "@/assets/guide-finance.png";
 import guideMeetingsImg from "@/assets/guide-meetings.png";
 import guideUsersImg from "@/assets/guide-users.png";
 import guideAssistantImg from "@/assets/guide-assistant.png";
+import yaseerLogo from "@/assets/yaseer-logo.png.asset.json";
 import { ExtraColHeaders, ExtraCells, RowChatButton, EditableHeaderLabel, HeaderMenu, HiddenColsRestore } from "@/components/table-extras";
 import { AdminPanel } from "@/components/admin-panel";
 import {
