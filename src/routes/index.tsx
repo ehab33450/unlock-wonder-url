@@ -7950,13 +7950,18 @@ function FinanceModal({
                       </div>
                     </td>
                     <td className="px-3 py-2">
-                      <button
-                        disabled={!isAdmin}
-                        onClick={() => onUpdatePayment(p.project, p.id, { paid: !p.paid })}
-                        className={`text-[10px] font-bold px-2 py-1 rounded ${p.paid ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"} ${isAdmin ? "hover:opacity-80" : ""}`}
-                      >
-                        {p.paid ? "مدفوع" : "غير مدفوع"}
-                      </button>
+                      {(() => {
+                        const s = computePayStatus(p);
+                        const m = PAY_STATUS_META[s];
+                        return (
+                          <span
+                            className={`text-[10px] font-bold px-2 py-1 rounded ${m.cls}`}
+                            title="تتحدث الحالة تلقائياً حسب المبلغ المدفوع وتاريخ الاستحقاق"
+                          >
+                            {m.label}
+                          </span>
+                        );
+                      })()}
                     </td>
                     <ExtraCells tableId="finance.payments" rowId={`${p.project}-${p.id}`} canEdit={isAdmin} employees={employees} tdClass="px-3 py-2 min-w-[120px]" />
                     {isAdmin && (
