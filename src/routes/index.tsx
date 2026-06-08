@@ -5561,16 +5561,16 @@ function Index() {
               try {
                 const projectsList = Object.entries(projectMeta).map(([name, m]) => {
                   const tasks = m.tasks || [];
-                  const done = tasks.filter((t) => t.status === "تم").length;
+                  const done = tasks.filter((t) => t.status === "تم الانجاز").length;
                   const overdue = tasks.filter((t) => {
-                    if (!t.endDate || t.status === "تم") return false;
+                    if (!t.endDate || t.status === "تم الانجاز") return false;
                     return new Date(t.endDate).getTime() < Date.now();
                   }).length;
                   return `• ${name}: مهام ${tasks.length} (منجزة ${done}، متأخرة ${overdue})، الموظف المُكلَّف: ${m.contract?.assignee || "—"}، قيمة العقد: ${m.contract?.value ?? "—"}`;
                 }).join("\n") || "لا توجد مشاريع بعد.";
                 const upcomingTasks = Object.entries(projectMeta)
                   .flatMap(([pname, m]) => (m.tasks || []).map((t) => ({ ...t, pname })))
-                  .filter((t) => t.status !== "تم" && t.endDate)
+                  .filter((t) => t.status !== "تم الانجاز" && t.endDate)
                   .sort((a, b) => new Date(a.endDate).getTime() - new Date(b.endDate).getTime())
                   .slice(0, 8)
                   .map((t) => `• [${t.pname}] ${t.name} — ينتهي ${t.endDate} — ${t.status} — أهمية ${t.priority}`)
