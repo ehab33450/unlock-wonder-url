@@ -334,7 +334,7 @@ function Index() {
     responsiblePhone: string;
     assignee: string;
   };
-  type TaskStatus = "جديد" | "جاري العمل" | "تم" | "معلق";
+  type TaskStatus = "جديد" | "جاري العمل" | "تم الانجاز" | "معلق" | "ملغي";
   type Priority = "لاشيء" | "منخفض" | "متوسط" | "عالي";
   type TaskRow = {
     id: string;
