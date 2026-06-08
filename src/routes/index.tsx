@@ -7429,6 +7429,7 @@ function FinanceModal({
 
         {/* Table */}
         <div className="overflow-auto flex-1">
+          <div className="px-3 pt-2"><HiddenColsRestore tableId="finance.payments" isAdmin={isAdmin} /></div>
           {filtered.length === 0 ? (
             <div className="py-16 text-center text-slate-400 text-sm">
               لا توجد أقساط. افتح أي مشروع واستخدم زر "تقسيم العقد إلى أقساط".
