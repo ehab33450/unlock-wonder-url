@@ -164,7 +164,7 @@ function Index() {
   const [memberSearch, setMemberSearch] = useState("");
 
   // Project folders/files store
-  type FileItem = { id: string; name: string; content: string; kind: "text" | "word" | "excel" };
+  type FileItem = { id: string; name: string; content: string; kind: "text" | "word" | "excel"; allowedDownload?: string[] };
   type SubFolder = { name: string; createdAt: string; files: FileItem[]; locked?: boolean };
   type ProjectData = { folders: SubFolder[]; files: FileItem[] };
   const [projectData, setProjectData] = useState<Record<string, ProjectData>>({});
