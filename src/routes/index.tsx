@@ -2051,7 +2051,7 @@ function Index() {
                 <div className="flex items-center justify-end gap-1 mb-3">
                   {([
                     { k: "mine" as TaskScope, label: "أنا فقط", icon: User },
-                    { k: "shared" as TaskScope, label: "المشترك بها", icon: Users },
+                    { k: "shared" as TaskScope, label: "بها", icon: Users },
                     { k: "all" as TaskScope, label: "الجميع", icon: List },
                   ]).map((o) => {
                     const Icon = o.icon;
@@ -2281,7 +2281,7 @@ function Index() {
           {/* Tabs */}
           <div className="flex items-center gap-4 px-4 text-sm border-b border-slate-200">
             <button className="py-2 text-slate-500">أنا فقط</button>
-            <button className="py-2 text-slate-500">المشترك بها</button>
+            <button className="py-2 text-slate-500">بها</button>
             <button className="py-2 text-[color:var(--eyenak-dark)] font-semibold border-b-2 border-[color:var(--eyenak-teal)]">
               الجميع
             </button>
@@ -6544,7 +6544,7 @@ const GUIDE_TOPICS: GuideTopic[] = [
       { title: "5. العد التنازلي", body: "يعرض الوقت المتبقي للموعد النهائي. يتحوّل إلى الأحمر عند آخر 24 ساعة و«متأخر» بعد انتهاء الوقت." },
       { title: "6. رفع المرفق", body: "اضغط على أيقونة الرفع في عمود المرفق لرفع التقرير النهائي للمهمة." },
     ],
-    tips: ["استخدم فلتر «أنا فقط / المشترك بها / الجميع» لتصفية المهام حسب علاقتك بها.", "الموظف يرى فقط المهام المسندة إليه."],
+    tips: ["استخدم فلتر «أنا فقط / بها / الجميع» لتصفية المهام حسب علاقتك بها.", "الموظف يرى فقط المهام المسندة إليه."],
   },
   {
     id: "finance",
