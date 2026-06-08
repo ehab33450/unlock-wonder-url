@@ -14,6 +14,7 @@ export type AdminEmployee = {
 
 type RoleRow = {
   id: string; name: string; isDefault: boolean; system?: boolean;
+  perms?: Record<string, boolean>;
 };
 
 type Props = {
@@ -46,6 +47,8 @@ export function AdminPanel({ open, onClose, employees, setEmployees, perms, defa
   const [addOpen, setAddOpen] = useState(false);
   const [editEmp, setEditEmp] = useState<AdminEmployee | null>(null);
   const [permsEmp, setPermsEmp] = useState<AdminEmployee | null>(null);
+  const [addRoleOpen, setAddRoleOpen] = useState(false);
+  const [editRolePerms, setEditRolePerms] = useState<RoleRow | null>(null);
 
   const [roles, setRoles] = useState<RoleRow[]>([
     { id: "r1", name: "Admin", isDefault: true, system: true },
@@ -117,7 +120,12 @@ export function AdminPanel({ open, onClose, employees, setEmployees, perms, defa
             />
           )}
           {section === "roles" && (
-            <RolesSection roles={roles} setRoles={setRoles} />
+            <RolesSection
+              roles={roles}
+              setRoles={setRoles}
+              onAdd={() => setAddRoleOpen(true)}
+              onEditPerms={(r) => setEditRolePerms(r)}
+            />
           )}
           {section === "company" && (
             <PlaceholderSection title="بيانات الشركة" subtitle="اسم الشركة، الشعار، العنوان، السجل التجاري." />
@@ -175,6 +183,27 @@ export function AdminPanel({ open, onClose, employees, setEmployees, perms, defa
           onSave={(u) => {
             setEmployees((arr: AdminEmployee[]) => arr.map((x) => (x.id === u.id ? u : x)));
             setPermsEmp(null);
+          }}
+        />
+      )}
+      {addRoleOpen && (
+        <AddRoleModal
+          perms={perms}
+          onClose={() => setAddRoleOpen(false)}
+          onCreate={(role) => {
+            setRoles((rs) => [...rs, role]);
+            setAddRoleOpen(false);
+          }}
+        />
+      )}
+      {editRolePerms && (
+        <RolePermsModal
+          role={editRolePerms}
+          perms={perms}
+          onClose={() => setEditRolePerms(null)}
+          onSave={(r) => {
+            setRoles((rs) => rs.map((x) => (x.id === r.id ? r : x)));
+            setEditRolePerms(null);
           }}
         />
       )}
