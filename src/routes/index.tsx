@@ -5978,6 +5978,13 @@ function ProjectDetailOverlay({
     e.preventDefault();
     setColMenu({ x: e.clientX, y: e.clientY, insertAt });
   };
+  const openInsertAt = (insertAt: number) => {
+    const x = Math.max(40, window.innerWidth / 2 - 140);
+    const y = Math.max(80, window.innerHeight / 3);
+    setColMenu({ x, y, insertAt });
+  };
+  // Built-in headers can only insert a new column right after the built-in block.
+  const builtinColMenu = { onInsertAfter: () => openInsertAt(0) };
   const addColumn = (type: DColType, insertAt: number) => {
     const name = window.prompt("اسم العمود الجديد:", COL_TYPE_OPTIONS.find((o) => o.type === type)?.label ?? "عمود");
     if (!name) { setColMenu(null); return; }
@@ -6166,28 +6173,33 @@ function ProjectDetailOverlay({
                         className="px-2 py-2 text-center font-semibold w-10"
                         title="محادثة المهمة الخاصة"
                       >💬</th>
-                      <th className="px-2 py-2 text-right font-semibold"><EditableHeaderLabel tableId="project.tasks" headerKey="name" defaultLabel="اسم المهمة" isAdmin={canEditAll} /></th>
-                      <th className="px-2 py-2 text-right font-semibold"><EditableHeaderLabel tableId="project.tasks" headerKey="platform" defaultLabel="المنصة" isAdmin={canEditAll} /></th>
-                      <th className="px-2 py-2 text-right font-semibold"><EditableHeaderLabel tableId="project.tasks" headerKey="beneficiary" defaultLabel="المستفيد" isAdmin={canEditAll} /></th>
-                      <th className="px-2 py-2 text-right font-semibold"><EditableHeaderLabel tableId="project.tasks" headerKey="doc" defaultLabel="رقم المستند" isAdmin={canEditAll} /></th>
-                      <th className="px-2 py-2 text-right font-semibold"><EditableHeaderLabel tableId="project.tasks" headerKey="period" defaultLabel="فترة المهمة" isAdmin={canEditAll} /></th>
-                      <th className="px-2 py-2 text-right font-semibold"><EditableHeaderLabel tableId="project.tasks" headerKey="count" defaultLabel="العد التنازلي" isAdmin={canEditAll} /></th>
-                      <th className="px-2 py-2 text-right font-semibold"><EditableHeaderLabel tableId="project.tasks" headerKey="done" defaultLabel="تاريخ الإنجاز" isAdmin={canEditAll} /></th>
-                      <th className="px-2 py-2 text-right font-semibold"><EditableHeaderLabel tableId="project.tasks" headerKey="status" defaultLabel="الحالة" isAdmin={canEditAll} /></th>
-                      <th className="px-2 py-2 text-right font-semibold"><EditableHeaderLabel tableId="project.tasks" headerKey="priority" defaultLabel="الأهمية" isAdmin={canEditAll} /></th>
-                      <th
-                        className="px-2 py-2 text-right font-semibold"
-                        onContextMenu={(e) => canEditAll && openColMenu(e, customCols.length)}
-                      ><EditableHeaderLabel tableId="project.tasks" headerKey="attach" defaultLabel="المرفق" isAdmin={canEditAll} /></th>
+                      <th className="px-2 py-2 text-right font-semibold"><EditableHeaderLabel tableId="project.tasks" headerKey="name" defaultLabel="اسم المهمة" isAdmin={canEditAll} colMenu={builtinColMenu} /></th>
+                      <th className="px-2 py-2 text-right font-semibold"><EditableHeaderLabel tableId="project.tasks" headerKey="platform" defaultLabel="المنصة" isAdmin={canEditAll} colMenu={builtinColMenu} /></th>
+                      <th className="px-2 py-2 text-right font-semibold"><EditableHeaderLabel tableId="project.tasks" headerKey="beneficiary" defaultLabel="المستفيد" isAdmin={canEditAll} colMenu={builtinColMenu} /></th>
+                      <th className="px-2 py-2 text-right font-semibold"><EditableHeaderLabel tableId="project.tasks" headerKey="doc" defaultLabel="رقم المستند" isAdmin={canEditAll} colMenu={builtinColMenu} /></th>
+                      <th className="px-2 py-2 text-right font-semibold"><EditableHeaderLabel tableId="project.tasks" headerKey="period" defaultLabel="فترة المهمة" isAdmin={canEditAll} colMenu={builtinColMenu} /></th>
+                      <th className="px-2 py-2 text-right font-semibold"><EditableHeaderLabel tableId="project.tasks" headerKey="count" defaultLabel="العد التنازلي" isAdmin={canEditAll} colMenu={builtinColMenu} /></th>
+                      <th className="px-2 py-2 text-right font-semibold"><EditableHeaderLabel tableId="project.tasks" headerKey="done" defaultLabel="تاريخ الإنجاز" isAdmin={canEditAll} colMenu={builtinColMenu} /></th>
+                      <th className="px-2 py-2 text-right font-semibold"><EditableHeaderLabel tableId="project.tasks" headerKey="status" defaultLabel="الحالة" isAdmin={canEditAll} colMenu={builtinColMenu} /></th>
+                      <th className="px-2 py-2 text-right font-semibold"><EditableHeaderLabel tableId="project.tasks" headerKey="priority" defaultLabel="الأهمية" isAdmin={canEditAll} colMenu={builtinColMenu} /></th>
+                      <th className="px-2 py-2 text-right font-semibold"><EditableHeaderLabel tableId="project.tasks" headerKey="attach" defaultLabel="المرفق" isAdmin={canEditAll} colMenu={builtinColMenu} /></th>
                       {customCols.map((c, idx) => (
                         <th
                           key={c.id}
                           className="px-2 py-2 text-right font-semibold whitespace-nowrap group"
-                          onContextMenu={(e) => canEditAll && openColMenu(e, idx + 1)}
                         >
                           <span className="inline-flex items-center gap-1">
                             <span>{COL_TYPE_OPTIONS.find((o) => o.type === c.type)?.icon}</span>
-                            <span>{c.name}</span>
+                            <span
+                              className={canEditAll ? "cursor-pointer hover:text-emerald-600" : ""}
+                              title={canEditAll ? "انقر مرتين لإعادة التسمية" : undefined}
+                              onDoubleClick={(e) => {
+                                if (!canEditAll) return;
+                                e.preventDefault();
+                                const next = window.prompt("اسم العمود:", c.name);
+                                if (next && next.trim()) onUpdateCustomCols((cur) => cur.map((x) => x.id === c.id ? { ...x, name: next.trim() } : x));
+                              }}
+                            >{c.name}</span>
                             {canEditAll && c.type === "select" && (
                               <button
                                 onClick={() => setEditingSelectCol(c.id)}
@@ -6196,11 +6208,11 @@ function ProjectDetailOverlay({
                               >⚙</button>
                             )}
                             {canEditAll && (
-                              <button
-                                onClick={() => removeColumn(c.id)}
-                                className="opacity-0 group-hover:opacity-100 text-red-500 hover:text-red-700 text-[10px] mr-1"
-                                title="حذف العمود"
-                              >✕</button>
+                              <HeaderMenu
+                                onInsertBefore={() => openInsertAt(idx)}
+                                onInsertAfter={() => openInsertAt(idx + 1)}
+                                onDelete={() => onUpdateCustomCols((cur) => cur.filter((x) => x.id !== c.id))}
+                              />
                             )}
                           </span>
                         </th>
