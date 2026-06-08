@@ -8,7 +8,7 @@ import guideFinanceImg from "@/assets/guide-finance.png";
 import guideMeetingsImg from "@/assets/guide-meetings.png";
 import guideUsersImg from "@/assets/guide-users.png";
 import guideAssistantImg from "@/assets/guide-assistant.png";
-import { ExtraColHeaders, ExtraCells, RowChatButton, EditableHeaderLabel } from "@/components/table-extras";
+import { ExtraColHeaders, ExtraCells, RowChatButton, EditableHeaderLabel, RowActions, HiddenColsRestore } from "@/components/table-extras";
 import { AdminPanel } from "@/components/admin-panel";
 import {
   Calendar,
@@ -2125,6 +2125,7 @@ function Index() {
                 </div>
               ) : (
                 <div className="overflow-x-auto">
+                  <HiddenColsRestore tableId="dashboard.tasks" isAdmin={isAdmin} />
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="text-slate-500 border-b border-slate-200">
@@ -5834,6 +5835,26 @@ function ProjectDetailOverlay({
       ],
     }));
   };
+  const insertTaskAt = (index: number) => {
+    onUpdate((cur) => {
+      const fresh: DTask = {
+        id: `${Date.now()}`,
+        name: "مهمة جديدة",
+        platform: "",
+        beneficiary: "",
+        documentNo: "",
+        startDate: new Date().toISOString().slice(0, 10),
+        endDate: "",
+        doneDate: "",
+        status: "جديد",
+        priority: "لاشيء",
+        progress: 0,
+      };
+      const arr = [...cur.tasks];
+      arr.splice(Math.max(0, Math.min(index, arr.length)), 0, fresh);
+      return { ...cur, tasks: arr };
+    });
+  };
   const updateTask = (id: string, patch: Partial<DTask>) => {
     onUpdate((cur) => ({
       ...cur,
@@ -6052,6 +6073,8 @@ function ProjectDetailOverlay({
                 )}
                 <h3 className="text-base font-bold text-slate-800">المهام ({data.tasks.length})</h3>
               </div>
+
+              <HiddenColsRestore tableId="project.tasks" isAdmin={canEditAll} />
 
               <div className="overflow-auto bg-white rounded-lg border border-slate-200">
                 <table className="w-full text-sm">
@@ -6403,15 +6426,12 @@ function ProjectDetailOverlay({
                           {canEditAll && <td className="px-1 py-1" />}
                           {canEditOwn && (
                             <td className="px-1 py-1">
-                              {isAdmin && (
-                                <button
-                                  onClick={() => removeTask(t.id)}
-                                  className="p-1 rounded hover:bg-red-50 text-slate-400 hover:text-red-500"
-                                  title="حذف المهمة"
-                                >
-                                  <Trash2 className="w-3.5 h-3.5" />
-                                </button>
-                              )}
+                              <RowActions
+                                disabled={!canEditAll}
+                                onInsertAbove={() => insertTaskAt(data.tasks.findIndex((x) => x.id === t.id))}
+                                onInsertBelow={() => insertTaskAt(data.tasks.findIndex((x) => x.id === t.id) + 1)}
+                                onDelete={() => removeTask(t.id)}
+                              />
                             </td>
                           )}
                         </tr>
@@ -7410,6 +7430,7 @@ function FinanceModal({
 
         {/* Table */}
         <div className="overflow-auto flex-1">
+          <div className="px-3 pt-2"><HiddenColsRestore tableId="finance.payments" isAdmin={isAdmin} /></div>
           {filtered.length === 0 ? (
             <div className="py-16 text-center text-slate-400 text-sm">
               لا توجد أقساط. افتح أي مشروع واستخدم زر "تقسيم العقد إلى أقساط".

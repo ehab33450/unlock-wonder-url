@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useRef, useState } from "react";
-import { MessageSquare, X, Plus, Upload, FileText, Undo2, Settings2, Trash2 } from "lucide-react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { MessageSquare, X, Plus, Upload, FileText, Undo2, Settings2, Trash2, MoreVertical, ArrowUp, ArrowDown, EyeOff, Eye } from "lucide-react";
 
 /* ============================================================
    Flexible columns + per-row internal chat — reusable for any
@@ -49,16 +49,109 @@ function notifyHeaders() {
   headerListeners.forEach((l) => l());
 }
 
+/* ---------- Hidden built-in columns store ---------- */
+const HIDDEN_KEY = "eyenak.hiddenCols.v1";
+type HiddenStore = Record<string, string[]>; // tableId -> [headerKey,...]
+function loadHidden(): HiddenStore {
+  if (typeof window === "undefined") return {};
+  try { return JSON.parse(window.localStorage.getItem(HIDDEN_KEY) || "{}"); } catch { return {}; }
+}
+let hiddenStore: HiddenStore = loadHidden();
+const hiddenListeners = new Set<() => void>();
+function notifyHidden() {
+  if (typeof window !== "undefined") {
+    try { window.localStorage.setItem(HIDDEN_KEY, JSON.stringify(hiddenStore)); } catch {}
+  }
+  hiddenListeners.forEach((l) => l());
+}
+export function useHiddenCols(tableId: string) {
+  const [, setTick] = useState(0);
+  useEffect(() => {
+    const l = () => setTick((t) => t + 1);
+    hiddenListeners.add(l);
+    return () => { hiddenListeners.delete(l); };
+  }, []);
+  const list = hiddenStore[tableId] ?? [];
+  const hide = (key: string) => {
+    const cur = new Set(hiddenStore[tableId] ?? []);
+    cur.add(key);
+    hiddenStore = { ...hiddenStore, [tableId]: Array.from(cur) };
+    notifyHidden();
+  };
+  const show = (key: string) => {
+    const cur = (hiddenStore[tableId] ?? []).filter((k) => k !== key);
+    hiddenStore = { ...hiddenStore, [tableId]: cur };
+    notifyHidden();
+  };
+  const restoreAll = () => {
+    hiddenStore = { ...hiddenStore, [tableId]: [] };
+    notifyHidden();
+  };
+  return { hidden: list, hide, show, restoreAll };
+}
+
+/** Shows a small floating chip that lets admin un-hide columns of a table. Place near the table title. */
+export function HiddenColsRestore({ tableId, isAdmin }: { tableId: string; isAdmin: boolean }) {
+  const { hidden, show, restoreAll } = useHiddenCols(tableId);
+  if (!isAdmin || hidden.length === 0) return null;
+  return (
+    <div className="inline-flex items-center gap-1 flex-wrap text-[11px] bg-amber-50 border border-amber-200 rounded px-2 py-1 mb-2">
+      <Eye className="w-3 h-3 text-amber-700" />
+      <span className="text-amber-700 font-semibold">أعمدة مخفية:</span>
+      {hidden.map((k) => {
+        const label = headerStore[tableId]?.[k] ?? k;
+        return (
+          <button
+            key={k}
+            onClick={() => show(k)}
+            className="px-1.5 py-0.5 rounded bg-white border border-amber-300 text-amber-800 hover:bg-amber-100"
+            title="إظهار العمود"
+          >{label} ↩</button>
+        );
+      })}
+      <button onClick={restoreAll} className="text-amber-700 underline hover:text-amber-900 mr-1">إظهار الكل</button>
+    </div>
+  );
+}
+
 export function EditableHeaderLabel({
   tableId, headerKey, defaultLabel, isAdmin,
 }: { tableId: string; headerKey: string; defaultLabel: string; isAdmin: boolean }) {
   const [, setTick] = useState(0);
+  const wrapRef = useRef<HTMLSpanElement>(null);
   useEffect(() => {
     const l = () => setTick((t) => t + 1);
     headerListeners.add(l);
-    return () => { headerListeners.delete(l); };
+    const h = () => setTick((t) => t + 1);
+    hiddenListeners.add(h);
+    return () => { headerListeners.delete(l); hiddenListeners.delete(h); };
   }, []);
   const label = headerStore[tableId]?.[headerKey] ?? defaultLabel;
+  const hiddenList = hiddenStore[tableId] ?? [];
+  const isHidden = hiddenList.includes(headerKey);
+
+  // Tag the parent <th> and the matching cell in every body row, then
+  // toggle visibility via inline style to mimic an Excel-style column hide.
+  useLayoutEffect(() => {
+    const node = wrapRef.current;
+    if (!node) return;
+    const th = node.closest("th") as HTMLTableCellElement | null;
+    if (!th) return;
+    const table = th.closest("table") as HTMLTableElement | null;
+    if (!table) return;
+    const idx = th.cellIndex;
+    th.dataset.thKey = headerKey;
+    th.style.display = isHidden ? "none" : "";
+    const rows = table.tBodies[0]?.rows ?? [];
+    for (let r = 0; r < rows.length; r++) {
+      const cell = rows[r].cells[idx];
+      if (cell) {
+        cell.dataset.tdKey = headerKey;
+        cell.style.display = isHidden ? "none" : "";
+      }
+    }
+  });
+
   const rename = () => {
     const next = window.prompt("اسم العمود الجديد:", label);
     if (next == null) return;
@@ -68,14 +161,27 @@ export function EditableHeaderLabel({
     headerStore = { ...headerStore, [tableId]: t };
     notifyHeaders();
   };
+  const hide = () => {
+    const cur = new Set(hiddenList);
+    cur.add(headerKey);
+    hiddenStore = { ...hiddenStore, [tableId]: Array.from(cur) };
+    notifyHidden();
+  };
   return (
-    <span
-      className={isAdmin ? "cursor-pointer hover:text-emerald-600" : ""}
-      title={isAdmin ? "انقر مرتين أو زر الفأرة الأيمن لإعادة التسمية" : undefined}
-      onDoubleClick={(e) => { if (!isAdmin) return; e.preventDefault(); rename(); }}
-      onContextMenu={(e) => { if (!isAdmin) return; e.preventDefault(); rename(); }}
-    >
-      {label}
+    <span ref={wrapRef} className="inline-flex items-center gap-1 group/hdr">
+      <span
+        className={isAdmin ? "cursor-pointer hover:text-emerald-600" : ""}
+        title={isAdmin ? "انقر مرتين لإعادة التسمية" : undefined}
+        onDoubleClick={(e) => { if (!isAdmin) return; e.preventDefault(); rename(); }}
+        onContextMenu={(e) => { if (!isAdmin) return; e.preventDefault(); rename(); }}
+      >{label}</span>
+      {isAdmin && (
+        <button
+          onClick={hide}
+          title="إخفاء هذا العمود (يمكنك إظهاره لاحقاً من أعلى الجدول)"
+          className="opacity-0 group-hover/hdr:opacity-100 text-slate-400 hover:text-red-600 transition"
+        ><EyeOff className="w-3 h-3" /></button>
+      )}
     </span>
   );
 }
@@ -755,5 +861,59 @@ export function RowChatButton({
         </div>
       )}
     </>
+  );
+}
+
+/* ============================================================
+   Row actions menu — Excel-style insert above / below / delete
+============================================================ */
+
+export function RowActions({
+  onInsertAbove, onInsertBelow, onDelete, disabled,
+}: {
+  onInsertAbove?: () => void;
+  onInsertBelow?: () => void;
+  onDelete?: () => void;
+  disabled?: boolean;
+}) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!open) return;
+    const h = (e: MouseEvent) => { if (!ref.current?.contains(e.target as Node)) setOpen(false); };
+    document.addEventListener("mousedown", h);
+    return () => document.removeEventListener("mousedown", h);
+  }, [open]);
+  if (disabled) return <span className="text-slate-200">—</span>;
+  return (
+    <div ref={ref} className="relative inline-block">
+      <button
+        onClick={() => setOpen((v) => !v)}
+        className="p-1 rounded hover:bg-slate-200 text-slate-500"
+        title="إجراءات الصف"
+      ><MoreVertical className="w-3.5 h-3.5" /></button>
+      {open && (
+        <div className="absolute z-50 left-0 mt-1 w-44 bg-white rounded-lg shadow-xl border border-slate-200 py-1 text-xs" dir="rtl">
+          {onInsertAbove && (
+            <button
+              onClick={() => { onInsertAbove(); setOpen(false); }}
+              className="w-full px-3 py-1.5 text-right hover:bg-slate-50 flex items-center gap-2"
+            ><ArrowUp className="w-3.5 h-3.5 text-emerald-600" /><span>إدراج صف فوق</span></button>
+          )}
+          {onInsertBelow && (
+            <button
+              onClick={() => { onInsertBelow(); setOpen(false); }}
+              className="w-full px-3 py-1.5 text-right hover:bg-slate-50 flex items-center gap-2"
+            ><ArrowDown className="w-3.5 h-3.5 text-emerald-600" /><span>إدراج صف تحت</span></button>
+          )}
+          {onDelete && (
+            <button
+              onClick={() => { if (window.confirm("حذف هذا الصف؟")) { onDelete(); setOpen(false); } }}
+              className="w-full px-3 py-1.5 text-right hover:bg-red-50 flex items-center gap-2 text-red-600"
+            ><Trash2 className="w-3.5 h-3.5" /><span>حذف الصف</span></button>
+          )}
+        </div>
+      )}
+    </div>
   );
 }
