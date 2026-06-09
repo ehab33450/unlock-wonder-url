@@ -1752,7 +1752,7 @@ function Index() {
       <div className="flex">
         {/* Left icon rail */}
         <aside className="w-20 bg-white border-l border-slate-200 min-h-[calc(100vh-3.5rem)] flex flex-col items-center py-4 gap-2">
-          {sidebarItems.map((item) => {
+          {sidebarItems.filter((it) => !it.permKey || hasPerm(it.permKey)).map((item) => {
             const Icon = item.icon;
             const isActive =
               (item.label === "التقويم" && calendarOpen) ||
