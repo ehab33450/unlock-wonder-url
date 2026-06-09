@@ -56,6 +56,8 @@ import {
   Trash2,
   Send,
   Eye,
+  EyeOff,
+  Lock,
   AlarmClock,
   BellRing,
   StickyNote,
@@ -259,6 +261,7 @@ function Index() {
     { key: "tasks_edit",      label: "تعديل المهام",         group: "المهام" },
     { key: "chat_view",       label: "عرض المحادثة",         group: "المحادثة" },
     { key: "chat_send",       label: "إرسال رسائل",          group: "المحادثة" },
+    { key: "chat_visibility", label: "إظهار/إخفاء الرسائل عن العميل", group: "المحادثة", desc: "السماح بفتح أو غلق العين لإظهار/إخفاء الرسائل عن العميل." },
     { key: "calendar_view",   label: "عرض التقويم",          group: "التقويم" },
     { key: "calendar_edit",   label: "تعديل التقويم",        group: "التقويم" },
     { key: "members_view",    label: "عرض الأعضاء",          group: "الأعضاء" },
@@ -602,7 +605,7 @@ function Index() {
             sender: "الأدمن",
             role: "admin",
             text: `مرحبًا، تم فتح مشروع "${name}". يرجى البدء بالمرحلة الأولى.`,
-            visibility: "all",
+            hiddenFromClient: false,
             createdAt: Date.now() - 1000 * 60 * 60 * 24 * 2,
           },
           {
@@ -610,7 +613,7 @@ function Index() {
             sender: assignee,
             role: "employee",
             text: "تم استلام المتطلبات وسأبدأ التنفيذ اليوم.",
-            visibility: "all",
+            hiddenFromClient: false,
             createdAt: Date.now() - 1000 * 60 * 60 * 20,
           },
           {
@@ -618,7 +621,7 @@ function Index() {
             sender: "الأدمن",
             role: "admin",
             text: "ملاحظة داخلية: تابع الجدول الزمني بدقة.",
-            visibility: "admin-employee",
+            hiddenFromClient: true,
             createdAt: Date.now() - 1000 * 60 * 60 * 5,
           },
           {
@@ -626,7 +629,7 @@ function Index() {
             sender: `مسؤول ${name}`,
             role: "client",
             text: "شكرًا، بانتظار التحديثات.",
-            visibility: "all",
+            hiddenFromClient: false,
             createdAt: Date.now() - 1000 * 60 * 30,
           },
         ];
@@ -703,24 +706,22 @@ function Index() {
 
   // ============ Internal Chat (Admin / Employee / Client) ============
   type ChatRole = "admin" | "employee" | "client";
-  type ChatVisibility = "all" | "admin-employee" | "admin-client";
   type ChatMessage = {
     id: string;
     sender: string;
     role: ChatRole;
     text: string;
-    visibility: ChatVisibility;
+    hiddenFromClient: boolean;
     createdAt: number;
   };
   const [chats, setChats] = useState<Record<string, ChatMessage[]>>({});
   const [chatViewOpen, setChatViewOpen] = useState(false);
   const [chatProject, setChatProject] = useState<string | null>(null);
   const [chatInput, setChatInput] = useState("");
-  const [chatVisibility, setChatVisibility] = useState<ChatVisibility>("all");
-  const [chatRoleView, setChatRoleView] = useState<ChatRole>(isAdmin ? "admin" : "employee");
-  useEffect(() => {
-    setChatRoleView(isAdmin ? "admin" : "employee");
-  }, [isAdmin]);
+  // عين الإظهار/الإخفاء: مغلقة = الرسالة مخفية عن العميل، مفتوحة = يراها العميل
+  const [composerHidden, setComposerHidden] = useState(false);
+  // في هذا التطبيق لا يوجد دخول للعميل، فالعرض دائماً من منظور الأدمن/الموظف
+  const viewerRole: ChatRole = isAdmin ? "admin" : "employee";
   // Group members per project (مجموعة المحادثة)
   const [chatMembers, setChatMembers] = useState<Record<string, string[]>>({});
   const [membersModalOpen, setMembersModalOpen] = useState(false);
@@ -762,33 +763,22 @@ function Index() {
       [project]: (m[project] ?? []).filter((x) => x !== name),
     }));
   };
-  const visibilityLabel = (v: ChatVisibility) =>
-    v === "all" ? "للجميع" : v === "admin-employee" ? "الأدمن + الموظف" : "الأدمن + العميل";
   const canSeeMessage = (m: ChatMessage, role: ChatRole) => {
-    if (m.visibility === "all") return true;
-    if (m.visibility === "admin-employee") return role === "admin" || role === "employee";
-    if (m.visibility === "admin-client") return role === "admin" || role === "client";
-    return false;
+    if (role === "client") return !m.hiddenFromClient;
+    return true;
   };
+  const canToggleVisibility = isAdmin || hasPerm("chat_visibility");
   const sendChatMessage = () => {
     if (!chatProject || !chatInput.trim()) return;
-    const role: ChatRole = chatRoleView;
-    const sender =
-      role === "admin"
-        ? "الأدمن"
-        : role === "client"
-        ? projectMeta[chatProject]?.contract.responsibleName || "العميل"
-        : currentUser;
-    // Constrain visibility based on role
-    let vis = chatVisibility;
-    if (role === "employee" && vis === "admin-client") vis = "admin-employee";
-    if (role === "client" && vis === "admin-employee") vis = "admin-client";
+    const role: ChatRole = viewerRole;
+    const sender = role === "admin" ? "الأدمن" : currentUser;
+    const hiddenFromClient = canToggleVisibility ? composerHidden : false;
     const msg: ChatMessage = {
       id: Math.random().toString(36).slice(2),
       sender,
       role,
       text: chatInput.trim(),
-      visibility: vis,
+      hiddenFromClient,
       createdAt: Date.now(),
     };
     setChats((c) => ({ ...c, [chatProject]: [...(c[chatProject] ?? []), msg] }));
@@ -2811,7 +2801,20 @@ function Index() {
 
                 <div className="mb-6">
                   <label className="block text-sm text-slate-600 mb-2 text-right">نوع الخدمة</label>
-                  <div className="relative mb-2">
+                  <div className="flex items-center gap-2 mb-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const v = npServiceInput.trim();
+                        if (!v) return;
+                        setNpServices((s) => [...s, v]);
+                        setNpServiceInput("");
+                      }}
+                      className="h-11 px-3 rounded bg-[color:var(--eyenak-teal)] text-white text-sm font-bold hover:opacity-90"
+                      title="إضافة خدمة"
+                    >
+                      + إضافة
+                    </button>
                     <input
                       value={npServiceInput}
                       onChange={(e) => setNpServiceInput(e.target.value)}
@@ -2822,8 +2825,8 @@ function Index() {
                           setNpServiceInput("");
                         }
                       }}
-                      placeholder="مثل: موارد بشرية ، محاسبة ... ثم Enter"
-                      className="w-full h-11 border border-slate-300 rounded px-3 text-right focus:outline-none focus:border-[color:var(--eyenak-teal)]"
+                      placeholder="اكتب الخدمة ثم Enter أو اضغط + إضافة (يمكنك إضافة أكثر من خدمة)"
+                      className="flex-1 h-11 border border-slate-300 rounded px-3 text-right focus:outline-none focus:border-[color:var(--eyenak-teal)]"
                     />
                   </div>
                   {npServices.length > 0 && (
@@ -4737,18 +4740,6 @@ function Index() {
                 {/* Header */}
                 <div className="h-14 px-4 flex items-center justify-between border-b border-slate-200 bg-white">
                   <div className="flex items-center gap-2 text-xs">
-                    <Eye className="w-4 h-4 text-slate-400" />
-                    <span className="text-slate-500">عرض كـ:</span>
-                    <select
-                      value={chatRoleView}
-                      onChange={(e) => setChatRoleView(e.target.value as ChatRole)}
-                      className="border border-slate-200 rounded px-2 py-1 text-xs bg-white"
-                      disabled={!isAdmin}
-                    >
-                      <option value="admin">أدمن</option>
-                      <option value="employee">موظف</option>
-                      <option value="client">عميل</option>
-                    </select>
                     {isAdmin && (
                       <button
                         onClick={() => setMembersModalOpen(true)}
@@ -4770,13 +4761,13 @@ function Index() {
 
                 {/* Messages */}
                 <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-slate-50">
-                  {(chats[chatProject] ?? []).filter((m) => canSeeMessage(m, chatRoleView)).length === 0 ? (
+                  {(chats[chatProject] ?? []).filter((m) => canSeeMessage(m, viewerRole)).length === 0 ? (
                     <div className="text-center text-xs text-slate-400 py-10">لا توجد رسائل مرئية لك بعد.</div>
                   ) : (
                     (chats[chatProject] ?? [])
-                      .filter((m) => canSeeMessage(m, chatRoleView))
+                      .filter((m) => canSeeMessage(m, viewerRole))
                       .map((m) => {
-                        const mine = m.role === chatRoleView;
+                        const mine = m.role === viewerRole;
                         return (
                           <div key={m.id} className={`flex ${mine ? "justify-start" : "justify-end"}`}>
                             <div className={`max-w-[70%] rounded-lg px-3 py-2 shadow-sm ${
@@ -4786,8 +4777,15 @@ function Index() {
                                 <span className="font-bold">{m.sender}</span>
                                 <span>·</span>
                                 <span>{m.role === "admin" ? "أدمن" : m.role === "employee" ? "موظف" : "عميل"}</span>
-                                <span>·</span>
-                                <span>{visibilityLabel(m.visibility)}</span>
+                                {m.hiddenFromClient && (
+                                  <span
+                                    className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-100"
+                                    title="مخفية عن العميل"
+                                  >
+                                    <Lock className="w-3 h-3" />
+                                    <span>مخفية عن العميل</span>
+                                  </span>
+                                )}
                               </div>
                               <div className="text-sm whitespace-pre-wrap break-words">{m.text}</div>
                               <div className={`text-[10px] mt-1 ${mine ? "text-white/70" : "text-slate-400"}`}>
@@ -4802,23 +4800,21 @@ function Index() {
 
                 {/* Composer */}
                 <div className="border-t border-slate-200 bg-white p-3">
-                  <div className="flex items-center gap-2 mb-2 text-xs text-slate-600">
-                    <span>إظهار الرسالة لـ:</span>
-                    <select
-                      value={chatVisibility}
-                      onChange={(e) => setChatVisibility(e.target.value as ChatVisibility)}
-                      className="border border-slate-200 rounded px-2 py-1 text-xs bg-white"
-                    >
-                      <option value="all">الجميع (أدمن + موظف + عميل)</option>
-                      {chatRoleView !== "client" && (
-                        <option value="admin-employee">الأدمن + الموظف فقط</option>
-                      )}
-                      {chatRoleView !== "employee" && (
-                        <option value="admin-client">الأدمن + العميل فقط</option>
-                      )}
-                    </select>
-                  </div>
                   <div className="flex items-center gap-2">
+                    {canToggleVisibility && (
+                      <button
+                        type="button"
+                        onClick={() => setComposerHidden((v) => !v)}
+                        className={`h-10 w-10 rounded-md border flex items-center justify-center ${
+                          composerHidden
+                            ? "bg-amber-50 border-amber-300 text-amber-700"
+                            : "bg-white border-slate-200 text-slate-600"
+                        }`}
+                        title={composerHidden ? "الرسالة مخفية عن العميل (انقر لإظهارها)" : "الرسالة ظاهرة للعميل (انقر لإخفائها)"}
+                      >
+                        {composerHidden ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    )}
                     <button
                       onClick={sendChatMessage}
                       disabled={!chatInput.trim()}
