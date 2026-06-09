@@ -1737,7 +1737,7 @@ function Index() {
                 ))}
                 <div className="border-t border-slate-100" />
                 <button
-                  onClick={() => { setUserMenuOpen(false); setIsAdmin(false); setCurrentUser(t("ايهاب فاتح","Ehab Fateh")); setLoginOpen(true); }}
+                  onClick={async () => { setUserMenuOpen(false); await auth.signOut(); navigate({ to: "/auth" }); }}
                   className="w-full text-right px-4 py-2.5 text-sm hover:bg-red-50 flex items-center gap-2 text-red-600"
                 >
                   <span className="w-5 text-center">↩</span>
