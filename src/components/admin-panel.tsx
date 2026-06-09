@@ -24,6 +24,15 @@ type Props = {
   setEmployees: React.Dispatch<React.SetStateAction<any>>;
   perms: { key: string; label: string; group: string }[];
   defaultPerms: () => Record<string, boolean>;
+  // Optional remote handlers — when provided, AdminPanel persists to backend
+  onCreateUser?: (input: {
+    email: string; password: string; display_name: string;
+    username?: string; role: "admin" | "employee" | "client";
+    perms: Record<string, boolean>;
+  }) => Promise<void>;
+  onUpdatePerms?: (userId: string, perms: Record<string, boolean>) => Promise<void>;
+  onToggleActive?: (userId: string, active: boolean) => Promise<void>;
+  loading?: boolean;
 };
 
 const SIDEBAR = [
@@ -40,7 +49,10 @@ const SIDEBAR = [
 
 type SectionId = typeof SIDEBAR[number]["id"];
 
-export function AdminPanel({ open, onClose, employees, setEmployees, perms, defaultPerms }: Props) {
+export function AdminPanel({
+  open, onClose, employees, setEmployees, perms, defaultPerms,
+  onCreateUser, onUpdatePerms, onToggleActive, loading,
+}: Props) {
   const [section, setSection] = useState<SectionId>("users");
   const [userTab, setUserTab] = useState<"users" | "invites" | "clients">("users");
   const [search, setSearch] = useState("");
@@ -117,6 +129,8 @@ export function AdminPanel({ open, onClose, employees, setEmployees, perms, defa
               onEdit={(e: AdminEmployee) => setEditEmp(e)}
               onPerms={(e: AdminEmployee) => setPermsEmp(e)}
               total={employees.length}
+              onToggleActive={onToggleActive}
+              loading={loading}
             />
           )}
           {section === "roles" && (
@@ -154,8 +168,24 @@ export function AdminPanel({ open, onClose, employees, setEmployees, perms, defa
       {addOpen && (
         <AddUserModal
           onClose={() => setAddOpen(false)}
-          onCreate={(emp) => {
-            setEmployees((arr: AdminEmployee[]) => [...arr, emp]);
+          onCreate={async (emp) => {
+            if (onCreateUser) {
+              const roleMap: Record<string, "admin" | "employee" | "client"> = {
+                Admin: "admin", admin: "admin",
+                Employee: "employee", موظف: "employee",
+                عميل: "client", client: "client",
+              };
+              await onCreateUser({
+                email: emp.email,
+                password: emp.password,
+                display_name: emp.name,
+                username: emp.username || undefined,
+                role: roleMap[emp.role] ?? "employee",
+                perms: emp.perms,
+              });
+            } else {
+              setEmployees((arr: AdminEmployee[]) => [...arr, emp]);
+            }
             setAddOpen(false);
           }}
           defaultPerms={defaultPerms}
@@ -180,8 +210,12 @@ export function AdminPanel({ open, onClose, employees, setEmployees, perms, defa
           emp={permsEmp}
           perms={perms}
           onClose={() => setPermsEmp(null)}
-          onSave={(u) => {
-            setEmployees((arr: AdminEmployee[]) => arr.map((x) => (x.id === u.id ? u : x)));
+          onSave={async (u) => {
+            if (onUpdatePerms) {
+              await onUpdatePerms(u.id, u.perms);
+            } else {
+              setEmployees((arr: AdminEmployee[]) => arr.map((x) => (x.id === u.id ? u : x)));
+            }
             setPermsEmp(null);
           }}
         />
