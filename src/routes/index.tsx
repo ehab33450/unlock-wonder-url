@@ -202,7 +202,8 @@ function Index() {
     "الخطابات والوثائق المصدقة",
     "عقود وبيانات الموظفين",
   ];
-  const [isAdmin, setIsAdmin] = useState(true);
+  const isAdmin = !!auth.me?.isAdmin;
+  const setIsAdmin = (_: boolean) => {}; // no-op: role comes from server
   const [permsOpen, setPermsOpen] = useState(false);
 
   // ====== نظام الصلاحيات الكامل (مقسّم لتبويبات) ======
