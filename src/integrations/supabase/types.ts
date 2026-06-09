@@ -44,45 +44,6 @@ export type Database = {
         }
         Relationships: []
       }
-      bookings: {
-        Row: {
-          contact: string | null
-          created_at: string
-          created_by: string | null
-          customer_name: string
-          id: string
-          note: string | null
-          scheduled_at: string
-          service: string | null
-          status: string
-          updated_at: string
-        }
-        Insert: {
-          contact?: string | null
-          created_at?: string
-          created_by?: string | null
-          customer_name: string
-          id?: string
-          note?: string | null
-          scheduled_at: string
-          service?: string | null
-          status?: string
-          updated_at?: string
-        }
-        Update: {
-          contact?: string | null
-          created_at?: string
-          created_by?: string | null
-          customer_name?: string
-          id?: string
-          note?: string | null
-          scheduled_at?: string
-          service?: string | null
-          status?: string
-          updated_at?: string
-        }
-        Relationships: []
-      }
       calendar_events: {
         Row: {
           created_at: string
