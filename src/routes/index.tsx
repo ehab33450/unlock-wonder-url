@@ -4,6 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useNavigate } from "@tanstack/react-router";
 import { useAuth } from "@/contexts/auth-context";
 import { askAssistant } from "@/lib/ai-assistant.functions";
+import { adminListUsers, adminCreateUser, adminSetPermissions, adminSetActive } from "@/lib/auth.functions";
 import guideDashboardImg from "@/assets/guide-dashboard.png";
 import guideProjectsImg from "@/assets/guide-projects.png";
 import guideFinanceImg from "@/assets/guide-finance.png";
@@ -336,6 +337,40 @@ function Index() {
   const [accountOpen, setAccountOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [adminPanelOpen, setAdminPanelOpen] = useState(false);
+  // ===== Remote users (Lovable Cloud) for the admin panel =====
+  const listUsersFn = useServerFn(adminListUsers);
+  const createUserFn = useServerFn(adminCreateUser);
+  const setPermsFn = useServerFn(adminSetPermissions);
+  const setActiveFn = useServerFn(adminSetActive);
+  const [adminUsersLoading, setAdminUsersLoading] = useState(false);
+  const refreshAdminUsers = async () => {
+    if (!isAdmin) return;
+    setAdminUsersLoading(true);
+    try {
+      const res: any = await listUsersFn();
+      const mapped: Employee[] = (res?.users ?? []).map((u: any) => ({
+        id: u.id,
+        name: u.display_name ?? u.email ?? "",
+        email: u.email ?? "",
+        username: u.username ?? "",
+        password: "",
+        role: (u.roles ?? []).includes("admin") ? "Admin" : "Employee",
+        active: !!u.active,
+        perms: { ...defaultEmpPerms(), ...(u.perms ?? {}) },
+      }));
+      setEmployees(mapped);
+    } catch (e) {
+      console.error("refreshAdminUsers", e);
+    } finally {
+      setAdminUsersLoading(false);
+    }
+  };
+  useEffect(() => {
+    if (adminPanelOpen && isAdmin) {
+      refreshAdminUsers();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [adminPanelOpen, isAdmin]);
   const [moreMenuOpen, setMoreMenuOpen] = useState(false);
   const [allProjectsOpen, setAllProjectsOpen] = useState(false);
   const [projectFilter, setProjectFilter] = useState<string | null>(null);
@@ -5747,6 +5782,19 @@ function Index() {
         setEmployees={setEmployees as any}
         perms={PERMS as any}
         defaultPerms={defaultEmpPerms as any}
+        loading={adminUsersLoading}
+        onCreateUser={async (input) => {
+          await createUserFn({ data: input });
+          await refreshAdminUsers();
+        }}
+        onUpdatePerms={async (userId, perms) => {
+          await setPermsFn({ data: { user_id: userId, perms } });
+          await refreshAdminUsers();
+        }}
+        onToggleActive={async (userId, active) => {
+          await setActiveFn({ data: { user_id: userId, active } });
+          await refreshAdminUsers();
+        }}
       />
 
     </div>

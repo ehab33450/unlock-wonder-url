@@ -24,6 +24,15 @@ type Props = {
   setEmployees: React.Dispatch<React.SetStateAction<any>>;
   perms: { key: string; label: string; group: string }[];
   defaultPerms: () => Record<string, boolean>;
+  // Optional remote handlers — when provided, AdminPanel persists to backend
+  onCreateUser?: (input: {
+    email: string; password: string; display_name: string;
+    username?: string; role: "admin" | "employee" | "client";
+    perms: Record<string, boolean>;
+  }) => Promise<void>;
+  onUpdatePerms?: (userId: string, perms: Record<string, boolean>) => Promise<void>;
+  onToggleActive?: (userId: string, active: boolean) => Promise<void>;
+  loading?: boolean;
 };
 
 const SIDEBAR = [
@@ -40,7 +49,10 @@ const SIDEBAR = [
 
 type SectionId = typeof SIDEBAR[number]["id"];
 
-export function AdminPanel({ open, onClose, employees, setEmployees, perms, defaultPerms }: Props) {
+export function AdminPanel({
+  open, onClose, employees, setEmployees, perms, defaultPerms,
+  onCreateUser, onUpdatePerms, onToggleActive, loading,
+}: Props) {
   const [section, setSection] = useState<SectionId>("users");
   const [userTab, setUserTab] = useState<"users" | "invites" | "clients">("users");
   const [search, setSearch] = useState("");
@@ -117,6 +129,8 @@ export function AdminPanel({ open, onClose, employees, setEmployees, perms, defa
               onEdit={(e: AdminEmployee) => setEditEmp(e)}
               onPerms={(e: AdminEmployee) => setPermsEmp(e)}
               total={employees.length}
+              onToggleActive={onToggleActive}
+              loading={loading}
             />
           )}
           {section === "roles" && (
@@ -154,8 +168,24 @@ export function AdminPanel({ open, onClose, employees, setEmployees, perms, defa
       {addOpen && (
         <AddUserModal
           onClose={() => setAddOpen(false)}
-          onCreate={(emp) => {
-            setEmployees((arr: AdminEmployee[]) => [...arr, emp]);
+          onCreate={async (emp) => {
+            if (onCreateUser) {
+              const roleMap: Record<string, "admin" | "employee" | "client"> = {
+                Admin: "admin", admin: "admin",
+                Employee: "employee", موظف: "employee",
+                عميل: "client", client: "client",
+              };
+              await onCreateUser({
+                email: emp.email,
+                password: emp.password,
+                display_name: emp.name,
+                username: emp.username || undefined,
+                role: roleMap[emp.role] ?? "employee",
+                perms: emp.perms,
+              });
+            } else {
+              setEmployees((arr: AdminEmployee[]) => [...arr, emp]);
+            }
             setAddOpen(false);
           }}
           defaultPerms={defaultPerms}
@@ -180,8 +210,12 @@ export function AdminPanel({ open, onClose, employees, setEmployees, perms, defa
           emp={permsEmp}
           perms={perms}
           onClose={() => setPermsEmp(null)}
-          onSave={(u) => {
-            setEmployees((arr: AdminEmployee[]) => arr.map((x) => (x.id === u.id ? u : x)));
+          onSave={async (u) => {
+            if (onUpdatePerms) {
+              await onUpdatePerms(u.id, u.perms);
+            } else {
+              setEmployees((arr: AdminEmployee[]) => arr.map((x) => (x.id === u.id ? u : x)));
+            }
             setPermsEmp(null);
           }}
         />
@@ -214,7 +248,7 @@ export function AdminPanel({ open, onClose, employees, setEmployees, perms, defa
 /* ============== Users Section ============== */
 function UsersSection({
   employees, setEmployees, search, setSearch, userTab, setUserTab,
-  onAdd, onEdit, onPerms, total,
+  onAdd, onEdit, onPerms, total, onToggleActive, loading,
 }: any) {
   return (
     <div className="p-6">
@@ -290,7 +324,9 @@ function UsersSection({
                 <td className="px-4 py-3">
                   <button
                     onClick={() =>
-                      setEmployees((arr: AdminEmployee[]) => arr.map((x) => x.id === emp.id ? { ...x, active: !x.active } : x))
+                      onToggleActive
+                        ? onToggleActive(emp.id, !emp.active)
+                        : setEmployees((arr: AdminEmployee[]) => arr.map((x) => x.id === emp.id ? { ...x, active: !x.active } : x))
                     }
                     className="flex items-center gap-1 text-xs"
                   >
@@ -318,7 +354,7 @@ function UsersSection({
               </tr>
             ))}
             {employees.length === 0 && (
-              <tr><td colSpan={7} className="px-4 py-12 text-center text-slate-400 text-sm">لا توجد نتائج</td></tr>
+              <tr><td colSpan={7} className="px-4 py-12 text-center text-slate-400 text-sm">{loading ? "جارٍ التحميل…" : "لا توجد نتائج"}</td></tr>
             )}
           </tbody>
         </table>
@@ -439,13 +475,14 @@ function SmtpSection() {
 
 /* ============== Add User Modal ============== */
 function AddUserModal({ onClose, onCreate, defaultPerms }: {
-  onClose: () => void; onCreate: (e: AdminEmployee) => void; defaultPerms: () => Record<string, boolean>;
+  onClose: () => void; onCreate: (e: AdminEmployee) => void | Promise<void>; defaultPerms: () => Record<string, boolean>;
 }) {
   const [f, setF] = useState({
     kind: "موظف", role: "Employee", name: "", jobTitle: "",
     email: "", phone: "", password: "", confirm: "",
   });
   const [err, setErr] = useState("");
+  const [busy, setBusy] = useState(false);
   return (
     <div dir="rtl" className="fixed inset-0 z-[70] bg-slate-900/60 flex items-center justify-center p-4" onClick={onClose}>
       <div onClick={(e) => e.stopPropagation()} className="bg-white rounded-xl shadow-2xl w-full max-w-2xl p-6">
@@ -490,21 +527,31 @@ function AddUserModal({ onClose, onCreate, defaultPerms }: {
         {err && <div className="mt-3 text-xs text-red-600 text-right">{err}</div>}
         <div className="mt-6 flex items-center justify-center">
           <button
-            onClick={() => {
+            disabled={busy}
+            onClick={async () => {
               if (!f.name.trim()) return setErr("الاسم مطلوب");
               if (!f.email.trim()) return setErr("البريد مطلوب");
+              if (!f.password || f.password.length < 6) return setErr("كلمة المرور 6 أحرف فأكثر");
               if (f.password !== f.confirm) return setErr("كلمتا المرور غير متطابقتين");
-              onCreate({
-                id: `u${Date.now()}`, name: f.name.trim(), email: f.email.trim(),
-                username: f.email.split("@")[0] || `u${Date.now()}`,
-                password: f.password || Math.random().toString(36).slice(2, 8),
-                role: f.role, active: true, phone: f.phone, jobTitle: f.jobTitle,
-                perms: defaultPerms(),
-              });
+              setErr("");
+              setBusy(true);
+              try {
+                await onCreate({
+                  id: `u${Date.now()}`, name: f.name.trim(), email: f.email.trim(),
+                  username: f.email.split("@")[0] || `u${Date.now()}`,
+                  password: f.password,
+                  role: f.role, active: true, phone: f.phone, jobTitle: f.jobTitle,
+                  perms: defaultPerms(),
+                });
+              } catch (e: any) {
+                setErr(e?.message ?? "فشل إنشاء المستخدم");
+              } finally {
+                setBusy(false);
+              }
             }}
-            className="h-11 px-10 rounded-lg bg-[color:var(--eyenak-teal)] text-white font-semibold hover:opacity-90"
+            className="h-11 px-10 rounded-lg bg-[color:var(--eyenak-teal)] text-white font-semibold hover:opacity-90 disabled:opacity-50"
           >
-            أضف الآن
+            {busy ? "..." : "أضف الآن"}
           </button>
         </div>
       </div>
@@ -545,9 +592,11 @@ function EditUserModal({ emp, onClose, onSave, onDelete }: {
 }
 
 function PermsModal({ emp, perms, onClose, onSave }: {
-  emp: AdminEmployee; perms: { key: string; label: string; group: string }[]; onClose: () => void; onSave: (e: AdminEmployee) => void;
+  emp: AdminEmployee; perms: { key: string; label: string; group: string }[]; onClose: () => void; onSave: (e: AdminEmployee) => void | Promise<void>;
 }) {
   const [u, setU] = useState(emp);
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState("");
   return (
     <div dir="rtl" className="fixed inset-0 z-[70] bg-slate-900/60 flex items-center justify-center p-4" onClick={onClose}>
       <div onClick={(e) => e.stopPropagation()} className="bg-white rounded-xl shadow-2xl w-full max-w-5xl p-6 max-h-[90vh] overflow-y-auto">
@@ -560,8 +609,20 @@ function PermsModal({ emp, perms, onClose, onSave }: {
           value={u.perms}
           onChange={(next) => setU({ ...u, perms: next })}
         />
+        {err && <div className="mt-3 text-xs text-red-600 text-right">{err}</div>}
         <div className="mt-5 flex justify-end">
-          <button onClick={() => onSave(u)} className="h-10 px-6 rounded-lg bg-[color:var(--eyenak-teal)] text-white text-sm font-semibold">حفظ</button>
+          <button
+            disabled={busy}
+            onClick={async () => {
+              setBusy(true); setErr("");
+              try { await onSave(u); }
+              catch (e: any) { setErr(e?.message ?? "فشل الحفظ"); }
+              finally { setBusy(false); }
+            }}
+            className="h-10 px-6 rounded-lg bg-[color:var(--eyenak-teal)] text-white text-sm font-semibold disabled:opacity-50"
+          >
+            {busy ? "..." : "حفظ"}
+          </button>
         </div>
       </div>
     </div>
