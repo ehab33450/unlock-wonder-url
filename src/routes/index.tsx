@@ -605,7 +605,7 @@ function Index() {
             sender: "الأدمن",
             role: "admin",
             text: `مرحبًا، تم فتح مشروع "${name}". يرجى البدء بالمرحلة الأولى.`,
-            visibility: "all",
+            hiddenFromClient: false,
             createdAt: Date.now() - 1000 * 60 * 60 * 24 * 2,
           },
           {
@@ -613,7 +613,7 @@ function Index() {
             sender: assignee,
             role: "employee",
             text: "تم استلام المتطلبات وسأبدأ التنفيذ اليوم.",
-            visibility: "all",
+            hiddenFromClient: false,
             createdAt: Date.now() - 1000 * 60 * 60 * 20,
           },
           {
@@ -621,7 +621,7 @@ function Index() {
             sender: "الأدمن",
             role: "admin",
             text: "ملاحظة داخلية: تابع الجدول الزمني بدقة.",
-            visibility: "admin-employee",
+            hiddenFromClient: true,
             createdAt: Date.now() - 1000 * 60 * 60 * 5,
           },
           {
@@ -629,7 +629,7 @@ function Index() {
             sender: `مسؤول ${name}`,
             role: "client",
             text: "شكرًا، بانتظار التحديثات.",
-            visibility: "all",
+            hiddenFromClient: false,
             createdAt: Date.now() - 1000 * 60 * 30,
           },
         ];
