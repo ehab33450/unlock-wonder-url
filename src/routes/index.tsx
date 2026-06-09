@@ -98,7 +98,6 @@ const sidebarItems = [
   { icon: Wallet, label: "المالية", en: "Finance", color: "#16a34a", permKey: "finance_view" as string | null },
   { icon: User, label: "مستخدم", en: "Users", color: "#6366f1", permKey: "members_view" as string | null },
   { icon: HelpCircle, label: "الإرشادات", en: "Guides", color: "#14b8a6", permKey: null as string | null },
-  { icon: CheckSquare, label: "الحجز", en: "Booking", color: "#ec4899", permKey: "booking_view" as string | null },
   { icon: MoreHorizontal, label: "المزيد", en: "More", color: "#64748b", permKey: null as string | null },
 ];
 
