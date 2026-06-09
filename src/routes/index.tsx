@@ -5704,7 +5704,7 @@ function Index() {
               </div>
               <div className="flex items-center justify-between p-3 border border-slate-200 rounded-lg">
                 <span className="text-slate-700">{t("وضع المدير","Admin mode")}</span>
-                <button onClick={() => setIsAdmin((v) => !v)} className={`px-3 py-1 rounded text-xs font-semibold ${isAdmin ? "bg-emerald-500 text-white" : "bg-slate-200 text-slate-600"}`}>{isAdmin ? "ON" : "OFF"}</button>
+                <button disabled className={`px-3 py-1 rounded text-xs font-semibold cursor-not-allowed ${isAdmin ? "bg-emerald-500 text-white" : "bg-slate-200 text-slate-600"}`}>{isAdmin ? "ON" : "OFF"}</button>
               </div>
               <div className="p-3 border border-dashed border-slate-300 rounded-lg text-xs text-slate-500 text-center">
                 {t("مزيد من الإعدادات قريباً","More settings coming soon")}
