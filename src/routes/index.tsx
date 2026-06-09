@@ -361,11 +361,11 @@ function Index() {
     }
   };
   useEffect(() => {
-    if (adminPanelOpen && isAdmin) {
+    if (adminPanelOpen && isAdmin && auth.session) {
       refreshAdminUsers();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [adminPanelOpen, isAdmin]);
+  }, [adminPanelOpen, isAdmin, auth.session]);
   const [moreMenuOpen, setMoreMenuOpen] = useState(false);
   const [allProjectsOpen, setAllProjectsOpen] = useState(false);
   const [projectFilter, setProjectFilter] = useState<string | null>(null);
