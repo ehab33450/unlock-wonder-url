@@ -56,6 +56,8 @@ import {
   Trash2,
   Send,
   Eye,
+  EyeOff,
+  Lock,
   AlarmClock,
   BellRing,
   StickyNote,
