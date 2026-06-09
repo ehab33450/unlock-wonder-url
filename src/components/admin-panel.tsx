@@ -475,13 +475,14 @@ function SmtpSection() {
 
 /* ============== Add User Modal ============== */
 function AddUserModal({ onClose, onCreate, defaultPerms }: {
-  onClose: () => void; onCreate: (e: AdminEmployee) => void; defaultPerms: () => Record<string, boolean>;
+  onClose: () => void; onCreate: (e: AdminEmployee) => void | Promise<void>; defaultPerms: () => Record<string, boolean>;
 }) {
   const [f, setF] = useState({
     kind: "موظف", role: "Employee", name: "", jobTitle: "",
     email: "", phone: "", password: "", confirm: "",
   });
   const [err, setErr] = useState("");
+  const [busy, setBusy] = useState(false);
   return (
     <div dir="rtl" className="fixed inset-0 z-[70] bg-slate-900/60 flex items-center justify-center p-4" onClick={onClose}>
       <div onClick={(e) => e.stopPropagation()} className="bg-white rounded-xl shadow-2xl w-full max-w-2xl p-6">
@@ -526,21 +527,31 @@ function AddUserModal({ onClose, onCreate, defaultPerms }: {
         {err && <div className="mt-3 text-xs text-red-600 text-right">{err}</div>}
         <div className="mt-6 flex items-center justify-center">
           <button
-            onClick={() => {
+            disabled={busy}
+            onClick={async () => {
               if (!f.name.trim()) return setErr("الاسم مطلوب");
               if (!f.email.trim()) return setErr("البريد مطلوب");
+              if (!f.password || f.password.length < 6) return setErr("كلمة المرور 6 أحرف فأكثر");
               if (f.password !== f.confirm) return setErr("كلمتا المرور غير متطابقتين");
-              onCreate({
-                id: `u${Date.now()}`, name: f.name.trim(), email: f.email.trim(),
-                username: f.email.split("@")[0] || `u${Date.now()}`,
-                password: f.password || Math.random().toString(36).slice(2, 8),
-                role: f.role, active: true, phone: f.phone, jobTitle: f.jobTitle,
-                perms: defaultPerms(),
-              });
+              setErr("");
+              setBusy(true);
+              try {
+                await onCreate({
+                  id: `u${Date.now()}`, name: f.name.trim(), email: f.email.trim(),
+                  username: f.email.split("@")[0] || `u${Date.now()}`,
+                  password: f.password,
+                  role: f.role, active: true, phone: f.phone, jobTitle: f.jobTitle,
+                  perms: defaultPerms(),
+                });
+              } catch (e: any) {
+                setErr(e?.message ?? "فشل إنشاء المستخدم");
+              } finally {
+                setBusy(false);
+              }
             }}
-            className="h-11 px-10 rounded-lg bg-[color:var(--eyenak-teal)] text-white font-semibold hover:opacity-90"
+            className="h-11 px-10 rounded-lg bg-[color:var(--eyenak-teal)] text-white font-semibold hover:opacity-90 disabled:opacity-50"
           >
-            أضف الآن
+            {busy ? "..." : "أضف الآن"}
           </button>
         </div>
       </div>
@@ -581,9 +592,11 @@ function EditUserModal({ emp, onClose, onSave, onDelete }: {
 }
 
 function PermsModal({ emp, perms, onClose, onSave }: {
-  emp: AdminEmployee; perms: { key: string; label: string; group: string }[]; onClose: () => void; onSave: (e: AdminEmployee) => void;
+  emp: AdminEmployee; perms: { key: string; label: string; group: string }[]; onClose: () => void; onSave: (e: AdminEmployee) => void | Promise<void>;
 }) {
   const [u, setU] = useState(emp);
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState("");
   return (
     <div dir="rtl" className="fixed inset-0 z-[70] bg-slate-900/60 flex items-center justify-center p-4" onClick={onClose}>
       <div onClick={(e) => e.stopPropagation()} className="bg-white rounded-xl shadow-2xl w-full max-w-5xl p-6 max-h-[90vh] overflow-y-auto">
@@ -596,8 +609,20 @@ function PermsModal({ emp, perms, onClose, onSave }: {
           value={u.perms}
           onChange={(next) => setU({ ...u, perms: next })}
         />
+        {err && <div className="mt-3 text-xs text-red-600 text-right">{err}</div>}
         <div className="mt-5 flex justify-end">
-          <button onClick={() => onSave(u)} className="h-10 px-6 rounded-lg bg-[color:var(--eyenak-teal)] text-white text-sm font-semibold">حفظ</button>
+          <button
+            disabled={busy}
+            onClick={async () => {
+              setBusy(true); setErr("");
+              try { await onSave(u); }
+              catch (e: any) { setErr(e?.message ?? "فشل الحفظ"); }
+              finally { setBusy(false); }
+            }}
+            className="h-10 px-6 rounded-lg bg-[color:var(--eyenak-teal)] text-white text-sm font-semibold disabled:opacity-50"
+          >
+            {busy ? "..." : "حفظ"}
+          </button>
         </div>
       </div>
     </div>
