@@ -136,14 +136,9 @@ const employeeTasks: Record<string, string[]> = {
 };
 
 function Index() {
-  // ===== Auth gate =====
+  // ===== Auth gate (DISABLED - full admin access without login) =====
   const auth = useAuth();
   const navigate = useNavigate();
-  useEffect(() => {
-    if (!auth.loading && !auth.session) {
-      navigate({ to: "/auth" });
-    }
-  }, [auth.loading, auth.session, navigate]);
 
   const [lang, setLang] = useState<"ar" | "en">("ar");
   const isEn = lang === "en";
