@@ -98,7 +98,6 @@ const sidebarItems = [
   { icon: Wallet, label: "المالية", en: "Finance", color: "#16a34a", permKey: "finance_view" as string | null },
   { icon: User, label: "مستخدم", en: "Users", color: "#6366f1", permKey: "members_view" as string | null },
   { icon: HelpCircle, label: "الإرشادات", en: "Guides", color: "#14b8a6", permKey: null as string | null },
-  { icon: CheckSquare, label: "الحجز", en: "Booking", color: "#ec4899", permKey: "booking_view" as string | null },
   { icon: MoreHorizontal, label: "المزيد", en: "More", color: "#64748b", permKey: null as string | null },
 ];
 
@@ -281,7 +280,6 @@ function Index() {
     { key: "members_view",    label: "عرض الأعضاء",          group: "الأعضاء" },
     { key: "meetings_view",   label: "عرض الاجتماعات",        group: "الاجتماعات" },
     { key: "finance_view",    label: "عرض المالية",           group: "المالية" },
-    { key: "booking_view",    label: "عرض الحجز",             group: "الحجز" },
   ];
   const defaultEmpPerms = (): Record<PermKey, boolean> => {
     const o = {} as Record<PermKey, boolean>;
@@ -1804,7 +1802,6 @@ function Index() {
               (item.label === "التقويم" && calendarOpen) ||
               (item.label === "الملفات" && filesViewOpen) ||
               (item.label === "المحادثة" && chatViewOpen) ||
-              (item.label === "الحجز" && bookingOpen) ||
               (item.label === "الاجتماعات" && meetingsOpen) ||
               (item.label === "المالية" && financeOpen) ||
               (item.label === "الإرشادات" && guidesOpen) ||
@@ -1815,7 +1812,6 @@ function Index() {
                 onClick={() => {
                   closeAllPanels();
                   if (item.label === "التقويم") setCalendarOpen(true);
-                  if (item.label === "الحجز") setBookingOpen(true);
                   if (item.label === "الملفات") setFilesViewOpen(true);
                   if (item.label === "المحادثة") setChatViewOpen(true);
                   if (item.label === "قائمة المذكرات") setNotesViewOpen(true);

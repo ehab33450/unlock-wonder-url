@@ -394,43 +394,6 @@ export const deleteFinance = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
-/* ============ BOOKINGS ============ */
-export const listBookings = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
-    const { data, error } = await context.supabase
-      .from("bookings").select("*").order("scheduled_at", { ascending: false });
-    if (error) throw new Error(error.message);
-    return data ?? [];
-  });
-
-export const upsertBooking = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .inputValidator((d: any) => z.object({
-    id: z.string().uuid().optional(),
-    customer_name: z.string().min(1).max(200),
-    contact: z.string().max(200).nullable().optional(),
-    service: z.string().max(200).nullable().optional(),
-    scheduled_at: z.string(),
-    status: z.string().max(40).optional(),
-    note: z.string().max(2000).nullable().optional(),
-  }).parse(d))
-  .handler(async ({ data, context }) => {
-    const row = { ...data, created_by: context.userId };
-    const { data: res, error } = await context.supabase.from("bookings").upsert(row).select().single();
-    if (error) throw new Error(error.message);
-    return res;
-  });
-
-export const deleteBooking = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .inputValidator((d: { id: string }) => z.object({ id: z.string().uuid() }).parse(d))
-  .handler(async ({ data, context }) => {
-    const { error } = await context.supabase.from("bookings").delete().eq("id", data.id);
-    if (error) throw new Error(error.message);
-    return { ok: true };
-  });
-
 /* ============ COMPANY SETTINGS ============ */
 export const getCompanySettings = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
