@@ -248,7 +248,7 @@ export function AdminPanel({
 /* ============== Users Section ============== */
 function UsersSection({
   employees, setEmployees, search, setSearch, userTab, setUserTab,
-  onAdd, onEdit, onPerms, total,
+  onAdd, onEdit, onPerms, total, onToggleActive, loading,
 }: any) {
   return (
     <div className="p-6">
@@ -324,7 +324,9 @@ function UsersSection({
                 <td className="px-4 py-3">
                   <button
                     onClick={() =>
-                      setEmployees((arr: AdminEmployee[]) => arr.map((x) => x.id === emp.id ? { ...x, active: !x.active } : x))
+                      onToggleActive
+                        ? onToggleActive(emp.id, !emp.active)
+                        : setEmployees((arr: AdminEmployee[]) => arr.map((x) => x.id === emp.id ? { ...x, active: !x.active } : x))
                     }
                     className="flex items-center gap-1 text-xs"
                   >
@@ -352,7 +354,7 @@ function UsersSection({
               </tr>
             ))}
             {employees.length === 0 && (
-              <tr><td colSpan={7} className="px-4 py-12 text-center text-slate-400 text-sm">لا توجد نتائج</td></tr>
+              <tr><td colSpan={7} className="px-4 py-12 text-center text-slate-400 text-sm">{loading ? "جارٍ التحميل…" : "لا توجد نتائج"}</td></tr>
             )}
           </tbody>
         </table>
