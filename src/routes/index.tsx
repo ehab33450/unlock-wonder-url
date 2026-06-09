@@ -136,9 +136,14 @@ const employeeTasks: Record<string, string[]> = {
 };
 
 function Index() {
-  // ===== Auth gate (DISABLED - full admin access without login) =====
+  // ===== Auth gate (required: must be signed in) =====
   const auth = useAuth();
   const navigate = useNavigate();
+  useEffect(() => {
+    if (!auth.loading && !auth.session) {
+      navigate({ to: "/auth" });
+    }
+  }, [auth.loading, auth.session, navigate]);
 
   const [lang, setLang] = useState<"ar" | "en">("ar");
   const isEn = lang === "en";
@@ -198,7 +203,7 @@ function Index() {
     "الخطابات والوثائق المصدقة",
     "عقود وبيانات الموظفين",
   ];
-  const isAdmin = true;
+  const isAdmin = !!auth.me?.isAdmin;
   const setIsAdmin = (_: boolean) => {}; // no-op: role comes from server
   const [permsOpen, setPermsOpen] = useState(false);
 
