@@ -1802,7 +1802,6 @@ function Index() {
               (item.label === "التقويم" && calendarOpen) ||
               (item.label === "الملفات" && filesViewOpen) ||
               (item.label === "المحادثة" && chatViewOpen) ||
-              (item.label === "الحجز" && bookingOpen) ||
               (item.label === "الاجتماعات" && meetingsOpen) ||
               (item.label === "المالية" && financeOpen) ||
               (item.label === "الإرشادات" && guidesOpen) ||
@@ -1813,7 +1812,6 @@ function Index() {
                 onClick={() => {
                   closeAllPanels();
                   if (item.label === "التقويم") setCalendarOpen(true);
-                  if (item.label === "الحجز") setBookingOpen(true);
                   if (item.label === "الملفات") setFilesViewOpen(true);
                   if (item.label === "المحادثة") setChatViewOpen(true);
                   if (item.label === "قائمة المذكرات") setNotesViewOpen(true);
