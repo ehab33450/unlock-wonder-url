@@ -136,14 +136,9 @@ const employeeTasks: Record<string, string[]> = {
 };
 
 function Index() {
-  // ===== Auth gate =====
+  // ===== Auth gate (DISABLED - full admin access without login) =====
   const auth = useAuth();
   const navigate = useNavigate();
-  useEffect(() => {
-    if (!auth.loading && !auth.session) {
-      navigate({ to: "/auth" });
-    }
-  }, [auth.loading, auth.session, navigate]);
 
   const [lang, setLang] = useState<"ar" | "en">("ar");
   const isEn = lang === "en";
@@ -203,7 +198,7 @@ function Index() {
     "الخطابات والوثائق المصدقة",
     "عقود وبيانات الموظفين",
   ];
-  const isAdmin = !!auth.me?.isAdmin;
+  const isAdmin = true;
   const setIsAdmin = (_: boolean) => {}; // no-op: role comes from server
   const [permsOpen, setPermsOpen] = useState(false);
 
@@ -1603,16 +1598,7 @@ function Index() {
     setAllProjectsOpen(false);
   };
 
-  if (auth.loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50 text-slate-500 text-sm">
-        جاري التحميل...
-      </div>
-    );
-  }
-  if (!auth.session) {
-    return null;
-  }
+  // Auth gate disabled — open access as admin
 
   return (
     <div dir={isEn ? "ltr" : "rtl"} className="min-h-screen bg-slate-50 text-slate-800 font-[Cairo]">
