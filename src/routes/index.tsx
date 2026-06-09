@@ -4764,7 +4764,7 @@ function Index() {
                                 <span className="font-bold">{m.sender}</span>
                                 <span>·</span>
                                 <span>{m.role === "admin" ? "أدمن" : m.role === "employee" ? "موظف" : "عميل"}</span>
-                                {m.hiddenFromClient && viewerRole !== "client" && (
+                                {m.hiddenFromClient && (
                                   <span
                                     className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-100"
                                     title="مخفية عن العميل"
