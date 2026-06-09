@@ -4781,18 +4781,18 @@ function Index() {
                                 {canToggleVisibility && (
                                   m.hiddenFromClient ? (
                                     <span
-                                      className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-100"
+                                      className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-red-500/20 text-red-200"
                                       title="مخفية عن العميل"
                                     >
-                                      <EyeOff className="w-3 h-3" />
+                                      <Lock className="w-3 h-3" />
                                     </span>
                                   ) : (
-                                     <span
-                                       className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded ${mine ? "bg-white/15 text-white/90" : "bg-slate-100 text-slate-500"}`}
-                                       title="ظاهرة للعميل"
-                                     >
-                                       <Eye className="w-3 h-3" />
-                                     </span>
+                                    <span
+                                      className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-green-500/20 text-green-200"
+                                      title="ظاهرة للعميل"
+                                    >
+                                      <LockOpen className="w-3 h-3" />
+                                    </span>
                                   )
                                 )}
                               </div>
