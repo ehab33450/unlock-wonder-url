@@ -1568,6 +1568,17 @@ function Index() {
     setAllProjectsOpen(false);
   };
 
+  if (auth.loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-50 text-slate-500 text-sm">
+        جاري التحميل...
+      </div>
+    );
+  }
+  if (!auth.session) {
+    return null;
+  }
+
   return (
     <div dir={isEn ? "ltr" : "rtl"} className="min-h-screen bg-slate-50 text-slate-800 font-[Cairo]">
       {/* Top header */}
