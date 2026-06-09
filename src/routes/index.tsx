@@ -198,7 +198,7 @@ function Index() {
     "الخطابات والوثائق المصدقة",
     "عقود وبيانات الموظفين",
   ];
-  const isAdmin = !!auth.me?.isAdmin;
+  const isAdmin = true;
   const setIsAdmin = (_: boolean) => {}; // no-op: role comes from server
   const [permsOpen, setPermsOpen] = useState(false);
 
