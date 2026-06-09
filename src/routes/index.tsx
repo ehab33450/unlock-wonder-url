@@ -261,6 +261,7 @@ function Index() {
     { key: "tasks_edit",      label: "تعديل المهام",         group: "المهام" },
     { key: "chat_view",       label: "عرض المحادثة",         group: "المحادثة" },
     { key: "chat_send",       label: "إرسال رسائل",          group: "المحادثة" },
+    { key: "chat_visibility", label: "إظهار/إخفاء الرسائل عن العميل", group: "المحادثة", desc: "السماح بفتح أو غلق العين لإظهار/إخفاء الرسائل عن العميل." },
     { key: "calendar_view",   label: "عرض التقويم",          group: "التقويم" },
     { key: "calendar_edit",   label: "تعديل التقويم",        group: "التقويم" },
     { key: "members_view",    label: "عرض الأعضاء",          group: "الأعضاء" },
