@@ -1,6 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
+import { useNavigate } from "@tanstack/react-router";
+import { useAuth } from "@/contexts/auth-context";
 import { askAssistant } from "@/lib/ai-assistant.functions";
 import guideDashboardImg from "@/assets/guide-dashboard.png";
 import guideProjectsImg from "@/assets/guide-projects.png";
@@ -87,16 +89,16 @@ export const Route = createFileRoute("/")({
 });
 
 const sidebarItems = [
-  { icon: Calendar, label: "التقويم", en: "Calendar", color: "#0ea5e9" },
-  { icon: FileText, label: "الملفات", en: "Files", color: "#8b5cf6" },
-  { icon: Pin, label: "قائمة المذكرات", en: "Notes", color: "#f59e0b" },
-  { icon: MessageSquare, label: "المحادثة", en: "Chat", color: "#10b981" },
-  { icon: Video, label: "الاجتماعات", en: "Meetings", color: "#ef4444" },
-  { icon: Wallet, label: "المالية", en: "Finance", color: "#16a34a" },
-  { icon: User, label: "مستخدم", en: "Users", color: "#6366f1" },
-  { icon: HelpCircle, label: "الإرشادات", en: "Guides", color: "#14b8a6" },
-  { icon: CheckSquare, label: "الحجز", en: "Booking", color: "#ec4899" },
-  { icon: MoreHorizontal, label: "المزيد", en: "More", color: "#64748b" },
+  { icon: Calendar, label: "التقويم", en: "Calendar", color: "#0ea5e9", permKey: "calendar_view" as string | null },
+  { icon: FileText, label: "الملفات", en: "Files", color: "#8b5cf6", permKey: "files_view" as string | null },
+  { icon: Pin, label: "قائمة المذكرات", en: "Notes", color: "#f59e0b", permKey: "pm_notes" as string | null },
+  { icon: MessageSquare, label: "المحادثة", en: "Chat", color: "#10b981", permKey: "chat_view" as string | null },
+  { icon: Video, label: "الاجتماعات", en: "Meetings", color: "#ef4444", permKey: "meetings_view" as string | null },
+  { icon: Wallet, label: "المالية", en: "Finance", color: "#16a34a", permKey: "finance_view" as string | null },
+  { icon: User, label: "مستخدم", en: "Users", color: "#6366f1", permKey: "members_view" as string | null },
+  { icon: HelpCircle, label: "الإرشادات", en: "Guides", color: "#14b8a6", permKey: null as string | null },
+  { icon: CheckSquare, label: "الحجز", en: "Booking", color: "#ec4899", permKey: "booking_view" as string | null },
+  { icon: MoreHorizontal, label: "المزيد", en: "More", color: "#64748b", permKey: null as string | null },
 ];
 
 const topTabs = [
@@ -133,6 +135,15 @@ const employeeTasks: Record<string, string[]> = {
 };
 
 function Index() {
+  // ===== Auth gate =====
+  const auth = useAuth();
+  const navigate = useNavigate();
+  useEffect(() => {
+    if (!auth.loading && !auth.session) {
+      navigate({ to: "/auth" });
+    }
+  }, [auth.loading, auth.session, navigate]);
+
   const [lang, setLang] = useState<"ar" | "en">("ar");
   const isEn = lang === "en";
   const t = (ar: string, en: string) => (isEn ? en : ar);
@@ -191,7 +202,8 @@ function Index() {
     "الخطابات والوثائق المصدقة",
     "عقود وبيانات الموظفين",
   ];
-  const [isAdmin, setIsAdmin] = useState(true);
+  const isAdmin = !!auth.me?.isAdmin;
+  const setIsAdmin = (_: boolean) => {}; // no-op: role comes from server
   const [permsOpen, setPermsOpen] = useState(false);
 
   // ====== نظام الصلاحيات الكامل (مقسّم لتبويبات) ======
@@ -266,6 +278,9 @@ function Index() {
     { key: "calendar_view",   label: "عرض التقويم",          group: "التقويم" },
     { key: "calendar_edit",   label: "تعديل التقويم",        group: "التقويم" },
     { key: "members_view",    label: "عرض الأعضاء",          group: "الأعضاء" },
+    { key: "meetings_view",   label: "عرض الاجتماعات",        group: "الاجتماعات" },
+    { key: "finance_view",    label: "عرض المالية",           group: "المالية" },
+    { key: "booking_view",    label: "عرض الحجز",             group: "الحجز" },
   ];
   const defaultEmpPerms = (): Record<PermKey, boolean> => {
     const o = {} as Record<PermKey, boolean>;
@@ -291,7 +306,10 @@ function Index() {
       active: true, perms: defaultEmpPerms(),
     },
   ]);
-  const [currentUser, setCurrentUser] = useState<string>("ايهاب فاتح");
+  const [currentUser, setCurrentUser] = useState<string>("");
+  useEffect(() => {
+    if (auth.me?.profile?.display_name) setCurrentUser(auth.me.profile.display_name);
+  }, [auth.me?.profile?.display_name]);
   const currentEmployee = useMemo(
     () => employees.find((e) => e.name === currentUser) ?? null,
     [employees, currentUser]
@@ -1550,6 +1568,17 @@ function Index() {
     setAllProjectsOpen(false);
   };
 
+  if (auth.loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-50 text-slate-500 text-sm">
+        جاري التحميل...
+      </div>
+    );
+  }
+  if (!auth.session) {
+    return null;
+  }
+
   return (
     <div dir={isEn ? "ltr" : "rtl"} className="min-h-screen bg-slate-50 text-slate-800 font-[Cairo]">
       {/* Top header */}
@@ -1722,7 +1751,7 @@ function Index() {
                 ))}
                 <div className="border-t border-slate-100" />
                 <button
-                  onClick={() => { setUserMenuOpen(false); setIsAdmin(false); setCurrentUser(t("ايهاب فاتح","Ehab Fateh")); setLoginOpen(true); }}
+                  onClick={async () => { setUserMenuOpen(false); await auth.signOut(); navigate({ to: "/auth" }); }}
                   className="w-full text-right px-4 py-2.5 text-sm hover:bg-red-50 flex items-center gap-2 text-red-600"
                 >
                   <span className="w-5 text-center">↩</span>
@@ -1737,7 +1766,7 @@ function Index() {
       <div className="flex">
         {/* Left icon rail */}
         <aside className="w-20 bg-white border-l border-slate-200 min-h-[calc(100vh-3.5rem)] flex flex-col items-center py-4 gap-2">
-          {sidebarItems.map((item) => {
+          {sidebarItems.filter((it) => !it.permKey || hasPerm(it.permKey)).map((item) => {
             const Icon = item.icon;
             const isActive =
               (item.label === "التقويم" && calendarOpen) ||
@@ -5692,7 +5721,7 @@ function Index() {
               </div>
               <div className="flex items-center justify-between p-3 border border-slate-200 rounded-lg">
                 <span className="text-slate-700">{t("وضع المدير","Admin mode")}</span>
-                <button onClick={() => setIsAdmin((v) => !v)} className={`px-3 py-1 rounded text-xs font-semibold ${isAdmin ? "bg-emerald-500 text-white" : "bg-slate-200 text-slate-600"}`}>{isAdmin ? "ON" : "OFF"}</button>
+                <button disabled className={`px-3 py-1 rounded text-xs font-semibold cursor-not-allowed ${isAdmin ? "bg-emerald-500 text-white" : "bg-slate-200 text-slate-600"}`}>{isAdmin ? "ON" : "OFF"}</button>
               </div>
               <div className="p-3 border border-dashed border-slate-300 rounded-lg text-xs text-slate-500 text-center">
                 {t("مزيد من الإعدادات قريباً","More settings coming soon")}
