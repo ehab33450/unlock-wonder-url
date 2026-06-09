@@ -89,16 +89,16 @@ export const Route = createFileRoute("/")({
 });
 
 const sidebarItems = [
-  { icon: Calendar, label: "التقويم", en: "Calendar", color: "#0ea5e9" },
-  { icon: FileText, label: "الملفات", en: "Files", color: "#8b5cf6" },
-  { icon: Pin, label: "قائمة المذكرات", en: "Notes", color: "#f59e0b" },
-  { icon: MessageSquare, label: "المحادثة", en: "Chat", color: "#10b981" },
-  { icon: Video, label: "الاجتماعات", en: "Meetings", color: "#ef4444" },
-  { icon: Wallet, label: "المالية", en: "Finance", color: "#16a34a" },
-  { icon: User, label: "مستخدم", en: "Users", color: "#6366f1" },
-  { icon: HelpCircle, label: "الإرشادات", en: "Guides", color: "#14b8a6" },
-  { icon: CheckSquare, label: "الحجز", en: "Booking", color: "#ec4899" },
-  { icon: MoreHorizontal, label: "المزيد", en: "More", color: "#64748b" },
+  { icon: Calendar, label: "التقويم", en: "Calendar", color: "#0ea5e9", permKey: "calendar_view" as string | null },
+  { icon: FileText, label: "الملفات", en: "Files", color: "#8b5cf6", permKey: "files_view" as string | null },
+  { icon: Pin, label: "قائمة المذكرات", en: "Notes", color: "#f59e0b", permKey: "pm_notes" as string | null },
+  { icon: MessageSquare, label: "المحادثة", en: "Chat", color: "#10b981", permKey: "chat_view" as string | null },
+  { icon: Video, label: "الاجتماعات", en: "Meetings", color: "#ef4444", permKey: "meetings_view" as string | null },
+  { icon: Wallet, label: "المالية", en: "Finance", color: "#16a34a", permKey: "finance_view" as string | null },
+  { icon: User, label: "مستخدم", en: "Users", color: "#6366f1", permKey: "members_view" as string | null },
+  { icon: HelpCircle, label: "الإرشادات", en: "Guides", color: "#14b8a6", permKey: null as string | null },
+  { icon: CheckSquare, label: "الحجز", en: "Booking", color: "#ec4899", permKey: "booking_view" as string | null },
+  { icon: MoreHorizontal, label: "المزيد", en: "More", color: "#64748b", permKey: null as string | null },
 ];
 
 const topTabs = [
