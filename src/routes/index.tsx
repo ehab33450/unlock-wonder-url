@@ -280,7 +280,6 @@ function Index() {
     { key: "members_view",    label: "عرض الأعضاء",          group: "الأعضاء" },
     { key: "meetings_view",   label: "عرض الاجتماعات",        group: "الاجتماعات" },
     { key: "finance_view",    label: "عرض المالية",           group: "المالية" },
-    { key: "booking_view",    label: "عرض الحجز",             group: "الحجز" },
   ];
   const defaultEmpPerms = (): Record<PermKey, boolean> => {
     const o = {} as Record<PermKey, boolean>;
