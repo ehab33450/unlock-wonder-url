@@ -4727,18 +4727,6 @@ function Index() {
                 {/* Header */}
                 <div className="h-14 px-4 flex items-center justify-between border-b border-slate-200 bg-white">
                   <div className="flex items-center gap-2 text-xs">
-                    <Eye className="w-4 h-4 text-slate-400" />
-                    <span className="text-slate-500">عرض كـ:</span>
-                    <select
-                      value={chatRoleView}
-                      onChange={(e) => setChatRoleView(e.target.value as ChatRole)}
-                      className="border border-slate-200 rounded px-2 py-1 text-xs bg-white"
-                      disabled={!isAdmin}
-                    >
-                      <option value="admin">أدمن</option>
-                      <option value="employee">موظف</option>
-                      <option value="client">عميل</option>
-                    </select>
                     {isAdmin && (
                       <button
                         onClick={() => setMembersModalOpen(true)}
@@ -4760,13 +4748,13 @@ function Index() {
 
                 {/* Messages */}
                 <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-slate-50">
-                  {(chats[chatProject] ?? []).filter((m) => canSeeMessage(m, chatRoleView)).length === 0 ? (
+                  {(chats[chatProject] ?? []).filter((m) => canSeeMessage(m, viewerRole)).length === 0 ? (
                     <div className="text-center text-xs text-slate-400 py-10">لا توجد رسائل مرئية لك بعد.</div>
                   ) : (
                     (chats[chatProject] ?? [])
-                      .filter((m) => canSeeMessage(m, chatRoleView))
+                      .filter((m) => canSeeMessage(m, viewerRole))
                       .map((m) => {
-                        const mine = m.role === chatRoleView;
+                        const mine = m.role === viewerRole;
                         return (
                           <div key={m.id} className={`flex ${mine ? "justify-start" : "justify-end"}`}>
                             <div className={`max-w-[70%] rounded-lg px-3 py-2 shadow-sm ${
@@ -4776,8 +4764,15 @@ function Index() {
                                 <span className="font-bold">{m.sender}</span>
                                 <span>·</span>
                                 <span>{m.role === "admin" ? "أدمن" : m.role === "employee" ? "موظف" : "عميل"}</span>
-                                <span>·</span>
-                                <span>{visibilityLabel(m.visibility)}</span>
+                                {m.hiddenFromClient && viewerRole !== "client" && (
+                                  <span
+                                    className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-100"
+                                    title="مخفية عن العميل"
+                                  >
+                                    <Lock className="w-3 h-3" />
+                                    <span>مخفية عن العميل</span>
+                                  </span>
+                                )}
                               </div>
                               <div className="text-sm whitespace-pre-wrap break-words">{m.text}</div>
                               <div className={`text-[10px] mt-1 ${mine ? "text-white/70" : "text-slate-400"}`}>
@@ -4792,23 +4787,21 @@ function Index() {
 
                 {/* Composer */}
                 <div className="border-t border-slate-200 bg-white p-3">
-                  <div className="flex items-center gap-2 mb-2 text-xs text-slate-600">
-                    <span>إظهار الرسالة لـ:</span>
-                    <select
-                      value={chatVisibility}
-                      onChange={(e) => setChatVisibility(e.target.value as ChatVisibility)}
-                      className="border border-slate-200 rounded px-2 py-1 text-xs bg-white"
-                    >
-                      <option value="all">الجميع (أدمن + موظف + عميل)</option>
-                      {chatRoleView !== "client" && (
-                        <option value="admin-employee">الأدمن + الموظف فقط</option>
-                      )}
-                      {chatRoleView !== "employee" && (
-                        <option value="admin-client">الأدمن + العميل فقط</option>
-                      )}
-                    </select>
-                  </div>
                   <div className="flex items-center gap-2">
+                    {canToggleVisibility && (
+                      <button
+                        type="button"
+                        onClick={() => setComposerHidden((v) => !v)}
+                        className={`h-10 w-10 rounded-md border flex items-center justify-center ${
+                          composerHidden
+                            ? "bg-amber-50 border-amber-300 text-amber-700"
+                            : "bg-white border-slate-200 text-slate-600"
+                        }`}
+                        title={composerHidden ? "الرسالة مخفية عن العميل (انقر لإظهارها)" : "الرسالة ظاهرة للعميل (انقر لإخفائها)"}
+                      >
+                        {composerHidden ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    )}
                     <button
                       onClick={sendChatMessage}
                       disabled={!chatInput.trim()}
