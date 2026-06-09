@@ -2801,7 +2801,20 @@ function Index() {
 
                 <div className="mb-6">
                   <label className="block text-sm text-slate-600 mb-2 text-right">نوع الخدمة</label>
-                  <div className="relative mb-2">
+                  <div className="flex items-center gap-2 mb-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const v = npServiceInput.trim();
+                        if (!v) return;
+                        setNpServices((s) => [...s, v]);
+                        setNpServiceInput("");
+                      }}
+                      className="h-11 px-3 rounded bg-[color:var(--eyenak-teal)] text-white text-sm font-bold hover:opacity-90"
+                      title="إضافة خدمة"
+                    >
+                      + إضافة
+                    </button>
                     <input
                       value={npServiceInput}
                       onChange={(e) => setNpServiceInput(e.target.value)}
@@ -2812,8 +2825,8 @@ function Index() {
                           setNpServiceInput("");
                         }
                       }}
-                      placeholder="مثل: موارد بشرية ، محاسبة ... ثم Enter"
-                      className="w-full h-11 border border-slate-300 rounded px-3 text-right focus:outline-none focus:border-[color:var(--eyenak-teal)]"
+                      placeholder="اكتب الخدمة ثم Enter أو اضغط + إضافة (يمكنك إضافة أكثر من خدمة)"
+                      className="flex-1 h-11 border border-slate-300 rounded px-3 text-right focus:outline-none focus:border-[color:var(--eyenak-teal)]"
                     />
                   </div>
                   {npServices.length > 0 && (
