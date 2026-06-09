@@ -1603,7 +1603,13 @@ function Index() {
     setAllProjectsOpen(false);
   };
 
-  // Auth gate disabled — open access as admin
+  // Auth gate
+  if (auth.loading) {
+    return <div dir="rtl" className="min-h-screen flex items-center justify-center text-slate-500">جارٍ التحميل…</div>;
+  }
+  if (!auth.session) {
+    return <div dir="rtl" className="min-h-screen flex items-center justify-center text-slate-500">يجب تسجيل الدخول…</div>;
+  }
 
   return (
     <div dir={isEn ? "ltr" : "rtl"} className="min-h-screen bg-slate-50 text-slate-800 font-[Cairo]">
