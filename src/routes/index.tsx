@@ -5782,6 +5782,19 @@ function Index() {
         setEmployees={setEmployees as any}
         perms={PERMS as any}
         defaultPerms={defaultEmpPerms as any}
+        loading={adminUsersLoading}
+        onCreateUser={async (input) => {
+          await createUserFn({ data: input });
+          await refreshAdminUsers();
+        }}
+        onUpdatePerms={async (userId, perms) => {
+          await setPermsFn({ data: { user_id: userId, perms } });
+          await refreshAdminUsers();
+        }}
+        onToggleActive={async (userId, active) => {
+          await setActiveFn({ data: { user_id: userId, active } });
+          await refreshAdminUsers();
+        }}
       />
 
     </div>
