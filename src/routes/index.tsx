@@ -337,6 +337,40 @@ function Index() {
   const [accountOpen, setAccountOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [adminPanelOpen, setAdminPanelOpen] = useState(false);
+  // ===== Remote users (Lovable Cloud) for the admin panel =====
+  const listUsersFn = useServerFn(adminListUsers);
+  const createUserFn = useServerFn(adminCreateUser);
+  const setPermsFn = useServerFn(adminSetPermissions);
+  const setActiveFn = useServerFn(adminSetActive);
+  const [adminUsersLoading, setAdminUsersLoading] = useState(false);
+  const refreshAdminUsers = async () => {
+    if (!isAdmin) return;
+    setAdminUsersLoading(true);
+    try {
+      const res: any = await listUsersFn();
+      const mapped: Employee[] = (res?.users ?? []).map((u: any) => ({
+        id: u.id,
+        name: u.display_name ?? u.email ?? "",
+        email: u.email ?? "",
+        username: u.username ?? "",
+        password: "",
+        role: (u.roles ?? []).includes("admin") ? "Admin" : "Employee",
+        active: !!u.active,
+        perms: { ...defaultEmpPerms(), ...(u.perms ?? {}) },
+      }));
+      setEmployees(mapped);
+    } catch (e) {
+      console.error("refreshAdminUsers", e);
+    } finally {
+      setAdminUsersLoading(false);
+    }
+  };
+  useEffect(() => {
+    if (adminPanelOpen && isAdmin) {
+      refreshAdminUsers();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [adminPanelOpen, isAdmin]);
   const [moreMenuOpen, setMoreMenuOpen] = useState(false);
   const [allProjectsOpen, setAllProjectsOpen] = useState(false);
   const [projectFilter, setProjectFilter] = useState<string | null>(null);
