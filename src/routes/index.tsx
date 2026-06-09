@@ -4,6 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useNavigate } from "@tanstack/react-router";
 import { useAuth } from "@/contexts/auth-context";
 import { askAssistant } from "@/lib/ai-assistant.functions";
+import { adminListUsers, adminCreateUser, adminSetPermissions, adminSetActive } from "@/lib/auth.functions";
 import guideDashboardImg from "@/assets/guide-dashboard.png";
 import guideProjectsImg from "@/assets/guide-projects.png";
 import guideFinanceImg from "@/assets/guide-finance.png";
