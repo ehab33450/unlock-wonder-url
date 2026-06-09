@@ -58,6 +58,7 @@ import {
   Eye,
   EyeOff,
   Lock,
+  LockOpen,
   AlarmClock,
   BellRing,
   StickyNote,
@@ -4777,14 +4778,22 @@ function Index() {
                                 <span className="font-bold">{m.sender}</span>
                                 <span>·</span>
                                 <span>{m.role === "admin" ? "أدمن" : m.role === "employee" ? "موظف" : "عميل"}</span>
-                                {m.hiddenFromClient && (
-                                  <span
-                                    className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-100"
-                                    title="مخفية عن العميل"
-                                  >
-                                    <Lock className="w-3 h-3" />
-                                    <span>مخفية عن العميل</span>
-                                  </span>
+                                {canToggleVisibility && (
+                                  m.hiddenFromClient ? (
+                                    <span
+                                      className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-100"
+                                      title="مخفية عن العميل"
+                                    >
+                                      <EyeOff className="w-3 h-3" />
+                                    </span>
+                                  ) : (
+                                    <span
+                                      className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded ${mine ? "bg-white/15 text-white/90" : "bg-slate-100 text-slate-500"}`}
+                                      title="ظاهرة للعميل"
+                                    >
+                                      <LockOpen className="w-3 h-3" />
+                                    </span>
+                                  )
                                 )}
                               </div>
                               <div className="text-sm whitespace-pre-wrap break-words">{m.text}</div>
