@@ -4787,12 +4787,12 @@ function Index() {
                                       <EyeOff className="w-3 h-3" />
                                     </span>
                                   ) : (
-                                    <span
-                                      className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded ${mine ? "bg-white/15 text-white/90" : "bg-slate-100 text-slate-500"}`}
-                                      title="ظاهرة للعميل"
-                                    >
-                                      <LockOpen className="w-3 h-3" />
-                                    </span>
+                                     <span
+                                       className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded ${mine ? "bg-white/15 text-white/90" : "bg-slate-100 text-slate-500"}`}
+                                       title="ظاهرة للعميل"
+                                     >
+                                       <Eye className="w-3 h-3" />
+                                     </span>
                                   )
                                 )}
                               </div>
