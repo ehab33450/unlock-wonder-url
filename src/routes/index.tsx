@@ -135,6 +135,15 @@ const employeeTasks: Record<string, string[]> = {
 };
 
 function Index() {
+  // ===== Auth gate =====
+  const auth = useAuth();
+  const navigate = useNavigate();
+  useEffect(() => {
+    if (!auth.loading && !auth.session) {
+      navigate({ to: "/auth" });
+    }
+  }, [auth.loading, auth.session, navigate]);
+
   const [lang, setLang] = useState<"ar" | "en">("ar");
   const isEn = lang === "en";
   const t = (ar: string, en: string) => (isEn ? en : ar);
