@@ -303,7 +303,10 @@ function Index() {
       active: true, perms: defaultEmpPerms(),
     },
   ]);
-  const [currentUser, setCurrentUser] = useState<string>("ايهاب فاتح");
+  const [currentUser, setCurrentUser] = useState<string>("");
+  useEffect(() => {
+    if (auth.me?.profile?.display_name) setCurrentUser(auth.me.profile.display_name);
+  }, [auth.me?.profile?.display_name]);
   const currentEmployee = useMemo(
     () => employees.find((e) => e.name === currentUser) ?? null,
     [employees, currentUser]
