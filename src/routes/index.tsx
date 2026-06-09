@@ -706,24 +706,22 @@ function Index() {
 
   // ============ Internal Chat (Admin / Employee / Client) ============
   type ChatRole = "admin" | "employee" | "client";
-  type ChatVisibility = "all" | "admin-employee" | "admin-client";
   type ChatMessage = {
     id: string;
     sender: string;
     role: ChatRole;
     text: string;
-    visibility: ChatVisibility;
+    hiddenFromClient: boolean;
     createdAt: number;
   };
   const [chats, setChats] = useState<Record<string, ChatMessage[]>>({});
   const [chatViewOpen, setChatViewOpen] = useState(false);
   const [chatProject, setChatProject] = useState<string | null>(null);
   const [chatInput, setChatInput] = useState("");
-  const [chatVisibility, setChatVisibility] = useState<ChatVisibility>("all");
-  const [chatRoleView, setChatRoleView] = useState<ChatRole>(isAdmin ? "admin" : "employee");
-  useEffect(() => {
-    setChatRoleView(isAdmin ? "admin" : "employee");
-  }, [isAdmin]);
+  // عين الإظهار/الإخفاء: مغلقة = الرسالة مخفية عن العميل، مفتوحة = يراها العميل
+  const [composerHidden, setComposerHidden] = useState(false);
+  // في هذا التطبيق لا يوجد دخول للعميل، فالعرض دائماً من منظور الأدمن/الموظف
+  const viewerRole: ChatRole = isAdmin ? "admin" : "employee";
   // Group members per project (مجموعة المحادثة)
   const [chatMembers, setChatMembers] = useState<Record<string, string[]>>({});
   const [membersModalOpen, setMembersModalOpen] = useState(false);
@@ -765,33 +763,22 @@ function Index() {
       [project]: (m[project] ?? []).filter((x) => x !== name),
     }));
   };
-  const visibilityLabel = (v: ChatVisibility) =>
-    v === "all" ? "للجميع" : v === "admin-employee" ? "الأدمن + الموظف" : "الأدمن + العميل";
   const canSeeMessage = (m: ChatMessage, role: ChatRole) => {
-    if (m.visibility === "all") return true;
-    if (m.visibility === "admin-employee") return role === "admin" || role === "employee";
-    if (m.visibility === "admin-client") return role === "admin" || role === "client";
-    return false;
+    if (role === "client") return !m.hiddenFromClient;
+    return true;
   };
+  const canToggleVisibility = isAdmin || hasPerm("chat_visibility");
   const sendChatMessage = () => {
     if (!chatProject || !chatInput.trim()) return;
-    const role: ChatRole = chatRoleView;
-    const sender =
-      role === "admin"
-        ? "الأدمن"
-        : role === "client"
-        ? projectMeta[chatProject]?.contract.responsibleName || "العميل"
-        : currentUser;
-    // Constrain visibility based on role
-    let vis = chatVisibility;
-    if (role === "employee" && vis === "admin-client") vis = "admin-employee";
-    if (role === "client" && vis === "admin-employee") vis = "admin-client";
+    const role: ChatRole = viewerRole;
+    const sender = role === "admin" ? "الأدمن" : currentUser;
+    const hiddenFromClient = canToggleVisibility ? composerHidden : false;
     const msg: ChatMessage = {
       id: Math.random().toString(36).slice(2),
       sender,
       role,
       text: chatInput.trim(),
-      visibility: vis,
+      hiddenFromClient,
       createdAt: Date.now(),
     };
     setChats((c) => ({ ...c, [chatProject]: [...(c[chatProject] ?? []), msg] }));
