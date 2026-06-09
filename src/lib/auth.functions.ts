@@ -25,11 +25,12 @@ export const resolveLoginIdentifier = createServerFn({ method: "POST" })
 export const getMe = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const { supabase, userId } = context;
+    const { userId } = context;
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const [{ data: profile }, { data: roles }, { data: perms }] = await Promise.all([
-      supabase.from("profiles").select("*").eq("id", userId).maybeSingle(),
-      supabase.from("user_roles").select("role").eq("user_id", userId),
-      supabase.from("user_permissions").select("perm_key, granted").eq("user_id", userId),
+      supabaseAdmin.from("profiles").select("*").eq("id", userId).maybeSingle(),
+      supabaseAdmin.from("user_roles").select("role").eq("user_id", userId),
+      supabaseAdmin.from("user_permissions").select("perm_key, granted").eq("user_id", userId),
     ]);
     const roleList = (roles ?? []).map((r) => r.role as string);
     const permMap: Record<string, boolean> = {};
