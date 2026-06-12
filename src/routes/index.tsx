@@ -1430,6 +1430,7 @@ function Index() {
           [folderViewProject]: { ...cur, files: [...cur.files, ...items] },
         };
       });
+      for (const it of items) persistFile(it);
     });
     e.target.value = "";
   };
