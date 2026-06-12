@@ -1336,6 +1336,14 @@ function Index() {
     closeNewProject();
     setFolderViewProject(name);
     setCurrentSubfolder(null);
+    // persist to server
+    (async () => {
+      try {
+        const group_id = npFolder ? (groupIdByName.current.get(npFolder) ?? null) : null;
+        const proj = await _createProject({ data: { name, group_id, description: npDesc, start_date: npStart || null, end_date: npEnd || null } });
+        projectIdByName.current.set(name, (proj as any).id);
+      } catch (e) { console.error("[createProject]", e); }
+    })();
   };
 
   const addSubfolder = () => {
@@ -1354,6 +1362,15 @@ function Index() {
     });
     setNewSubfolderName("");
     setNewSubfolderOpen(false);
+    // persist
+    (async () => {
+      try {
+        const project_id = projectIdByName.current.get(folderViewProject);
+        if (!project_id) return;
+        const sub = await _createSub({ data: { project_id, name } });
+        subfolderIdByKey.current.set(`${folderViewProject}::${name}`, (sub as any).id);
+      } catch (e) { console.error("[createSubfolder]", e); }
+    })();
   };
 
   const handleUploadFiles = (e: React.ChangeEvent<HTMLInputElement>) => {
