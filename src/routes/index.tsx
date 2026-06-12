@@ -121,24 +121,9 @@ const topTabs = [
 ];
 
 type Project = { name: string; children: string[] };
-const projects: Project[] = [
-  { name: "المدير التنفيذي", children: ["أ. أروى الجعدي - المدير المسؤول"] },
-  {
-    name: "عملاء أ.أروى الجعدي",
-    children: ["ايهاب فاتح", "محمد علي", "سارة أحمد"],
-  },
-  {
-    name: "المبيعات",
-    children: ["صفقات جديدة", "صفقات قيد التفاوض", "صفقات مغلقة"],
-  },
-  { name: "ايهاب تطوير", children: ["شركة hc", "مشروع عنان الفضاء"] },
-];
+const projects: Project[] = [];
 
-const employeeTasks: Record<string, string[]> = {
-  "ايهاب فاتح": ["تطوير الواجهة", "مراجعة الكود", "اجتماع العميل"],
-  "محمد علي": ["تصميم الشعار", "تجهيز العرض"],
-  "سارة أحمد": ["كتابة المحتوى", "تحليل البيانات"],
-};
+const employeeTasks: Record<string, string[]> = {};
 
 function Index() {
   // ===== Auth gate (required: must be signed in) =====
