@@ -150,6 +150,75 @@ function Index() {
     }
   }, [auth.loading, auth.session, navigate]);
 
+  // Hydrate persisted Projects / Folders / Files from the server (merge into local seed)
+  useEffect(() => {
+    if (!auth.session) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const [groups, projs] = await Promise.all([_listGroups(), _listProjects()]);
+        if (cancelled) return;
+        // folder groups
+        const groupNames: string[] = [];
+        for (const g of groups as any[]) {
+          groupIdByName.current.set(g.name, g.id);
+          groupNames.push(g.name);
+        }
+        if (groupNames.length) setCustomFolders((arr) => Array.from(new Set([...arr, ...groupNames])));
+        // projects
+        const folderMap: Record<string, string> = {};
+        const groupNameById = new Map<string, string>();
+        for (const g of groups as any[]) groupNameById.set(g.id, g.name);
+        for (const p of projs as any[]) {
+          projectIdByName.current.set(p.name, p.id);
+          if (p.group_id && groupNameById.has(p.group_id)) folderMap[p.name] = groupNameById.get(p.group_id)!;
+        }
+        if (Object.keys(folderMap).length) setProjectFolders((f) => ({ ...folderMap, ...f }));
+        // subfolders + files per project
+        const newData: Record<string, ProjectData> = {};
+        await Promise.all((projs as any[]).map(async (p) => {
+          const [subs, files] = await Promise.all([
+            _listSubs({ data: { project_id: p.id } }),
+            _listFiles({ data: { project_id: p.id } }),
+          ]);
+          const subById = new Map<string, { name: string; createdAt: string; files: FileItem[]; locked?: boolean }>();
+          const subList: SubFolder[] = [];
+          for (const s of subs as any[]) {
+            const sf: SubFolder = { name: s.name, createdAt: new Date(s.created_at).toLocaleDateString("en-GB",{day:"numeric",month:"short",year:"numeric"}), files: [] };
+            subById.set(s.id, sf);
+            subList.push(sf);
+            subfolderIdByKey.current.set(`${p.name}::${s.name}`, s.id);
+          }
+          const rootFiles: FileItem[] = [];
+          for (const f of files as any[]) {
+            const item: FileItem = { id: f.id, name: f.name, content: f.content ?? "", kind: (f.kind as any) ?? "text" };
+            fileIdByKey.current.set(item.id, f.id);
+            if (f.subfolder_id && subById.has(f.subfolder_id)) subById.get(f.subfolder_id)!.files.push(item);
+            else rootFiles.push(item);
+          }
+          newData[p.name] = { folders: subList, files: rootFiles };
+        }));
+        if (Object.keys(newData).length) {
+          setProjectData((d) => {
+            const merged = { ...d };
+            for (const [k, v] of Object.entries(newData)) {
+              const existing = merged[k];
+              if (!existing) { merged[k] = v; continue; }
+              const folderNames = new Set(existing.folders.map((f) => f.name));
+              const fileIds = new Set(existing.files.map((f) => f.id));
+              merged[k] = {
+                folders: [...existing.folders, ...v.folders.filter((f) => !folderNames.has(f.name))],
+                files: [...existing.files, ...v.files.filter((f) => !fileIds.has(f.id))],
+              };
+            }
+            return merged;
+          });
+        }
+      } catch (e) { console.error("[hydrate]", e); }
+    })();
+    return () => { cancelled = true; };
+  }, [auth.session]);
+
   const [lang, setLang] = useState<"ar" | "en">("ar");
   const isEn = lang === "en";
   const t = (ar: string, en: string) => (isEn ? en : ar);
