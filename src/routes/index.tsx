@@ -1294,7 +1294,6 @@ function Index() {
   });
 
   const handleCreateProject = () => {
-    // persistFile helper used by addBlankFile / saveEditingFile / uploads
     const name = npName.trim();
     if (!name) return;
     setProjectData((d) => {
