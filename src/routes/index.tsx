@@ -200,6 +200,22 @@ function Index() {
   // Mapping of project -> folder/company group it belongs to (for sidebar grouping)
   const [projectFolders, setProjectFolders] = useState<Record<string, string>>({});
 
+  // ===== Server persistence layer (Projects + Folders + Files) =====
+  const projectIdByName = useRef<Map<string, string>>(new Map());
+  const groupIdByName = useRef<Map<string, string>>(new Map());
+  const subfolderIdByKey = useRef<Map<string, string>>(new Map()); // key = `${projectName}::${subName}`
+  const fileIdByKey = useRef<Map<string, string>>(new Map()); // key = localId
+  const _listGroups = useServerFn(listFolderGroups);
+  const _upsertGroup = useServerFn(upsertFolderGroup);
+  const _listProjects = useServerFn(listProjects);
+  const _createProject = useServerFn(svCreateProject);
+  const _listSubs = useServerFn(listSubfolders);
+  const _createSub = useServerFn(svCreateSubfolder);
+  const _delSub = useServerFn(svDeleteSubfolder);
+  const _listFiles = useServerFn(listProjectFiles);
+  const _upsertFile = useServerFn(svUpsertFile);
+  const _delFile = useServerFn(svDeleteFile);
+
   // Roles & permissions
   const DEFAULT_FOLDERS = [
     "اليوزرات",
