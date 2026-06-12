@@ -2868,6 +2868,13 @@ function Index() {
                           if (n) {
                             setCustomFolders((arr) => (arr.includes(n) ? arr : [...arr, n]));
                             setNpFolder(n);
+                            (async () => {
+                              try {
+                                if (groupIdByName.current.has(n)) return;
+                                const g = await _upsertGroup({ data: { name: n } });
+                                groupIdByName.current.set(n, (g as any).id);
+                              } catch (e) { console.error("[createFolderGroup]", e); }
+                            })();
                           }
                         } else {
                           setNpFolder(v);
