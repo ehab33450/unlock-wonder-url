@@ -1422,6 +1422,7 @@ function Index() {
 
   const addBlankFile = (kind: FileItem["kind"]) => {
     if (!folderViewProject) return;
+    void kind;
     const ext = kind === "word" ? "docx" : kind === "excel" ? "xlsx" : "txt";
     const label = kind === "word" ? "مستند Word" : kind === "excel" ? "جدول Excel" : "ملف نصي";
     const item: FileItem = {
