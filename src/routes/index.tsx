@@ -5,6 +5,12 @@ import { useNavigate } from "@tanstack/react-router";
 import { useAuth } from "@/contexts/auth-context";
 import { askAssistant } from "@/lib/ai-assistant.functions";
 import { adminListUsers, adminCreateUser, adminSetPermissions, adminSetActive } from "@/lib/auth.functions";
+import {
+  listFolderGroups, upsertFolderGroup, deleteFolderGroup,
+  listProjects, createProject as svCreateProject, deleteProject as svDeleteProject,
+  listSubfolders, createSubfolder as svCreateSubfolder, deleteSubfolder as svDeleteSubfolder,
+  listProjectFiles, upsertProjectFile as svUpsertFile, deleteProjectFile as svDeleteFile,
+} from "@/lib/data.functions";
 import guideDashboardImg from "@/assets/guide-dashboard.png";
 import guideProjectsImg from "@/assets/guide-projects.png";
 import guideFinanceImg from "@/assets/guide-finance.png";
