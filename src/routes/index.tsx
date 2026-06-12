@@ -714,26 +714,7 @@ function Index() {
     triggered?: boolean;
   };
   const [notesViewOpen, setNotesViewOpen] = useState(false);
-  const [notes, setNotes] = useState<StickyNoteItem[]>([
-    {
-      id: "n1",
-      text: "مراجعة عقد العميل قبل اجتماع الغد",
-      color: "#fde68a",
-      author: "الأدمن",
-      target: "ايهاب فاتح",
-      reminder: null,
-      createdAt: Date.now(),
-    },
-    {
-      id: "n2",
-      text: "تذكير: تسليم تقرير المهام الأسبوعي",
-      color: "#bae6fd",
-      author: "الأدمن",
-      target: "الجميع",
-      reminder: null,
-      createdAt: Date.now(),
-    },
-  ]);
+  const [notes, setNotes] = useState<StickyNoteItem[]>([]);
   const [noteText, setNoteText] = useState("");
   const [noteColor, setNoteColor] = useState("#fde68a");
   const [noteTarget, setNoteTarget] = useState("الجميع");
