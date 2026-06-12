@@ -5,6 +5,12 @@ import { useNavigate } from "@tanstack/react-router";
 import { useAuth } from "@/contexts/auth-context";
 import { askAssistant } from "@/lib/ai-assistant.functions";
 import { adminListUsers, adminCreateUser, adminSetPermissions, adminSetActive } from "@/lib/auth.functions";
+import {
+  listFolderGroups, upsertFolderGroup, deleteFolderGroup,
+  listProjects, createProject as svCreateProject, deleteProject as svDeleteProject,
+  listSubfolders, createSubfolder as svCreateSubfolder, deleteSubfolder as svDeleteSubfolder,
+  listProjectFiles, upsertProjectFile as svUpsertFile, deleteProjectFile as svDeleteFile,
+} from "@/lib/data.functions";
 import guideDashboardImg from "@/assets/guide-dashboard.png";
 import guideProjectsImg from "@/assets/guide-projects.png";
 import guideFinanceImg from "@/assets/guide-finance.png";
@@ -144,6 +150,75 @@ function Index() {
     }
   }, [auth.loading, auth.session, navigate]);
 
+  // Hydrate persisted Projects / Folders / Files from the server (merge into local seed)
+  useEffect(() => {
+    if (!auth.session) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const [groups, projs] = await Promise.all([_listGroups(), _listProjects()]);
+        if (cancelled) return;
+        // folder groups
+        const groupNames: string[] = [];
+        for (const g of groups as any[]) {
+          groupIdByName.current.set(g.name, g.id);
+          groupNames.push(g.name);
+        }
+        if (groupNames.length) setCustomFolders((arr) => Array.from(new Set([...arr, ...groupNames])));
+        // projects
+        const folderMap: Record<string, string> = {};
+        const groupNameById = new Map<string, string>();
+        for (const g of groups as any[]) groupNameById.set(g.id, g.name);
+        for (const p of projs as any[]) {
+          projectIdByName.current.set(p.name, p.id);
+          if (p.group_id && groupNameById.has(p.group_id)) folderMap[p.name] = groupNameById.get(p.group_id)!;
+        }
+        if (Object.keys(folderMap).length) setProjectFolders((f) => ({ ...folderMap, ...f }));
+        // subfolders + files per project
+        const newData: Record<string, ProjectData> = {};
+        await Promise.all((projs as any[]).map(async (p) => {
+          const [subs, files] = await Promise.all([
+            _listSubs({ data: { project_id: p.id } }),
+            _listFiles({ data: { project_id: p.id } }),
+          ]);
+          const subById = new Map<string, { name: string; createdAt: string; files: FileItem[]; locked?: boolean }>();
+          const subList: SubFolder[] = [];
+          for (const s of subs as any[]) {
+            const sf: SubFolder = { name: s.name, createdAt: new Date(s.created_at).toLocaleDateString("en-GB",{day:"numeric",month:"short",year:"numeric"}), files: [] };
+            subById.set(s.id, sf);
+            subList.push(sf);
+            subfolderIdByKey.current.set(`${p.name}::${s.name}`, s.id);
+          }
+          const rootFiles: FileItem[] = [];
+          for (const f of files as any[]) {
+            const item: FileItem = { id: f.id, name: f.name, content: f.content ?? "", kind: (f.kind as any) ?? "text" };
+            fileIdByKey.current.set(item.id, f.id);
+            if (f.subfolder_id && subById.has(f.subfolder_id)) subById.get(f.subfolder_id)!.files.push(item);
+            else rootFiles.push(item);
+          }
+          newData[p.name] = { folders: subList, files: rootFiles };
+        }));
+        if (Object.keys(newData).length) {
+          setProjectData((d) => {
+            const merged = { ...d };
+            for (const [k, v] of Object.entries(newData)) {
+              const existing = merged[k];
+              if (!existing) { merged[k] = v; continue; }
+              const folderNames = new Set(existing.folders.map((f) => f.name));
+              const fileIds = new Set(existing.files.map((f) => f.id));
+              merged[k] = {
+                folders: [...existing.folders, ...v.folders.filter((f) => !folderNames.has(f.name))],
+                files: [...existing.files, ...v.files.filter((f) => !fileIds.has(f.id))],
+              };
+            }
+            return merged;
+          });
+        }
+      } catch (e) { console.error("[hydrate]", e); }
+    })();
+    return () => { cancelled = true; };
+  }, [auth.session]);
+
   const [lang, setLang] = useState<"ar" | "en">("ar");
   const isEn = lang === "en";
   const t = (ar: string, en: string) => (isEn ? en : ar);
@@ -193,6 +268,22 @@ function Index() {
   const [filesViewOpen, setFilesViewOpen] = useState(false);
   // Mapping of project -> folder/company group it belongs to (for sidebar grouping)
   const [projectFolders, setProjectFolders] = useState<Record<string, string>>({});
+
+  // ===== Server persistence layer (Projects + Folders + Files) =====
+  const projectIdByName = useRef<Map<string, string>>(new Map());
+  const groupIdByName = useRef<Map<string, string>>(new Map());
+  const subfolderIdByKey = useRef<Map<string, string>>(new Map()); // key = `${projectName}::${subName}`
+  const fileIdByKey = useRef<Map<string, string>>(new Map()); // key = localId
+  const _listGroups = useServerFn(listFolderGroups);
+  const _upsertGroup = useServerFn(upsertFolderGroup);
+  const _listProjects = useServerFn(listProjects);
+  const _createProject = useServerFn(svCreateProject);
+  const _listSubs = useServerFn(listSubfolders);
+  const _createSub = useServerFn(svCreateSubfolder);
+  const _delSub = useServerFn(svDeleteSubfolder);
+  const _listFiles = useServerFn(listProjectFiles);
+  const _upsertFile = useServerFn(svUpsertFile);
+  const _delFile = useServerFn(svDeleteFile);
 
   // Roles & permissions
   const DEFAULT_FOLDERS = [
@@ -1202,6 +1293,20 @@ function Index() {
     year: "numeric",
   });
 
+  const persistFile = (item: { id: string; name: string; content: string; kind: FileItem["kind"] }) => {
+    if (!folderViewProject) return;
+    const project_id = projectIdByName.current.get(folderViewProject);
+    if (!project_id) return; // only persist for server-backed projects
+    const subfolder_id = currentSubfolder ? (subfolderIdByKey.current.get(`${folderViewProject}::${currentSubfolder}`) ?? null) : null;
+    const existingId = fileIdByKey.current.get(item.id);
+    (async () => {
+      try {
+        const res = await _upsertFile({ data: { id: existingId, project_id, subfolder_id, name: item.name, kind: item.kind, content: item.content } });
+        if (!existingId) fileIdByKey.current.set(item.id, (res as any).id);
+      } catch (e) { console.error("[persistFile]", e); }
+    })();
+  };
+
   const handleCreateProject = () => {
     const name = npName.trim();
     if (!name) return;
@@ -1245,6 +1350,14 @@ function Index() {
     closeNewProject();
     setFolderViewProject(name);
     setCurrentSubfolder(null);
+    // persist to server
+    (async () => {
+      try {
+        const group_id = npFolder ? (groupIdByName.current.get(npFolder) ?? null) : null;
+        const proj = await _createProject({ data: { name, group_id, description: npDesc, start_date: npStart || null, end_date: npEnd || null } });
+        projectIdByName.current.set(name, (proj as any).id);
+      } catch (e) { console.error("[createProject]", e); }
+    })();
   };
 
   const addSubfolder = () => {
@@ -1263,6 +1376,15 @@ function Index() {
     });
     setNewSubfolderName("");
     setNewSubfolderOpen(false);
+    // persist
+    (async () => {
+      try {
+        const project_id = projectIdByName.current.get(folderViewProject);
+        if (!project_id) return;
+        const sub = await _createSub({ data: { project_id, name } });
+        subfolderIdByKey.current.set(`${folderViewProject}::${name}`, (sub as any).id);
+      } catch (e) { console.error("[createSubfolder]", e); }
+    })();
   };
 
   const handleUploadFiles = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -1308,6 +1430,7 @@ function Index() {
           [folderViewProject]: { ...cur, files: [...cur.files, ...items] },
         };
       });
+      for (const it of items) persistFile(it);
     });
     e.target.value = "";
   };
@@ -1342,6 +1465,8 @@ function Index() {
     });
     setNewFileMenuOpen(false);
     setEditingFile(item);
+    // persist
+    persistFile(item);
   };
 
   const saveEditingFile = () => {
@@ -1368,6 +1493,7 @@ function Index() {
       }
       return { ...d, [folderViewProject]: { ...cur, files: mapFiles(cur.files) } };
     });
+    persistFile({ id: editingFile.id, name: editingFile.name, content: editingFile.content, kind: editingFile.kind });
     setEditingFile(null);
   };
 
@@ -1390,6 +1516,12 @@ function Index() {
       }
       return { ...d, [folderViewProject]: { ...cur, files: filterFiles(cur.files) } };
     });
+    (async () => {
+      try {
+        const sid = fileIdByKey.current.get(id);
+        if (sid) { await _delFile({ data: { id: sid } }); fileIdByKey.current.delete(id); }
+      } catch (e) { console.error("[deleteFile]", e); }
+    })();
   };
 
   const removeSubfolder = (name: string) => {
@@ -1401,6 +1533,13 @@ function Index() {
         folders: d[folderViewProject].folders.filter((f) => f.name !== name),
       },
     }));
+    (async () => {
+      try {
+        const key = `${folderViewProject}::${name}`;
+        const sid = subfolderIdByKey.current.get(key);
+        if (sid) { await _delSub({ data: { id: sid } }); subfolderIdByKey.current.delete(key); }
+      } catch (e) { console.error("[deleteSubfolder]", e); }
+    })();
   };
 
   const currentProject = folderViewProject ? projectData[folderViewProject] : null;
@@ -2566,6 +2705,13 @@ function Index() {
                 setCustomFolders((arr) => (arr.includes(n) ? arr : [...arr, n]));
                 setOpenProjects((o) => ({ ...o, [n]: true }));
                 setNewFolderOpen(false);
+                (async () => {
+                  try {
+                    if (groupIdByName.current.has(n)) return;
+                    const g = await _upsertGroup({ data: { name: n } });
+                    groupIdByName.current.set(n, (g as any).id);
+                  } catch (e) { console.error("[createFolderGroup]", e); }
+                })();
               }}
               className="w-full h-11 bg-[color:var(--eyenak-teal)] disabled:bg-slate-200 disabled:text-slate-500 hover:opacity-90 text-white rounded text-sm font-semibold"
             >إنشاء</button>
@@ -2722,6 +2868,13 @@ function Index() {
                           if (n) {
                             setCustomFolders((arr) => (arr.includes(n) ? arr : [...arr, n]));
                             setNpFolder(n);
+                            (async () => {
+                              try {
+                                if (groupIdByName.current.has(n)) return;
+                                const g = await _upsertGroup({ data: { name: n } });
+                                groupIdByName.current.set(n, (g as any).id);
+                              } catch (e) { console.error("[createFolderGroup]", e); }
+                            })();
                           }
                         } else {
                           setNpFolder(v);
