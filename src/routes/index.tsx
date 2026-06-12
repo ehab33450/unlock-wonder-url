@@ -2705,6 +2705,13 @@ function Index() {
                 setCustomFolders((arr) => (arr.includes(n) ? arr : [...arr, n]));
                 setOpenProjects((o) => ({ ...o, [n]: true }));
                 setNewFolderOpen(false);
+                (async () => {
+                  try {
+                    if (groupIdByName.current.has(n)) return;
+                    const g = await _upsertGroup({ data: { name: n } });
+                    groupIdByName.current.set(n, (g as any).id);
+                  } catch (e) { console.error("[createFolderGroup]", e); }
+                })();
               }}
               className="w-full h-11 bg-[color:var(--eyenak-teal)] disabled:bg-slate-200 disabled:text-slate-500 hover:opacity-90 text-white rounded text-sm font-semibold"
             >إنشاء</button>
