@@ -374,13 +374,7 @@ function Index() {
     active: boolean;
     perms: Record<PermKey, boolean>;
   };
-  const [employees, setEmployees] = useState<Employee[]>([
-    {
-      id: "u1", name: "ايهاب فاتح", email: "ehab@example.com",
-      username: "ehab", password: "1234", role: "موظف",
-      active: true, perms: defaultEmpPerms(),
-    },
-  ]);
+  const [employees, setEmployees] = useState<Employee[]>([]);
   const [currentUser, setCurrentUser] = useState<string>("");
   useEffect(() => {
     if (auth.me?.profile?.display_name) setCurrentUser(auth.me.profile.display_name);
