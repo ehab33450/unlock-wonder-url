@@ -1293,6 +1293,20 @@ function Index() {
     year: "numeric",
   });
 
+  const persistFile = (item: { id: string; name: string; content: string; kind: FileItem["kind"] }) => {
+    if (!folderViewProject) return;
+    const project_id = projectIdByName.current.get(folderViewProject);
+    if (!project_id) return; // only persist for server-backed projects
+    const subfolder_id = currentSubfolder ? (subfolderIdByKey.current.get(`${folderViewProject}::${currentSubfolder}`) ?? null) : null;
+    const existingId = fileIdByKey.current.get(item.id);
+    (async () => {
+      try {
+        const res = await _upsertFile({ data: { id: existingId, project_id, subfolder_id, name: item.name, kind: item.kind, content: item.content } });
+        if (!existingId) fileIdByKey.current.set(item.id, (res as any).id);
+      } catch (e) { console.error("[persistFile]", e); }
+    })();
+  };
+
   const handleCreateProject = () => {
     const name = npName.trim();
     if (!name) return;
