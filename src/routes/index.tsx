@@ -121,24 +121,9 @@ const topTabs = [
 ];
 
 type Project = { name: string; children: string[] };
-const projects: Project[] = [
-  { name: "المدير التنفيذي", children: ["أ. أروى الجعدي - المدير المسؤول"] },
-  {
-    name: "عملاء أ.أروى الجعدي",
-    children: ["ايهاب فاتح", "محمد علي", "سارة أحمد"],
-  },
-  {
-    name: "المبيعات",
-    children: ["صفقات جديدة", "صفقات قيد التفاوض", "صفقات مغلقة"],
-  },
-  { name: "ايهاب تطوير", children: ["شركة hc", "مشروع عنان الفضاء"] },
-];
+const projects: Project[] = [];
 
-const employeeTasks: Record<string, string[]> = {
-  "ايهاب فاتح": ["تطوير الواجهة", "مراجعة الكود", "اجتماع العميل"],
-  "محمد علي": ["تصميم الشعار", "تجهيز العرض"],
-  "سارة أحمد": ["كتابة المحتوى", "تحليل البيانات"],
-};
+const employeeTasks: Record<string, string[]> = {};
 
 function Index() {
   // ===== Auth gate (required: must be signed in) =====
@@ -389,13 +374,7 @@ function Index() {
     active: boolean;
     perms: Record<PermKey, boolean>;
   };
-  const [employees, setEmployees] = useState<Employee[]>([
-    {
-      id: "u1", name: "ايهاب فاتح", email: "ehab@example.com",
-      username: "ehab", password: "1234", role: "موظف",
-      active: true, perms: defaultEmpPerms(),
-    },
-  ]);
+  const [employees, setEmployees] = useState<Employee[]>([]);
   const [currentUser, setCurrentUser] = useState<string>("");
   useEffect(() => {
     if (auth.me?.profile?.display_name) setCurrentUser(auth.me.profile.display_name);
@@ -591,228 +570,7 @@ function Index() {
     return () => clearInterval(id);
   }, []);
 
-  // ============ Seed sample data so every window opens with content ============
-  const seededRef = useRef(false);
-  useEffect(() => {
-    if (seededRef.current) return;
-    seededRef.current = true;
-
-    const today = new Date();
-    const iso = (offsetDays: number) => {
-      const d = new Date(today);
-      d.setDate(d.getDate() + offsetDays);
-      return d.toISOString().slice(0, 10);
-    };
-    const todayLbl = today.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
-
-    // All child projects from the sidebar
-    const allChildren: { folder: string; name: string }[] = [];
-    for (const p of projects) for (const c of p.children) allChildren.push({ folder: p.name, name: c });
-
-    // Extra employees
-    setEmployees((prev) => {
-      if (prev.length > 1) return prev;
-      const mk = (id: string, name: string, email: string, username: string, role: string, full = false): Employee => ({
-        id, name, email, username, password: "1234", role, active: true,
-        perms: (() => {
-          const p = defaultEmpPerms();
-          if (full) { for (const k of Object.keys(p) as PermKey[]) p[k] = true; }
-          return p;
-        })(),
-      });
-      return [
-        ...prev,
-        mk("u2", "محمد علي", "mohamed@example.com", "mohamed", "مصمم", true),
-        mk("u3", "سارة أحمد", "sara@example.com", "sara", "محرر محتوى"),
-        mk("u4", "أ. أروى الجعدي", "arwa@example.com", "arwa", "مديرة حسابات", true),
-      ];
-    });
-
-    // projectFolders mapping
-    setProjectFolders((f) => {
-      const next = { ...f };
-      for (const { folder, name } of allChildren) if (!next[name]) next[name] = folder;
-      return next;
-    });
-
-    const assignees = ["ايهاب فاتح", "محمد علي", "سارة أحمد", "أ. أروى الجعدي"];
-    const platforms = ["نظام أبشر", "منصة اعتماد", "بوابة العميل", "البريد المؤسسي"];
-    const statuses: TaskStatus[] = ["جديد", "جاري العمل", "تم الانجاز", "معلق"];
-    const priorities: Priority[] = ["متوسط", "عالي", "عادي"];
-
-    setProjectMeta((m) => {
-      const next = { ...m };
-      allChildren.forEach(({ name }, idx) => {
-        if (next[name]) return;
-        const assignee = assignees[idx % assignees.length];
-        next[name] = {
-          contract: {
-            startDate: iso(-30 - idx),
-            endDate: iso(30 + idx * 5),
-            value: String(15000 + idx * 5000),
-            payments: [
-              { id: `p1-${idx}`, amount: String(5000 + idx * 1000), date: iso(-15), paid: true },
-              { id: `p2-${idx}`, amount: String(5000 + idx * 1000), date: iso(15), paid: false },
-              { id: `p3-${idx}`, amount: String(5000 + idx * 1000), date: iso(45), paid: false },
-            ],
-            responsibleName: `مسؤول ${name}`,
-            responsiblePhone: `+9665${(1000000 + idx * 11111).toString().slice(0, 7)}`,
-            assignee,
-          },
-          tasks: [
-            {
-              id: `t1-${idx}`,
-              name: "إعداد المتطلبات الأولية",
-              platform: platforms[idx % platforms.length],
-              beneficiary: name,
-              documentNo: `DOC-${1000 + idx}`,
-              startDate: iso(-10),
-              endDate: iso(2),
-              doneDate: "",
-              status: statuses[1],
-              priority: priorities[1],
-              progress: 60,
-            },
-            {
-              id: `t2-${idx}`,
-              name: "تنفيذ المرحلة الأولى",
-              platform: platforms[(idx + 1) % platforms.length],
-              beneficiary: name,
-              documentNo: `DOC-${2000 + idx}`,
-              startDate: iso(-5),
-              endDate: iso(10),
-              doneDate: "",
-              status: statuses[0],
-              priority: priorities[0],
-              progress: 20,
-            },
-            {
-              id: `t3-${idx}`,
-              name: "تسليم ومراجعة",
-              platform: platforms[(idx + 2) % platforms.length],
-              beneficiary: name,
-              documentNo: `DOC-${3000 + idx}`,
-              startDate: iso(-20),
-              endDate: iso(-2),
-              doneDate: iso(-2),
-              status: statuses[2],
-              priority: priorities[2],
-              progress: 100,
-            },
-          ],
-        };
-      });
-      return next;
-    });
-
-    setProjectData((d) => {
-      const next = { ...d };
-      allChildren.forEach(({ name }) => {
-        if (next[name]) return;
-        const defaultFolders: SubFolder[] = DEFAULT_FOLDERS.map((fn) => ({
-          name: fn,
-          createdAt: todayLbl,
-          files: [
-            { id: `${name}-${fn}-f1`, name: "ملاحظات.txt", content: `ملاحظات ${fn} لمشروع ${name}`, kind: "text" as const },
-          ],
-          locked: true,
-        }));
-        next[name] = {
-          folders: [
-            ...defaultFolders,
-            {
-              name: "المرفقات الإضافية",
-              createdAt: todayLbl,
-              files: [
-                { id: `${name}-extra-1`, name: "ملخص المشروع.txt", content: `هذا ملخص لمشروع ${name}.`, kind: "text" as const },
-                { id: `${name}-extra-2`, name: "جدول الميزانية.csv", content: "البند,القيمة\nتصميم,5000\nتنفيذ,8000\nمتابعة,2000", kind: "excel" as const },
-              ],
-            },
-          ],
-          files: [
-            { id: `${name}-root-1`, name: "العقد.docx", content: `عقد المشروع: ${name}\nالمدة: 60 يوم`, kind: "word" as const },
-          ],
-        };
-      });
-      return next;
-    });
-
-    setChats((c) => {
-      const next = { ...c };
-      allChildren.forEach(({ name }, idx) => {
-        if (next[name] && next[name].length) return;
-        const assignee = assignees[idx % assignees.length];
-        next[name] = [
-          {
-            id: `${name}-m1`,
-            sender: "الأدمن",
-            role: "admin",
-            text: `مرحبًا، تم فتح مشروع "${name}". يرجى البدء بالمرحلة الأولى.`,
-            hiddenFromClient: false,
-            createdAt: Date.now() - 1000 * 60 * 60 * 24 * 2,
-          },
-          {
-            id: `${name}-m2`,
-            sender: assignee,
-            role: "employee",
-            text: "تم استلام المتطلبات وسأبدأ التنفيذ اليوم.",
-            hiddenFromClient: false,
-            createdAt: Date.now() - 1000 * 60 * 60 * 20,
-          },
-          {
-            id: `${name}-m3`,
-            sender: "الأدمن",
-            role: "admin",
-            text: "ملاحظة داخلية: تابع الجدول الزمني بدقة.",
-            hiddenFromClient: true,
-            createdAt: Date.now() - 1000 * 60 * 60 * 5,
-          },
-          {
-            id: `${name}-m4`,
-            sender: `مسؤول ${name}`,
-            role: "client",
-            text: "شكرًا، بانتظار التحديثات.",
-            hiddenFromClient: false,
-            createdAt: Date.now() - 1000 * 60 * 30,
-          },
-        ];
-      });
-      return next;
-    });
-
-    // Seed calendar events around today
-    setEvents((e) => {
-      const next = { ...e };
-      const palette = ["#0ea5e9", "#22c55e", "#f97316", "#a855f7", "#dc2626"];
-      const sample = [
-        { offset: 0, title: "اجتماع فريق العمل اليومي", loc: "غرفة الاجتماعات A" },
-        { offset: 0, title: "مكالمة متابعة مع العميل", loc: "Zoom" },
-        { offset: 1, title: "تسليم المرحلة الأولى - شركة hc", loc: "المكتب الرئيسي" },
-        { offset: 2, title: "ورشة عمل: تطوير الواجهة", loc: "قاعة التدريب" },
-        { offset: 3, title: "مراجعة عقود الموظفين", loc: "المكتب" },
-        { offset: 5, title: "عرض تقديمي لمشروع عنان الفضاء", loc: "Microsoft Teams" },
-        { offset: 7, title: "اجتماع المدير التنفيذي", loc: "المكتب التنفيذي" },
-      ];
-      sample.forEach((s, i) => {
-        const date = iso(s.offset);
-        const ev: CalEvent = {
-          id: `seed-ev-${i}`,
-          title: s.title,
-          start: date,
-          end: date,
-          allDay: true,
-          color: palette[i % palette.length],
-          location: s.loc,
-          members: assignees.slice(0, 2).join(", "),
-          clients: allChildren[i % allChildren.length]?.name ?? "",
-          description: "حدث تجريبي للتأكد من جاهزية التقويم.",
-          allowInvite: true,
-        };
-        next[date] = [...(next[date] ?? []), ev];
-      });
-      return next;
-    });
-  }, []);
+  // (Seed data removed — يبقى فقط ما يُنشئه المستخدم)
 
   type Notif = {
     id: string;
@@ -956,26 +714,7 @@ function Index() {
     triggered?: boolean;
   };
   const [notesViewOpen, setNotesViewOpen] = useState(false);
-  const [notes, setNotes] = useState<StickyNoteItem[]>([
-    {
-      id: "n1",
-      text: "مراجعة عقد العميل قبل اجتماع الغد",
-      color: "#fde68a",
-      author: "الأدمن",
-      target: "ايهاب فاتح",
-      reminder: null,
-      createdAt: Date.now(),
-    },
-    {
-      id: "n2",
-      text: "تذكير: تسليم تقرير المهام الأسبوعي",
-      color: "#bae6fd",
-      author: "الأدمن",
-      target: "الجميع",
-      reminder: null,
-      createdAt: Date.now(),
-    },
-  ]);
+  const [notes, setNotes] = useState<StickyNoteItem[]>([]);
   const [noteText, setNoteText] = useState("");
   const [noteColor, setNoteColor] = useState("#fde68a");
   const [noteTarget, setNoteTarget] = useState("الجميع");
