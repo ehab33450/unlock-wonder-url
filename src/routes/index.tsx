@@ -1294,6 +1294,7 @@ function Index() {
   });
 
   const handleCreateProject = () => {
+    // no-op anchor
     const name = npName.trim();
     if (!name) return;
     setProjectData((d) => {
