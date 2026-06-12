@@ -1450,6 +1450,8 @@ function Index() {
     });
     setNewFileMenuOpen(false);
     setEditingFile(item);
+    // persist
+    persistFile(item);
   };
 
   const saveEditingFile = () => {
@@ -1476,6 +1478,7 @@ function Index() {
       }
       return { ...d, [folderViewProject]: { ...cur, files: mapFiles(cur.files) } };
     });
+    persistFile({ id: editingFile.id, name: editingFile.name, content: editingFile.content, kind: editingFile.kind });
     setEditingFile(null);
   };
 
@@ -1498,6 +1501,12 @@ function Index() {
       }
       return { ...d, [folderViewProject]: { ...cur, files: filterFiles(cur.files) } };
     });
+    (async () => {
+      try {
+        const sid = fileIdByKey.current.get(id);
+        if (sid) { await _delFile({ data: { id: sid } }); fileIdByKey.current.delete(id); }
+      } catch (e) { console.error("[deleteFile]", e); }
+    })();
   };
 
   const removeSubfolder = (name: string) => {
@@ -1509,6 +1518,13 @@ function Index() {
         folders: d[folderViewProject].folders.filter((f) => f.name !== name),
       },
     }));
+    (async () => {
+      try {
+        const key = `${folderViewProject}::${name}`;
+        const sid = subfolderIdByKey.current.get(key);
+        if (sid) { await _delSub({ data: { id: sid } }); subfolderIdByKey.current.delete(key); }
+      } catch (e) { console.error("[deleteSubfolder]", e); }
+    })();
   };
 
   const currentProject = folderViewProject ? projectData[folderViewProject] : null;
