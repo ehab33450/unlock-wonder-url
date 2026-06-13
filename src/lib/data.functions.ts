@@ -8,7 +8,7 @@ export const listFolderGroups = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     const { data, error } = await context.supabase
       .from("folder_groups").select("*").order("sort_order").order("created_at");
-    if (error) throw new Error(error.message);
+    if (error) throw (console.error("[data.fn]", error), new Error("حدث خطأ، يرجى المحاولة مرة أخرى"));
     return data ?? [];
   });
 
@@ -19,7 +19,7 @@ export const upsertFolderGroup = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const row = { ...data, created_by: context.userId };
     const { data: res, error } = await context.supabase.from("folder_groups").upsert(row).select().single();
-    if (error) throw new Error(error.message);
+    if (error) throw (console.error("[data.fn]", error), new Error("حدث خطأ، يرجى المحاولة مرة أخرى"));
     return res;
   });
 
@@ -28,7 +28,7 @@ export const deleteFolderGroup = createServerFn({ method: "POST" })
   .inputValidator((d: { id: string }) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     const { error } = await context.supabase.from("folder_groups").delete().eq("id", data.id);
-    if (error) throw new Error(error.message);
+    if (error) throw (console.error("[data.fn]", error), new Error("حدث خطأ، يرجى المحاولة مرة أخرى"));
     return { ok: true };
   });
 
@@ -38,7 +38,7 @@ export const listProjects = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     const { data, error } = await context.supabase
       .from("projects").select("*").order("created_at", { ascending: false });
-    if (error) throw new Error(error.message);
+    if (error) throw (console.error("[data.fn]", error), new Error("حدث خطأ، يرجى المحاولة مرة أخرى"));
     return data ?? [];
   });
 
@@ -63,7 +63,7 @@ export const createProject = createServerFn({ method: "POST" })
       .from("projects")
       .insert({ ...row, created_by: context.userId })
       .select().single();
-    if (error) throw new Error(error.message);
+    if (error) throw (console.error("[data.fn]", error), new Error("حدث خطأ، يرجى المحاولة مرة أخرى"));
     // creator becomes a member; plus any extras
     const memberRows = [
       { project_id: proj.id, user_id: context.userId, role: "owner" },
@@ -89,7 +89,7 @@ export const updateProject = createServerFn({ method: "POST" })
     const { id, ...patch } = data;
     const { data: res, error } = await context.supabase
       .from("projects").update(patch).eq("id", id).select().single();
-    if (error) throw new Error(error.message);
+    if (error) throw (console.error("[data.fn]", error), new Error("حدث خطأ، يرجى المحاولة مرة أخرى"));
     return res;
   });
 
@@ -98,7 +98,7 @@ export const deleteProject = createServerFn({ method: "POST" })
   .inputValidator((d: { id: string }) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     const { error } = await context.supabase.from("projects").delete().eq("id", data.id);
-    if (error) throw new Error(error.message);
+    if (error) throw (console.error("[data.fn]", error), new Error("حدث خطأ، يرجى المحاولة مرة أخرى"));
     return { ok: true };
   });
 
@@ -107,7 +107,7 @@ export const listProjectMembers = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { data, error } = await context.supabase.from("project_members").select("*");
-    if (error) throw new Error(error.message);
+    if (error) throw (console.error("[data.fn]", error), new Error("حدث خطأ، يرجى المحاولة مرة أخرى"));
     return data ?? [];
   });
 
@@ -117,7 +117,7 @@ export const addProjectMember = createServerFn({ method: "POST" })
     z.object({ project_id: z.string().uuid(), user_id: z.string().uuid(), role: z.string().max(40).optional() }).parse(d))
   .handler(async ({ data, context }) => {
     const { error } = await context.supabase.from("project_members").upsert(data, { onConflict: "project_id,user_id" });
-    if (error) throw new Error(error.message);
+    if (error) throw (console.error("[data.fn]", error), new Error("حدث خطأ، يرجى المحاولة مرة أخرى"));
     return { ok: true };
   });
 
@@ -128,7 +128,7 @@ export const removeProjectMember = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { error } = await context.supabase.from("project_members").delete()
       .eq("project_id", data.project_id).eq("user_id", data.user_id);
-    if (error) throw new Error(error.message);
+    if (error) throw (console.error("[data.fn]", error), new Error("حدث خطأ، يرجى المحاولة مرة أخرى"));
     return { ok: true };
   });
 
@@ -139,7 +139,7 @@ export const listSubfolders = createServerFn({ method: "GET" })
   .handler(async ({ data, context }) => {
     const { data: res, error } = await context.supabase
       .from("subfolders").select("*").eq("project_id", data.project_id).order("created_at");
-    if (error) throw new Error(error.message);
+    if (error) throw (console.error("[data.fn]", error), new Error("حدث خطأ، يرجى المحاولة مرة أخرى"));
     return res ?? [];
   });
 
@@ -150,7 +150,7 @@ export const createSubfolder = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { data: res, error } = await context.supabase
       .from("subfolders").insert({ ...data, created_by: context.userId }).select().single();
-    if (error) throw new Error(error.message);
+    if (error) throw (console.error("[data.fn]", error), new Error("حدث خطأ، يرجى المحاولة مرة أخرى"));
     return res;
   });
 
@@ -159,7 +159,7 @@ export const deleteSubfolder = createServerFn({ method: "POST" })
   .inputValidator((d: { id: string }) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     const { error } = await context.supabase.from("subfolders").delete().eq("id", data.id);
-    if (error) throw new Error(error.message);
+    if (error) throw (console.error("[data.fn]", error), new Error("حدث خطأ، يرجى المحاولة مرة أخرى"));
     return { ok: true };
   });
 
@@ -170,7 +170,7 @@ export const listProjectFiles = createServerFn({ method: "GET" })
   .handler(async ({ data, context }) => {
     const { data: res, error } = await context.supabase
       .from("project_files").select("*").eq("project_id", data.project_id).order("created_at", { ascending: false });
-    if (error) throw new Error(error.message);
+    if (error) throw (console.error("[data.fn]", error), new Error("حدث خطأ، يرجى المحاولة مرة أخرى"));
     return res ?? [];
   });
 
@@ -188,7 +188,7 @@ export const upsertProjectFile = createServerFn({ method: "POST" })
     const row = { ...data, created_by: context.userId };
     const { data: res, error } = await context.supabase
       .from("project_files").upsert(row).select().single();
-    if (error) throw new Error(error.message);
+    if (error) throw (console.error("[data.fn]", error), new Error("حدث خطأ، يرجى المحاولة مرة أخرى"));
     return res;
   });
 
@@ -197,7 +197,7 @@ export const deleteProjectFile = createServerFn({ method: "POST" })
   .inputValidator((d: { id: string }) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     const { error } = await context.supabase.from("project_files").delete().eq("id", data.id);
-    if (error) throw new Error(error.message);
+    if (error) throw (console.error("[data.fn]", error), new Error("حدث خطأ، يرجى المحاولة مرة أخرى"));
     return { ok: true };
   });
 
@@ -207,7 +207,7 @@ export const listTasks = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     const { data, error } = await context.supabase
       .from("tasks").select("*").order("created_at", { ascending: false });
-    if (error) throw new Error(error.message);
+    if (error) throw (console.error("[data.fn]", error), new Error("حدث خطأ، يرجى المحاولة مرة أخرى"));
     return data ?? [];
   });
 
@@ -228,7 +228,7 @@ export const upsertTask = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const row = { ...data, created_by: data.id ? undefined : context.userId };
     const { data: res, error } = await context.supabase.from("tasks").upsert(row).select().single();
-    if (error) throw new Error(error.message);
+    if (error) throw (console.error("[data.fn]", error), new Error("حدث خطأ، يرجى المحاولة مرة أخرى"));
     return res;
   });
 
@@ -237,7 +237,7 @@ export const deleteTask = createServerFn({ method: "POST" })
   .inputValidator((d: { id: string }) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     const { error } = await context.supabase.from("tasks").delete().eq("id", data.id);
-    if (error) throw new Error(error.message);
+    if (error) throw (console.error("[data.fn]", error), new Error("حدث خطأ، يرجى المحاولة مرة أخرى"));
     return { ok: true };
   });
 
@@ -247,7 +247,7 @@ export const listNotes = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     const { data, error } = await context.supabase
       .from("notes").select("*").order("pinned", { ascending: false }).order("updated_at", { ascending: false });
-    if (error) throw new Error(error.message);
+    if (error) throw (console.error("[data.fn]", error), new Error("حدث خطأ، يرجى المحاولة مرة أخرى"));
     return data ?? [];
   });
 
@@ -263,7 +263,7 @@ export const upsertNote = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const row = { ...data, user_id: context.userId, content: data.content ?? "" };
     const { data: res, error } = await context.supabase.from("notes").upsert(row).select().single();
-    if (error) throw new Error(error.message);
+    if (error) throw (console.error("[data.fn]", error), new Error("حدث خطأ، يرجى المحاولة مرة أخرى"));
     return res;
   });
 
@@ -272,7 +272,7 @@ export const deleteNote = createServerFn({ method: "POST" })
   .inputValidator((d: { id: string }) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     const { error } = await context.supabase.from("notes").delete().eq("id", data.id);
-    if (error) throw new Error(error.message);
+    if (error) throw (console.error("[data.fn]", error), new Error("حدث خطأ، يرجى المحاولة مرة أخرى"));
     return { ok: true };
   });
 
@@ -281,7 +281,7 @@ export const listChatChannels = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { data, error } = await context.supabase.from("chat_channels").select("*").order("created_at");
-    if (error) throw new Error(error.message);
+    if (error) throw (console.error("[data.fn]", error), new Error("حدث خطأ، يرجى المحاولة مرة أخرى"));
     return data ?? [];
   });
 
@@ -292,7 +292,7 @@ export const createChatChannel = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { data: res, error } = await context.supabase
       .from("chat_channels").insert({ ...data, created_by: context.userId }).select().single();
-    if (error) throw new Error(error.message);
+    if (error) throw (console.error("[data.fn]", error), new Error("حدث خطأ، يرجى المحاولة مرة أخرى"));
     return res;
   });
 
@@ -302,7 +302,7 @@ export const listMessages = createServerFn({ method: "GET" })
   .handler(async ({ data, context }) => {
     const { data: res, error } = await context.supabase
       .from("chat_messages").select("*").eq("channel_id", data.channel_id).order("created_at");
-    if (error) throw new Error(error.message);
+    if (error) throw (console.error("[data.fn]", error), new Error("حدث خطأ، يرجى المحاولة مرة أخرى"));
     return res ?? [];
   });
 
@@ -313,7 +313,7 @@ export const sendMessage = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { data: res, error } = await context.supabase
       .from("chat_messages").insert({ ...data, sender_id: context.userId }).select().single();
-    if (error) throw new Error(error.message);
+    if (error) throw (console.error("[data.fn]", error), new Error("حدث خطأ، يرجى المحاولة مرة أخرى"));
     return res;
   });
 
@@ -323,7 +323,7 @@ export const listEvents = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     const { data, error } = await context.supabase
       .from("calendar_events").select("*").order("starts_at");
-    if (error) throw new Error(error.message);
+    if (error) throw (console.error("[data.fn]", error), new Error("حدث خطأ، يرجى المحاولة مرة أخرى"));
     return data ?? [];
   });
 
@@ -343,7 +343,7 @@ export const upsertEvent = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const row = { ...data, created_by: context.userId };
     const { data: res, error } = await context.supabase.from("calendar_events").upsert(row).select().single();
-    if (error) throw new Error(error.message);
+    if (error) throw (console.error("[data.fn]", error), new Error("حدث خطأ، يرجى المحاولة مرة أخرى"));
     return res;
   });
 
@@ -352,7 +352,7 @@ export const deleteEvent = createServerFn({ method: "POST" })
   .inputValidator((d: { id: string }) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     const { error } = await context.supabase.from("calendar_events").delete().eq("id", data.id);
-    if (error) throw new Error(error.message);
+    if (error) throw (console.error("[data.fn]", error), new Error("حدث خطأ، يرجى المحاولة مرة أخرى"));
     return { ok: true };
   });
 
@@ -362,7 +362,7 @@ export const listFinance = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     const { data, error } = await context.supabase
       .from("finance_entries").select("*").order("occurred_on", { ascending: false });
-    if (error) throw new Error(error.message);
+    if (error) throw (console.error("[data.fn]", error), new Error("حدث خطأ، يرجى المحاولة مرة أخرى"));
     return data ?? [];
   });
 
@@ -381,7 +381,7 @@ export const upsertFinance = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const row = { ...data, created_by: context.userId };
     const { data: res, error } = await context.supabase.from("finance_entries").upsert(row).select().single();
-    if (error) throw new Error(error.message);
+    if (error) throw (console.error("[data.fn]", error), new Error("حدث خطأ، يرجى المحاولة مرة أخرى"));
     return res;
   });
 
@@ -390,7 +390,7 @@ export const deleteFinance = createServerFn({ method: "POST" })
   .inputValidator((d: { id: string }) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     const { error } = await context.supabase.from("finance_entries").delete().eq("id", data.id);
-    if (error) throw new Error(error.message);
+    if (error) throw (console.error("[data.fn]", error), new Error("حدث خطأ، يرجى المحاولة مرة أخرى"));
     return { ok: true };
   });
 
@@ -399,7 +399,7 @@ export const getCompanySettings = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { data, error } = await context.supabase.from("company_settings").select("*").eq("id", 1).maybeSingle();
-    if (error) throw new Error(error.message);
+    if (error) throw (console.error("[data.fn]", error), new Error("حدث خطأ، يرجى المحاولة مرة أخرى"));
     return data;
   });
 
@@ -416,7 +416,7 @@ export const updateCompanySettings = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { data: res, error } = await context.supabase
       .from("company_settings").update(data).eq("id", 1).select().single();
-    if (error) throw new Error(error.message);
+    if (error) throw (console.error("[data.fn]", error), new Error("حدث خطأ، يرجى المحاولة مرة أخرى"));
     return res;
   });
 
@@ -426,7 +426,7 @@ export const listActivity = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     const { data, error } = await context.supabase
       .from("activity_log").select("*").order("created_at", { ascending: false }).limit(200);
-    if (error) throw new Error(error.message);
+    if (error) throw (console.error("[data.fn]", error), new Error("حدث خطأ، يرجى المحاولة مرة أخرى"));
     return data ?? [];
   });
 
@@ -440,6 +440,6 @@ export const logActivity = createServerFn({ method: "POST" })
   }).parse(d))
   .handler(async ({ data, context }) => {
     const { error } = await context.supabase.from("activity_log").insert({ ...data, user_id: context.userId });
-    if (error) throw new Error(error.message);
+    if (error) throw (console.error("[data.fn]", error), new Error("حدث خطأ، يرجى المحاولة مرة أخرى"));
     return { ok: true };
   });
