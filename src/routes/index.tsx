@@ -1674,8 +1674,9 @@ function Index() {
       <div className="flex">
         {/* Left icon rail */}
         <aside className="w-20 bg-white border-l border-slate-200 min-h-[calc(100vh-3.5rem)] flex flex-col items-center py-4 gap-2">
-          {sidebarItems.filter((it) => !it.permKey || hasPerm(it.permKey)).map((item) => {
+          {sidebarItems.map((item) => {
             const Icon = item.icon;
+            const allowed = !item.permKey || hasPerm(item.permKey as PermKey);
             const isActive =
               (item.label === "التقويم" && calendarOpen) ||
               (item.label === "الملفات" && filesViewOpen) ||
@@ -1687,7 +1688,10 @@ function Index() {
             return (
               <button
                 key={item.label}
+                disabled={!allowed}
+                title={!allowed ? "لا تملك صلاحية الوصول لهذه الأيقونة" : undefined}
                 onClick={() => {
+                  if (!allowed) return;
                   closeAllPanels();
                   if (item.label === "التقويم") setCalendarOpen(true);
                   if (item.label === "الملفات") setFilesViewOpen(true);
@@ -1699,26 +1703,30 @@ function Index() {
                   if (item.label === "الإرشادات") setGuidesOpen(true);
                   if (item.label === "المزيد") setMoreMenuOpen(true);
                 }}
-                className={`group w-16 py-2.5 flex flex-col items-center gap-1 rounded-xl transition-all duration-200 hover:-translate-y-0.5 ${
-                  isActive
-                    ? "text-white shadow-lg"
-                    : "text-slate-600 hover:bg-slate-50"
+                className={`group w-16 py-2.5 flex flex-col items-center gap-1 rounded-xl transition-all duration-200 relative ${
+                  !allowed
+                    ? "opacity-40 grayscale cursor-not-allowed"
+                    : "hover:-translate-y-0.5 " +
+                      (isActive ? "text-white shadow-lg" : "text-slate-600 hover:bg-slate-50")
                 }`}
                 style={
-                  isActive
+                  isActive && allowed
                     ? { background: `linear-gradient(135deg, ${item.color}, ${item.color}cc)` }
                     : undefined
                 }
               >
                 <span
                   className={`w-9 h-9 rounded-lg flex items-center justify-center transition ${
-                    isActive ? "bg-white/20" : "group-hover:scale-110"
+                    isActive && allowed ? "bg-white/20" : allowed ? "group-hover:scale-110" : ""
                   }`}
                   style={!isActive ? { color: item.color, backgroundColor: `${item.color}15` } : undefined}
                 >
                   <Icon className="w-5 h-5" />
                 </span>
                 <span className="text-[10px] font-semibold">{isEn ? item.en : item.label}</span>
+                {!allowed && (
+                  <span className="absolute top-1 left-1 text-[9px]" aria-hidden>🔒</span>
+                )}
               </button>
             );
           })}
