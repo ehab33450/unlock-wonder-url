@@ -1,9 +1,27 @@
 import { createServerFn } from "@tanstack/react-start";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { z } from "zod";
 
 type Msg = { role: "user" | "assistant" | "system"; content: string };
 
 export const askAssistant = createServerFn({ method: "POST" })
-  .inputValidator((data: { messages: Msg[]; context?: string }) => data)
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: { messages: Msg[]; context?: string }) =>
+    z
+      .object({
+        messages: z
+          .array(
+            z.object({
+              role: z.enum(["user", "assistant"]),
+              content: z.string().min(1).max(4000),
+            }),
+          )
+          .min(1)
+          .max(40),
+        context: z.string().max(8000).optional(),
+      })
+      .parse(data),
+  )
   .handler(async ({ data }) => {
     const apiKey = process.env.LOVABLE_API_KEY;
     if (!apiKey) {
