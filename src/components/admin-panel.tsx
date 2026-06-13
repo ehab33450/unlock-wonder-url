@@ -65,10 +65,6 @@ export function AdminPanel({
   const [roles, setRoles] = useState<RoleRow[]>([
     { id: "r1", name: "Admin", isDefault: true, system: true },
     { id: "r2", name: "Employee", isDefault: true, system: true },
-    { id: "r3", name: "عميل", isDefault: false },
-    { id: "r4", name: "مدير حساب العميل", isDefault: false },
-    { id: "r5", name: "مندوب مبيعات", isDefault: false },
-    { id: "r6", name: "محاسب", isDefault: false },
   ]);
 
   if (!open) return null;
@@ -493,13 +489,12 @@ function AddUserModal({ onClose, onCreate, defaultPerms }: {
         <div className="grid grid-cols-2 gap-4 text-right">
           <Field label="الخاصية">
             <select value={f.kind} onChange={(e) => setF({ ...f, kind: e.target.value })} className="ad-input">
-              <option>موظف</option><option>عميل</option><option>مدير حساب العميل</option>
+              <option>موظف</option>
             </select>
           </Field>
           <Field label="الصلاحية">
             <select value={f.role} onChange={(e) => setF({ ...f, role: e.target.value })} className="ad-input">
-              <option>Admin</option><option>Employee</option><option>عميل</option>
-              <option>مدير حساب العميل</option><option>مندوب مبيعات</option><option>محاسب</option>
+              <option>Admin</option><option>Employee</option>
             </select>
           </Field>
           <Field label="الإسم">
