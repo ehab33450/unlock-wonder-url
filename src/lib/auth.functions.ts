@@ -2,7 +2,12 @@ import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
 
+const GENERIC_ERR = "حدث خطأ، يرجى المحاولة مرة أخرى";
+const FORBIDDEN_ERR = "غير مصرّح";
+
 // Resolve a username (or email) to an email so users can sign in by username.
+// Security: always returns an email — for unknown usernames returns a deterministic
+// non-existent synthetic email so attackers cannot enumerate accounts.
 export const resolveLoginIdentifier = createServerFn({ method: "POST" })
   .inputValidator((d: { identifier: string }) =>
     z.object({ identifier: z.string().min(1).max(255) }).parse(d),
@@ -11,14 +16,15 @@ export const resolveLoginIdentifier = createServerFn({ method: "POST" })
     const id = data.identifier.trim();
     if (id.includes("@")) return { email: id };
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: row, error } = await supabaseAdmin
+    const { data: row } = await supabaseAdmin
       .from("profiles")
       .select("email")
       .eq("username", id)
       .maybeSingle();
-    if (error) throw new Error(error.message);
-    if (!row?.email) throw new Error("اسم المستخدم غير موجود");
-    return { email: row.email };
+    if (row?.email) return { email: row.email };
+    // Synthetic non-existent email — login will fail with generic invalid credentials.
+    const safe = id.toLowerCase().replace(/[^a-z0-9._-]/g, "");
+    return { email: `${safe || "user"}@invalid.local` };
   });
 
 // Current user profile + role + permissions
