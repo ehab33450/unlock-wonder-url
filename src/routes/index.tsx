@@ -5184,12 +5184,11 @@ function Index() {
               <h2 className="text-lg font-bold text-slate-800">رابط دخول الموظف</h2>
             </div>
             <div className="text-sm text-slate-600 mb-3 text-right">
-              شارك الرابط التالي مع <b>{linkEmp.name}</b> ليدخل مباشرة دون كتابة كلمة المرور، أو زوّده بـ
-              اسم المستخدم والرمز يدوياً.
+              شارك الرابط التالي مع <b>{linkEmp.name}</b>. سيقوم بإدخال اسم المستخدم وكلمة المرور بنفسه في صفحة الدخول.
+              لا يتم تضمين كلمة المرور في الرابط لأسباب أمنية.
             </div>
             <div className="bg-slate-50 border border-slate-200 rounded p-3 mb-3 text-xs text-right space-y-1">
               <div className="flex justify-between"><span className="font-mono text-slate-700">{linkEmp.username}</span><span className="text-slate-500">اسم المستخدم</span></div>
-              <div className="flex justify-between"><span className="font-mono text-slate-700">{linkEmp.password}</span><span className="text-slate-500">كلمة المرور</span></div>
             </div>
             <div className="bg-slate-900 text-slate-100 rounded p-3 text-[11px] font-mono break-all text-left mb-3 max-h-28 overflow-y-auto">
               {buildLoginLink(linkEmp)}
@@ -5209,7 +5208,7 @@ function Index() {
               </button>
               <a
                 href={`https://wa.me/?text=${encodeURIComponent(
-                  `مرحباً ${linkEmp.name}، هذا رابط دخولك إلى منصة يسير:\n${buildLoginLink(linkEmp)}\nاسم المستخدم: ${linkEmp.username}\nالرمز: ${linkEmp.password}`
+                  `مرحباً ${linkEmp.name}، هذا رابط دخولك إلى منصة يسير:\n${buildLoginLink(linkEmp)}\nاسم المستخدم: ${linkEmp.username}\nسيتم تزويدك بكلمة المرور بشكل منفصل عبر قناة آمنة.`
                 )}`}
                 target="_blank"
                 rel="noreferrer"
@@ -5221,7 +5220,7 @@ function Index() {
               {linkEmp.email && (
                 <a
                   href={`mailto:${linkEmp.email}?subject=${encodeURIComponent("بيانات دخولك إلى منصة يسير")}&body=${encodeURIComponent(
-                    `مرحباً ${linkEmp.name}،\n\nرابط الدخول المباشر:\n${buildLoginLink(linkEmp)}\n\nاسم المستخدم: ${linkEmp.username}\nالرمز: ${linkEmp.password}`
+                    `مرحباً ${linkEmp.name}،\n\nرابط الدخول:\n${buildLoginLink(linkEmp)}\n\nاسم المستخدم: ${linkEmp.username}\nسيتم تزويدك بكلمة المرور بشكل منفصل عبر قناة آمنة.`
                   )}`}
                   className="col-span-2 h-10 rounded border border-slate-300 text-slate-700 text-sm flex items-center justify-center gap-2 hover:bg-slate-50"
                 >
