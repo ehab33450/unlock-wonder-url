@@ -3104,7 +3104,6 @@ function Index() {
                           <div className="text-xs space-y-1 text-right border-t border-slate-100 pt-2">
                             <div className="flex justify-between"><span className="text-slate-500">{emp.email || "—"}</span><span className="text-slate-600">البريد</span></div>
                             <div className="flex justify-between"><span className="text-slate-500 font-mono">{emp.username}</span><span className="text-slate-600">اسم المستخدم</span></div>
-                            <div className="flex justify-between"><span className="text-slate-500 font-mono">{emp.password}</span><span className="text-slate-600">الرمز</span></div>
                           </div>
 
                           {/* صلاحيات قابلة للتعديل من المدير */}
