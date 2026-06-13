@@ -449,22 +449,17 @@ function Index() {
   const [linkCopied, setLinkCopied] = useState(false);
   const buildLoginLink = (emp: Employee) => {
     if (typeof window === "undefined") return "";
-    const base = window.location.origin + window.location.pathname;
-    return `${base}?u=${encodeURIComponent(emp.username)}&p=${encodeURIComponent(emp.password)}`;
+    // أمان: لا نضع كلمة المرور أبداً داخل الرابط. الرابط يفتح صفحة الدخول فقط.
+    void emp;
+    return `${window.location.origin}/auth`;
   };
 
-  // الدخول التلقائي من رابط URL ?u=&p=
+  // أمان: تم إلغاء الدخول التلقائي من معاملات URL لمنع تسريب بيانات الاعتماد.
+  // إذا وُجدت معاملات قديمة، نُزيلها فقط من الشريط ولا نستخدمها.
   useEffect(() => {
     if (typeof window === "undefined") return;
     const sp = new URLSearchParams(window.location.search);
-    const u = sp.get("u");
-    const p = sp.get("p");
-    if (!u || !p) return;
-    const emp = employees.find((e) => e.username === u && e.password === p && e.active);
-    if (emp) {
-      setCurrentUser(emp.name);
-      setIsAdmin(false);
-      // نظف الرابط
+    if (sp.has("u") || sp.has("p")) {
       const url = new URL(window.location.href);
       url.searchParams.delete("u");
       url.searchParams.delete("p");
