@@ -60,12 +60,12 @@ export const adminListUsers = createServerFn({ method: "GET" })
       .eq("user_id", context.userId)
       .eq("role", "admin")
       .maybeSingle();
-    if (!isAdminRow) throw new Error("صلاحية الأدمن مطلوبة");
+    if (!isAdminRow) throw new Error(FORBIDDEN_ERR);
     const { data: profiles, error } = await supabaseAdmin
       .from("profiles")
       .select("*")
       .order("created_at", { ascending: false });
-    if (error) throw new Error(error.message);
+    if (error) { console.error("[adminListUsers]", error); throw new Error(GENERIC_ERR); }
     const { data: roles } = await supabaseAdmin.from("user_roles").select("user_id, role");
     const { data: perms } = await supabaseAdmin
       .from("user_permissions")
@@ -112,7 +112,7 @@ export const adminCreateUser = createServerFn({ method: "POST" })
       .eq("user_id", context.userId)
       .eq("role", "admin")
       .maybeSingle();
-    if (!isAdminRow) throw new Error("صلاحية الأدمن مطلوبة");
+    if (!isAdminRow) throw new Error(FORBIDDEN_ERR);
 
     const created = await supabaseAdmin.auth.admin.createUser({
       email: data.email,
@@ -124,7 +124,11 @@ export const adminCreateUser = createServerFn({ method: "POST" })
       },
     });
     if (created.error || !created.data.user) {
-      throw new Error(created.error?.message ?? "تعذّر إنشاء المستخدم");
+      console.error("[adminCreateUser]", created.error);
+      // Surface only the duplicate-account case in a safe way; otherwise generic.
+      const msg = created.error?.message ?? "";
+      if (/already|exists|registered/i.test(msg)) throw new Error("هذا البريد مستخدم مسبقاً");
+      throw new Error("تعذّر إنشاء المستخدم");
     }
     const newId = created.data.user.id;
     // upsert profile (trigger creates it; we update fields)
@@ -165,7 +169,7 @@ export const adminSetPermissions = createServerFn({ method: "POST" })
       .eq("user_id", context.userId)
       .eq("role", "admin")
       .maybeSingle();
-    if (!isAdminRow) throw new Error("صلاحية الأدمن مطلوبة");
+    if (!isAdminRow) throw new Error(FORBIDDEN_ERR);
     await supabaseAdmin.from("user_permissions").delete().eq("user_id", data.user_id);
     const rows = Object.entries(data.perms).map(([k, v]) => ({
       user_id: data.user_id,
@@ -190,7 +194,7 @@ export const adminSetActive = createServerFn({ method: "POST" })
       .eq("user_id", context.userId)
       .eq("role", "admin")
       .maybeSingle();
-    if (!isAdminRow) throw new Error("صلاحية الأدمن مطلوبة");
+    if (!isAdminRow) throw new Error(FORBIDDEN_ERR);
     await supabaseAdmin.from("profiles").update({ active: data.active }).eq("id", data.user_id);
     return { ok: true };
   });
@@ -219,7 +223,10 @@ export const bootstrapFirstAdmin = createServerFn({ method: "POST" })
       email_confirm: true,
       user_metadata: { display_name: data.display_name, username: data.username },
     });
-    if (created.error || !created.data.user) throw new Error(created.error?.message ?? "خطأ");
+    if (created.error || !created.data.user) {
+      console.error("[bootstrapFirstAdmin]", created.error);
+      throw new Error(GENERIC_ERR);
+    }
     const id = created.data.user.id;
     await supabaseAdmin.from("profiles").upsert({
       id,
