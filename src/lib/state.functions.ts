@@ -10,7 +10,7 @@ export const getAppState = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     const { data, error } = await context.supabase.from("app_state").select("key, value");
     if (error) throw (console.error("[state.fn]", error), new Error(ERR));
-    const out: Record<string, unknown> = {};
+    const out: Record<string, any> = {};
     for (const r of data ?? []) out[(r as any).key] = (r as any).value;
     return out;
   });
