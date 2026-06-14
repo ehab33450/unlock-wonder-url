@@ -5,6 +5,8 @@ import { useNavigate } from "@tanstack/react-router";
 import { useAuth } from "@/contexts/auth-context";
 import { askAssistant } from "@/lib/ai-assistant.functions";
 import { adminListUsers, adminCreateUser, adminSetPermissions, adminSetActive } from "@/lib/auth.functions";
+import { getAppState, setAppState } from "@/lib/state.functions";
+import { sendUserInvite, sendMeetingInvite } from "@/lib/email.functions";
 import {
   listFolderGroups, upsertFolderGroup, deleteFolderGroup,
   listProjects, createProject as svCreateProject, deleteProject as svDeleteProject,
@@ -269,6 +271,8 @@ function Index() {
   const _listFiles = useServerFn(listProjectFiles);
   const _upsertFile = useServerFn(svUpsertFile);
   const _delFile = useServerFn(svDeleteFile);
+  const _getState = useServerFn(getAppState);
+  const _setState = useServerFn(setAppState);
 
   // Roles & permissions
   const DEFAULT_FOLDERS = [
@@ -410,6 +414,8 @@ function Index() {
   const createUserFn = useServerFn(adminCreateUser);
   const setPermsFn = useServerFn(adminSetPermissions);
   const setActiveFn = useServerFn(adminSetActive);
+  const sendInviteFn = useServerFn(sendUserInvite);
+  const sendMeetingFn = useServerFn(sendMeetingInvite);
   const [adminUsersLoading, setAdminUsersLoading] = useState(false);
   const refreshAdminUsers = async () => {
     if (!isAdmin) return;
@@ -798,6 +804,18 @@ function Index() {
       createdAt: Date.now(),
     };
     setMeetings((prev) => [m, ...prev]);
+    // Email invitation (with .ics + Google Calendar link) when the email channel is on.
+    if (m.channels.email && meetingForm.email.trim()) {
+      const toEmail = meetingForm.email.trim();
+      sendMeetingFn({ data: {
+        to: [toEmail],
+        title: m.title,
+        date: m.date,
+        location: m.location || undefined,
+        organizer: m.organizer || undefined,
+        notes: m.notes || undefined,
+      } }).catch((e) => console.error("[meeting-invite]", e));
+    }
     if (m.channels.inApp) {
       const targets = att.length > 0 ? att : [currentUser];
       setMeetingNotifs((prev) => [
@@ -960,6 +978,65 @@ function Index() {
   const [evColor, setEvColor] = useState("#0ea5e9");
   const [evDesc, setEvDesc] = useState("");
   const [evAllowInvite, setEvAllowInvite] = useState(false);
+
+  // ===== Unified server persistence for all dashboard feature state =====
+  // Loads every slice on sign-in and auto-saves (debounced) on any change, so notes,
+  // tasks, chats, calendar, meetings, services, bookings, etc. survive refresh and are
+  // shared across the team. Backed by the `app_state` table via state.functions.ts.
+  const stateHydrated = useRef(false);
+  const saveTimers = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
+  const persist = (key: string, value: unknown) => {
+    if (!stateHydrated.current) return;
+    clearTimeout(saveTimers.current[key]);
+    saveTimers.current[key] = setTimeout(() => {
+      _setState({ data: { key, value } }).catch((e) => console.error("[persist]", key, e));
+    }, 600);
+  };
+  useEffect(() => {
+    if (!auth.session) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const s = (await _getState()) as Record<string, any>;
+        if (cancelled) return;
+        if (s.notes) setNotes(s.notes);
+        if (s.projectMeta) setProjectMeta(s.projectMeta);
+        if (s.customCols) setCustomCols(s.customCols);
+        if (s.customCells) setCustomCells(s.customCells);
+        if (s.taskChats) setTaskChats(s.taskChats);
+        if (s.chats) setChats(s.chats);
+        if (s.chatMembers) setChatMembers(s.chatMembers);
+        if (s.events) setEvents(s.events);
+        if (s.meetings) setMeetings(s.meetings);
+        if (s.services) setServices(s.services);
+        if (s.bookings) setBookings(s.bookings);
+        if (s.guideVideos) setGuideVideos(s.guideVideos);
+        if (s.guideImages) setGuideImages(s.guideImages);
+      } catch (e) {
+        console.error("[hydrate-state]", e);
+      } finally {
+        stateHydrated.current = true;
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [auth.session]);
+
+  useEffect(() => { persist("notes", notes); }, [notes]);
+  useEffect(() => { persist("projectMeta", projectMeta); }, [projectMeta]);
+  useEffect(() => { persist("customCols", customCols); }, [customCols]);
+  useEffect(() => { persist("customCells", customCells); }, [customCells]);
+  useEffect(() => { persist("taskChats", taskChats); }, [taskChats]);
+  useEffect(() => { persist("chats", chats); }, [chats]);
+  useEffect(() => { persist("chatMembers", chatMembers); }, [chatMembers]);
+  useEffect(() => { persist("events", events); }, [events]);
+  useEffect(() => { persist("meetings", meetings); }, [meetings]);
+  useEffect(() => { persist("services", services); }, [services]);
+  useEffect(() => { persist("bookings", bookings); }, [bookings]);
+  useEffect(() => { persist("guideVideos", guideVideos); }, [guideVideos]);
+  useEffect(() => { persist("guideImages", guideImages); }, [guideImages]);
+
   const eventColors = [
     "#a855f7", "#818cf8", "#3b82f6", "#16a34a", "#22c55e",
     "#eab308", "#f97316", "#f472b6", "#dc2626", "#0ea5e9",
@@ -5672,6 +5749,17 @@ function Index() {
         onCreateUser={async (input) => {
           await createUserFn({ data: input });
           await refreshAdminUsers();
+          // Email the new user their login credentials (best-effort; never blocks creation).
+          if (input.email) {
+            try {
+              await sendInviteFn({ data: {
+                email: input.email,
+                display_name: input.display_name,
+                username: input.username,
+                password: input.password,
+              } });
+            } catch (e) { console.error("[invite]", e); }
+          }
         }}
         onUpdatePerms={async (userId, perms) => {
           await setPermsFn({ data: { user_id: userId, perms } });
