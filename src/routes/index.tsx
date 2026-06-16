@@ -2796,10 +2796,9 @@ function Index() {
                       className="w-full h-11 border border-slate-300 rounded px-3 text-right focus:outline-none focus:border-[color:var(--eyenak-teal)]"
                     />
                     <datalist id="np-assignees">
-                      {Object.keys(employeeTasks).map((n) => (
-                        <option key={n} value={n} />
+                      {employees.map((e) => (
+                        <option key={e.id} value={e.name} />
                       ))}
-                      <option value="ايهاب فاتح" />
                     </datalist>
                   </div>
                 </div>
