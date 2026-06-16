@@ -387,7 +387,7 @@ function Index() {
     [employees, currentUser]
   );
   const hasPerm = (k: PermKey) =>
-    isAdmin ? true : !!currentEmployee?.perms?.[k];
+    isAdmin ? true : !!auth.me?.perms?.[k];
   const canAdd = hasPerm("files_add");
   const canDelete = hasPerm("files_delete");
   const employeeCanEdit = hasPerm("tasks_edit");
