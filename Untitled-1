@@ -1,5 +1,71 @@
-في src/routes/index.tsx:
-1) في نموذج "إنشاء مشروع جديد"، استبدل خانة إدخال الأعضاء النصية بقائمة كل الموظفين الحقيقيين كـ checkboxes. حمّل القائمة عبر دالة الخادم adminListUsers من @/lib/auth.functions باستخدام useServerFn، واعرض كل موظف بـ display_name، وخزّن المعرّفات المختارة (uuid) ومرّرها كمصفوفة members إلى createProject.
-2) أضف زراً داخل صفحة المشروع المفتوح يسمح للأدمن بإضافة موظف موجود إلى المشروع لاحقاً باستدعاء دالة الخادم addProjectMember(project_id, user_id) من @/lib/data.functions.
-3) في واجهة أي موظف غير أدمن: حمّل المشاريع عبر listProjects (تُرجع فقط مشاريعه حسب RLS) واعرضها له، بحيث يظهر له كل مشروع هو عضو فيه، مع محادثته وملفاته. واجعل أزرار التعديل تحترم دالة hasPerm الموجودة.
-حافظ على نفس التنسيق ولا تكسر شيئاً. أرني التغييرات قبل الموافقة.
+عدّل الملف src/routes/index.tsx لإضافة زرّي أرشفة وحذف للمشاريع في الشريط الجانبي. نفّذ هذه التغييرات بدقة:
+
+1) في جملة import من "@/lib/data.functions"، غيّر السطر:
+   listProjects, createProject as svCreateProject, deleteProject as svDeleteProject,
+   إلى:
+   listProjects, createProject as svCreateProject, deleteProject as svDeleteProject, updateProject as svUpdateProject,
+
+2) في import الأيقونات من lucide-react، بعد السطر:  Trash2,
+   أضف سطرين:
+   Archive,
+   ArchiveRestore,
+
+3) بعد السطر:  const [customFolders, setCustomFolders] = useState<string[]>([]);
+   أضف:
+   const [archivedProjects, setArchivedProjects] = useState<string[]>([]);
+
+4) بعد السطر:  const _createProject = useServerFn(svCreateProject);
+   أضف:
+   const _deleteProject = useServerFn(svDeleteProject);
+   const _updateProject = useServerFn(svUpdateProject);
+
+5) في دالة hydrate-state، بعد السطر:  if (s.guideImages) setGuideImages(s.guideImages);
+   أضف:
+   if (s.archivedProjects) setArchivedProjects(s.archivedProjects);
+
+6) بعد السطر:  useEffect(() => { persist("projectMeta", projectMeta); }, [projectMeta]);
+   أضف:
+   useEffect(() => { persist("archivedProjects", archivedProjects); }, [archivedProjects]);
+
+7) قبل السطر:  const handleUploadFiles = (e: React.ChangeEvent<HTMLInputElement>) => {
+   أضف هاتين الدالتين:
+   const archiveProject = (name: string) => {
+     const isArchived = archivedProjects.includes(name);
+     setArchivedProjects((arr) => isArchived ? arr.filter((x) => x !== name) : [...arr, name]);
+     const id = projectIdByName.current.get(name);
+     if (id) _updateProject({ data: { id, status: isArchived ? "active" : "archived" } }).catch((e) => console.error("[archiveProject]", e));
+   };
+   const deleteProjectByName = (name: string) => {
+     if (!window.confirm(`حذف المشروع «${name}» نهائياً؟`)) return;
+     const id = projectIdByName.current.get(name);
+     setProjectMeta((m) => { const c = { ...m }; delete c[name]; return c; });
+     setProjectData((d) => { const c = { ...d }; delete c[name]; return c; });
+     setProjectFolders((f) => { const c = { ...f }; delete c[name]; return c; });
+     setChats((c) => { const n = { ...c }; delete n[name]; return n; });
+     setArchivedProjects((arr) => arr.filter((x) => x !== name));
+     if (folderViewProject === name) setFolderViewProject(null);
+     if (detailProject === name) setDetailProject(null);
+     projectIdByName.current.delete(name);
+     if (id) _deleteProject({ data: { id } }).catch((e) => console.error("[deleteProject]", e));
+   };
+
+8) ابحث عن السطر:  return merged;
+   الذي يسبقه مباشرة كتلة orphans و merged.push({ name: "مشاريع أخرى" ...، واستبدل return merged; بـ:
+   const archSet = new Set(archivedProjects);
+   const visible = merged.map((m) => ({ ...m, children: m.children.filter((c) => !archSet.has(c)) }));
+   if (archivedProjects.length > 0) visible.push({ name: "🗄️ الأرشيف", children: archivedProjects });
+   return visible;
+
+9) في الشريط الجانبي، ابحث عن زر فتح الملفات الذي يحتوي <Folder className="w-3.5 h-3.5" /> داخل صف المشروع، وبعد </button> الخاص به وقبل <span>{c}</span>، أضف:
+   {isAdmin && projectMeta[c] && (
+     <>
+       <button onClick={(e) => { e.stopPropagation(); archiveProject(c); }} className="text-white/50 hover:text-amber-300" title={archivedProjects.includes(c) ? "استعادة" : "أرشفة"}>
+         {archivedProjects.includes(c) ? <ArchiveRestore className="w-3.5 h-3.5" /> : <Archive className="w-3.5 h-3.5" />}
+       </button>
+       <button onClick={(e) => { e.stopPropagation(); deleteProjectByName(c); }} className="text-white/50 hover:text-red-400" title="حذف المشروع">
+         <Trash2 className="w-3.5 h-3.5" />
+       </button>
+     </>
+   )}
+
+ثم احفظ الملف.
