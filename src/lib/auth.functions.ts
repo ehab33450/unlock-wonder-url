@@ -54,7 +54,7 @@ export const adminListUsers = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: isAdminRow } = await context.supabase
+    const { data: isAdminRow } = await supabaseAdmin
       .from("user_roles")
       .select("role")
       .eq("user_id", context.userId)
@@ -106,7 +106,7 @@ export const adminCreateUser = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: isAdminRow } = await context.supabase
+    const { data: isAdminRow } = await supabaseAdmin
       .from("user_roles")
       .select("role")
       .eq("user_id", context.userId)
@@ -163,7 +163,7 @@ export const adminSetPermissions = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: isAdminRow } = await context.supabase
+    const { data: isAdminRow } = await supabaseAdmin
       .from("user_roles")
       .select("role")
       .eq("user_id", context.userId)
@@ -188,7 +188,7 @@ export const adminSetActive = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: isAdminRow } = await context.supabase
+    const { data: isAdminRow } = await supabaseAdmin
       .from("user_roles")
       .select("role")
       .eq("user_id", context.userId)
