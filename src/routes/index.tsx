@@ -9,7 +9,7 @@ import { getAppState, setAppState } from "@/lib/state.functions";
 import { sendUserInvite, sendMeetingInvite } from "@/lib/email.functions";
 import {
   listFolderGroups, upsertFolderGroup, deleteFolderGroup,
-  listProjects, createProject as svCreateProject, deleteProject as svDeleteProject,
+  listProjects, createProject as svCreateProject, deleteProject as svDeleteProject, updateProject as svUpdateProject,
   listSubfolders, createSubfolder as svCreateSubfolder, deleteSubfolder as svDeleteSubfolder,
   listProjectFiles, upsertProjectFile as svUpsertFile, deleteProjectFile as svDeleteFile,
 } from "@/lib/data.functions";
@@ -64,6 +64,8 @@ import {
   Upload,
   Megaphone,
   Trash2,
+  Archive,
+  ArchiveRestore,
   Send,
   Eye,
   EyeOff,
@@ -220,6 +222,7 @@ function Index() {
   const [newProjectOpen, setNewProjectOpen] = useState(false);
   // Quick-create extras: folder, task, templates
   const [customFolders, setCustomFolders] = useState<string[]>([]);
+  const [archivedProjects, setArchivedProjects] = useState<string[]>([]);
   const [newFolderOpen, setNewFolderOpen] = useState(false);
   const [newFolderName, setNewFolderName] = useState("");
   const [newTaskOpen, setNewTaskOpen] = useState(false);
@@ -264,6 +267,8 @@ function Index() {
   const _upsertGroup = useServerFn(upsertFolderGroup);
   const _listProjects = useServerFn(listProjects);
   const _createProject = useServerFn(svCreateProject);
+  const _deleteProject = useServerFn(svDeleteProject);
+  const _updateProject = useServerFn(svUpdateProject);
   const _listSubs = useServerFn(listSubfolders);
   const _createSub = useServerFn(svCreateSubfolder);
   const _delSub = useServerFn(svDeleteSubfolder);
@@ -1011,6 +1016,8 @@ function Index() {
         if (s.bookings) setBookings(s.bookings);
         if (s.guideVideos) setGuideVideos(s.guideVideos);
         if (s.guideImages) setGuideImages(s.guideImages);
+        if (s.archivedProjects) setArchivedProjects(s.archivedProjects);
+        if (s.customFolders) setCustomFolders((arr) => Array.from(new Set([...arr, ...s.customFolders])));
       } catch (e) {
         console.error("[hydrate-state]", e);
       } finally {
@@ -1024,6 +1031,8 @@ function Index() {
 
   useEffect(() => { persist("notes", notes); }, [notes]);
   useEffect(() => { persist("projectMeta", projectMeta); }, [projectMeta]);
+  useEffect(() => { persist("archivedProjects", archivedProjects); }, [archivedProjects]);
+  useEffect(() => { persist("customFolders", customFolders); }, [customFolders]);
   useEffect(() => { persist("customCols", customCols); }, [customCols]);
   useEffect(() => { persist("customCells", customCells); }, [customCells]);
   useEffect(() => { persist("taskChats", taskChats); }, [taskChats]);
@@ -1195,6 +1204,35 @@ function Index() {
         subfolderIdByKey.current.set(`${folderViewProject}::${name}`, (sub as any).id);
       } catch (e) { console.error("[createSubfolder]", e); }
     })();
+  };
+
+  const archiveProject = (name: string) => {
+    const isArchived = archivedProjects.includes(name);
+    setArchivedProjects((arr) =>
+      isArchived ? arr.filter((x) => x !== name) : [...arr, name],
+    );
+    const id = projectIdByName.current.get(name);
+    if (id) {
+      _updateProject({ data: { id, status: isArchived ? "active" : "archived" } }).catch((e) =>
+        console.error("[archiveProject]", e),
+      );
+    }
+  };
+
+  const deleteProjectByName = (name: string) => {
+    if (!window.confirm(`حذف المشروع «${name}» نهائياً؟ لا يمكن التراجع.`)) return;
+    const id = projectIdByName.current.get(name);
+    setProjectMeta((m) => { const c = { ...m }; delete c[name]; return c; });
+    setProjectData((d) => { const c = { ...d }; delete c[name]; return c; });
+    setProjectFolders((f) => { const c = { ...f }; delete c[name]; return c; });
+    setChats((c) => { const n = { ...c }; delete n[name]; return n; });
+    setArchivedProjects((arr) => arr.filter((x) => x !== name));
+    if (folderViewProject === name) setFolderViewProject(null);
+    if (detailProject === name) setDetailProject(null);
+    projectIdByName.current.delete(name);
+    if (id) {
+      _deleteProject({ data: { id } }).catch((e) => console.error("[deleteProject]", e));
+    }
   };
 
   const handleUploadFiles = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -2402,7 +2440,16 @@ function Index() {
               if (orphans.length > 0) {
                 merged.push({ name: "مشاريع أخرى", children: orphans });
               }
-              return merged;
+              // Hide archived projects from normal folders; gather them in their own folder
+              const archSet = new Set(archivedProjects);
+              const visible = merged.map((m) => ({
+                ...m,
+                children: m.children.filter((c) => !archSet.has(c)),
+              }));
+              if (archivedProjects.length > 0) {
+                visible.push({ name: "🗄️ الأرشيف", children: archivedProjects });
+              }
+              return visible;
             })().map((p) => {
               const open = openProjects[p.name];
               return (
@@ -2470,6 +2517,28 @@ function Index() {
                             >
                               <Folder className="w-3.5 h-3.5" />
                             </button>
+                            {isAdmin && projectMeta[c] && (
+                              <>
+                                <button
+                                  onClick={(e) => { e.stopPropagation(); archiveProject(c); }}
+                                  className="text-white/50 hover:text-amber-300"
+                                  aria-label={archivedProjects.includes(c) ? "استعادة" : "أرشفة"}
+                                  title={archivedProjects.includes(c) ? "استعادة" : "أرشفة"}
+                                >
+                                  {archivedProjects.includes(c)
+                                    ? <ArchiveRestore className="w-3.5 h-3.5" />
+                                    : <Archive className="w-3.5 h-3.5" />}
+                                </button>
+                                <button
+                                  onClick={(e) => { e.stopPropagation(); deleteProjectByName(c); }}
+                                  className="text-white/50 hover:text-red-400"
+                                  aria-label="حذف"
+                                  title="حذف المشروع"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </button>
+                              </>
+                            )}
                             <span>{c}</span>
                             <FileIcon className="w-4 h-4 text-white/60" />
                           </div>
