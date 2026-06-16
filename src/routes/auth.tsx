@@ -7,7 +7,7 @@ import { LogIn } from "lucide-react";
 
 export const Route = createFileRoute("/auth")({
   component: AuthPage,
-  head: () => ({ meta: [{ title: "تسجيل الدخول — يسير" }] }),
+  head: () => ({ meta: [{ title: "تسجيل الدخول" }] }),
 });
 
 function AuthPage() {
@@ -48,7 +48,7 @@ function AuthPage() {
     <div dir="rtl" className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-100 to-slate-200 px-4">
       <div className="w-full max-w-md bg-white rounded-2xl shadow-xl p-8 border border-slate-200">
         <div className="flex items-center justify-center gap-2 mb-6">
-          <div className="w-12 h-12 rounded-xl bg-[color:var(--eyenak-teal,#0ea5a4)] text-white flex items-center justify-center font-bold text-xl">يسير</div>
+          <div className="w-12 h-12 rounded-xl bg-[color:var(--eyenak-teal,#0ea5a4)] text-white flex items-center justify-center font-bold text-xl">م</div>
         </div>
         <h1 className="text-2xl font-bold text-center text-slate-800 mb-1">تسجيل الدخول</h1>
         <p className="text-center text-sm text-slate-500 mb-6">ادخل ببريدك الإلكتروني أو اسم المستخدم</p>

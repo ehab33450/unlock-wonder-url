@@ -19,7 +19,6 @@ import guideFinanceImg from "@/assets/guide-finance.png";
 import guideMeetingsImg from "@/assets/guide-meetings.png";
 import guideUsersImg from "@/assets/guide-users.png";
 import guideAssistantImg from "@/assets/guide-assistant.png";
-import yaseerLogo from "@/assets/yaseer-logo.png.asset.json";
 import { ExtraColHeaders, ExtraCells, RowChatButton, EditableHeaderLabel, HeaderMenu, HiddenColsRestore } from "@/components/table-extras";
 import { AdminPanel } from "@/components/admin-panel";
 import {
@@ -87,10 +86,10 @@ export const Route = createFileRoute("/")({
   component: Index,
   head: () => ({
     meta: [
-      { title: "يسير Dashboard — Manage Projects, Tasks & Files" },
-      { name: "description", content: "يسير control panel for managing projects, employees, contracts, tasks, calendar, files, and team collaboration." },
-      { property: "og:title", content: "يسير Dashboard — Manage Projects, Tasks & Files" },
-      { property: "og:description", content: "يسير control panel for managing projects, employees, contracts, tasks, calendar, files, and team collaboration." },
+      { title: "لوحة التحكم — إدارة المشاريع والمهام والملفات" },
+      { name: "description", content: "منصة إدارة شاملة لإدارة المشاريع والموظفين والعقود والمهام والملفات والتعاون." },
+      { property: "og:title", content: "لوحة التحكم — إدارة المشاريع والمهام والملفات" },
+      { property: "og:description", content: "منصة إدارة شاملة لإدارة المشاريع والموظفين والعقود والمهام والملفات والتعاون." },
       { property: "og:url", content: "https://unlock-wonder-url.lovable.app/" },
     ],
     links: [{ rel: "canonical", href: "https://unlock-wonder-url.lovable.app/" }],
@@ -1564,14 +1563,13 @@ function Index() {
       {/* Top header */}
       <header className="h-14 bg-gradient-to-l from-white via-white to-slate-50 border-b border-slate-200 flex items-center justify-between px-4 shadow-sm">
         {/* Right: logo */}
-        <div className="flex items-center gap-2 select-none" dir="ltr">
-          <span className="text-2xl font-extrabold tracking-tight text-[color:var(--eyenak-dark)] leading-none" dir="rtl">
-            يسير
+        <div className="flex items-center gap-2 select-none" dir="rtl">
+          <span className="text-xl font-extrabold tracking-tight text-[color:var(--eyenak-dark)] leading-none">
+            لوحة التحكم
           </span>
           <span className="h-7 w-px bg-[color:var(--eyenak-teal)]/60" />
-          <span className="flex flex-col text-[10px] font-bold leading-[1.05] tracking-[0.18em] text-[color:var(--eyenak-teal)]">
-            <span>YAS</span>
-            <span>EER</span>
+          <span className="text-[11px] font-semibold tracking-[0.18em] text-[color:var(--eyenak-teal)]">
+            إدارة
           </span>
         </div>
 
@@ -1817,7 +1815,7 @@ function Index() {
                 <Pencil className="w-4 h-4" />
                 <span>تخصيص لوحة التحكم</span>
               </button>
-              <h1 className="text-xl font-bold text-slate-800">لوحة التحكم - يسير Project Management</h1>
+              <h1 className="text-xl font-bold text-slate-800">لوحة التحكم - إدارة المشاريع</h1>
             </div>
           </div>
 
@@ -2152,7 +2150,7 @@ function Index() {
               {activeTab === "المقالات" ? (
                 <div className="space-y-3">
                   {[
-                    { t: "دليل إدارة المهام في يسير", d: "كيف تنظم فريقك وتوزع المهام بكفاءة." },
+                    { t: "دليل إدارة المهام", d: "كيف تنظم فريقك وتوزع المهام بكفاءة." },
                     { t: "أفضل ممارسات متابعة العقود", d: "نصائح لمتابعة الدفعات والمواعيد." },
                     { t: "استخدام التقويم والاجتماعات", d: "جدولة الأحداث ودعوة الأعضاء." },
                     { t: "صلاحيات الأدمن والموظف", d: "فهم نظام الأدوار والمحادثات." },
@@ -2495,7 +2493,7 @@ function Index() {
 
           {/* Footer */}
           <div className="text-center text-[11px] text-slate-400 py-3 border-t border-slate-100">
-            © 2026 يسير
+            © 2026 جميع الحقوق محفوظة
           </div>
         </aside>
       </div>
@@ -3751,7 +3749,7 @@ function Index() {
                 <div className="h-1 bg-white rounded" style={{ width: "1%" }} />
               </div>
               <div className="mt-4 text-center text-[10px] text-white/40">
-                © 2026 يسير
+                © 2026 جميع الحقوق محفوظة
               </div>
             </div>
           </aside>
@@ -5732,9 +5730,8 @@ function Index() {
       {/* تذييل الصفحة - حقوق التطوير */}
       <footer className="mt-8 border-t border-slate-200 bg-white py-4 px-4">
         <div className="text-center text-xs text-slate-500">
-          <span className="font-semibold text-slate-600">برمجة وتطوير</span>
-          <span className="mx-1.5 text-[color:var(--eyenak-teal)] font-bold">ايهاب المزلم</span>
-          <span className="opacity-60">© {new Date().getFullYear()} يسير</span>
+          <span className="font-semibold text-slate-600">جميع الحقوق محفوظة</span>
+          <span className="mx-1.5 opacity-60">© {new Date().getFullYear()}</span>
         </div>
       </footer>
 
