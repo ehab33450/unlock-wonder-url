@@ -1,0 +1,218 @@
+diff --git a/src/routes/index.tsx b/src/routes/index.tsx
+index 43783a0..564f4ed 100644
+--- a/src/routes/index.tsx
++++ b/src/routes/index.tsx
+@@ -128,6 +128,92 @@ const projects: Project[] = [];
+ 
+ const employeeTasks: Record<string, string[]> = {};
+ 
++type UiDialogReq = {
++  kind: "confirm" | "prompt" | "alert";
++  message: string;
++  value: string;
++  resolve: (v: any) => void;
++};
++let _uiSetDialog: ((d: UiDialogReq | null) => void) | null = null;
++function uiConfirm(message: string): Promise<boolean> {
++  return new Promise((resolve) =>
++    _uiSetDialog
++      ? _uiSetDialog({ kind: "confirm", message, value: "", resolve })
++      : resolve(false),
++  );
++}
++function uiPrompt(message: string, def = ""): Promise<string | null> {
++  return new Promise((resolve) =>
++    _uiSetDialog
++      ? _uiSetDialog({ kind: "prompt", message, value: def, resolve })
++      : resolve(null),
++  );
++}
++function uiAlert(message: string): Promise<void> {
++  return new Promise((resolve) =>
++    _uiSetDialog
++      ? _uiSetDialog({ kind: "alert", message, value: "", resolve })
++      : resolve(),
++  );
++}
++function DialogHost() {
++  const [d, setD] = useState<UiDialogReq | null>(null);
++  useEffect(() => {
++    _uiSetDialog = setD;
++    return () => {
++      _uiSetDialog = null;
++    };
++  }, []);
++  if (!d) return null;
++  const close = (v: any) => {
++    d.resolve(v);
++    setD(null);
++  };
++  const cancelVal = d.kind === "confirm" ? false : d.kind === "prompt" ? null : undefined;
++  const okVal = d.kind === "confirm" ? true : d.kind === "prompt" ? d.value : undefined;
++  return (
++    <div
++      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 px-4"
++      onClick={() => close(cancelVal)}
++    >
++      <div
++        dir="rtl"
++        className="bg-white rounded-md shadow-xl w-full max-w-md p-6"
++        onClick={(e) => e.stopPropagation()}
++      >
++        <p className="text-sm text-slate-700 mb-4 text-right whitespace-pre-line leading-7">{d.message}</p>
++        {d.kind === "prompt" && (
++          <input
++            autoFocus
++            value={d.value}
++            onChange={(e) => setD((p) => (p ? { ...p, value: e.target.value } : p))}
++            onKeyDown={(e) => {
++              if (e.key === "Enter") close(d.value);
++            }}
++            className="w-full h-11 border border-slate-300 rounded px-3 text-right focus:outline-none focus:border-[color:var(--eyenak-teal)] mb-4"
++          />
++        )}
++        <div className="flex items-center gap-2 justify-end">
++          {d.kind !== "alert" && (
++            <button
++              onClick={() => close(cancelVal)}
++              className="h-10 px-4 rounded border border-slate-300 text-slate-600 text-sm hover:bg-slate-50"
++            >
++              إلغاء
++            </button>
++          )}
++          <button
++            onClick={() => close(okVal)}
++            className="h-10 px-5 rounded bg-[color:var(--eyenak-teal)] text-white text-sm font-bold hover:opacity-90"
++          >
++            {d.kind === "confirm" ? "تأكيد" : "موافق"}
++          </button>
++        </div>
++      </div>
++    </div>
++  );
++}
++
+ function Index() {
+   // ===== Auth gate (required: must be signed in) =====
+   const auth = useAuth();
+@@ -1220,8 +1306,8 @@ function Index() {
+     }
+   };
+ 
+-  const deleteProjectByName = (name: string) => {
+-    if (!window.confirm(`حذف المشروع «${name}» نهائياً؟ لا يمكن التراجع.`)) return;
++  const deleteProjectByName = async (name: string) => {
++    if (!(await uiConfirm(`حذف المشروع «${name}» نهائياً؟ لا يمكن التراجع.`))) return;
+     const id = projectIdByName.current.get(name);
+     setProjectMeta((m) => { const c = { ...m }; delete c[name]; return c; });
+     setProjectData((d) => { const c = { ...d }; delete c[name]; return c; });
+@@ -1236,8 +1322,8 @@ function Index() {
+     }
+   };
+ 
+-  const deleteFolderByName = (name: string) => {
+-    if (!window.confirm(`حذف المجلد «${name}»؟ المشاريع التي بداخله لن تُحذف.`)) return;
++  const deleteFolderByName = async (name: string) => {
++    if (!(await uiConfirm(`حذف المجلد «${name}»؟ المشاريع التي بداخله لن تُحذف.`))) return;
+     setCustomFolders((arr) => arr.filter((x) => x !== name));
+     setProjectFolders((f) => {
+       const c = { ...f };
+@@ -1416,9 +1502,9 @@ function Index() {
+   // ============ صلاحيات تنزيل الملفات ============
+   const canDownloadFile = (_f: FileItem) => hasPerm("files_download");
+ 
+-  const downloadFile = (f: FileItem) => {
++  const downloadFile = async (f: FileItem) => {
+     if (!canDownloadFile(f)) {
+-      alert("لا تملك صلاحية تنزيل هذا الملف");
++      await uiAlert("لا تملك صلاحية تنزيل هذا الملف");
+       return;
+     }
+     const mime =
+@@ -1614,6 +1700,7 @@ function Index() {
+ 
+   return (
+     <div dir={isEn ? "ltr" : "rtl"} className="min-h-screen bg-slate-50 text-slate-800 font-[Cairo]">
++      <DialogHost />
+       {/* Top header */}
+       <header className="h-14 bg-gradient-to-l from-white via-white to-slate-50 border-b border-slate-200 flex items-center justify-between px-4 shadow-sm">
+         {/* Right: logo */}
+@@ -2774,10 +2861,10 @@ function Index() {
+                   <div className="relative">
+                     <select
+                       value={npFolder}
+-                      onChange={(e) => {
++                      onChange={async (e) => {
+                         const v = e.target.value;
+                         if (v === "__new__") {
+-                          const n = prompt("اسم المجلد الجديد")?.trim();
++                          const n = (await uiPrompt("اسم المجلد الجديد"))?.trim();
+                           if (n) {
+                             setCustomFolders((arr) => (arr.includes(n) ? arr : [...arr, n]));
+                             setNpFolder(n);
+@@ -6116,8 +6203,8 @@ function ProjectDetailOverlay({
+   // ===== Task groups =====
+   const groups: DTaskGroup[] = data.groups ?? [];
+   const GROUP_COLORS = ["#ef4444","#f97316","#f59e0b","#10b981","#14b8a6","#06b6d4","#3b82f6","#6366f1","#8b5cf6","#ec4899","#64748b"];
+-  const addGroup = () => {
+-    const title = window.prompt("اسم المجموعة الجديدة:", "مجموعة جديدة");
++  const addGroup = async () => {
++    const title = await uiPrompt("اسم المجموعة الجديدة:", "مجموعة جديدة");
+     if (!title || !title.trim()) return;
+     const g: DTaskGroup = {
+       id: `g${Date.now()}`,
+@@ -6248,8 +6335,8 @@ function ProjectDetailOverlay({
+   };
+   // Built-in headers can only insert a new column right after the built-in block.
+   const builtinColMenu = { onInsertAfter: () => openInsertAt(0) };
+-  const addColumn = (type: DColType, insertAt: number) => {
+-    const name = window.prompt("اسم العمود الجديد:", COL_TYPE_OPTIONS.find((o) => o.type === type)?.label ?? "عمود");
++  const addColumn = async (type: DColType, insertAt: number) => {
++    const name = await uiPrompt("اسم العمود الجديد:", COL_TYPE_OPTIONS.find((o) => o.type === type)?.label ?? "عمود");
+     if (!name) { setColMenu(null); return; }
+     const id = `c${Date.now()}`;
+     onUpdateCustomCols((cur) => {
+@@ -6259,8 +6346,8 @@ function ProjectDetailOverlay({
+     });
+     setColMenu(null);
+   };
+-  const removeColumn = (id: string) => {
+-    if (!window.confirm("حذف هذا العمود؟")) return;
++  const removeColumn = async (id: string) => {
++    if (!(await uiConfirm("حذف هذا العمود؟"))) return;
+     onUpdateCustomCols((cur) => cur.filter((c) => c.id !== id));
+   };
+ 
+@@ -6540,10 +6627,10 @@ function ProjectDetailOverlay({
+                             <span
+                               className={canEditAll ? "cursor-pointer hover:text-emerald-600" : ""}
+                               title={canEditAll ? "انقر مرتين لإعادة التسمية" : undefined}
+-                              onDoubleClick={(e) => {
++                              onDoubleClick={async (e) => {
+                                 if (!canEditAll) return;
+                                 e.preventDefault();
+-                                const next = window.prompt("اسم العمود:", c.name);
++                                const next = await uiPrompt("اسم العمود:", c.name);
+                                 if (next && next.trim()) onUpdateCustomCols((cur) => cur.map((x) => x.id === c.id ? { ...x, name: next.trim() } : x));
+                               }}
+                             >{c.name}</span>
+@@ -6653,8 +6740,8 @@ function ProjectDetailOverlay({
+                                             inp.onchange = () => { const f = inp.files?.[0]; if (f) importGroupCSV(g.id, f); };
+                                             inp.click();
+                                           } },
+-                                        { label: "حذف المجموعة", icon: "🗑", danger: true, onClick: () => {
+-                                            if (window.confirm(`حذف المجموعة "${g.title}"؟ ستبقى المهام بدون مجموعة.`)) removeGroup(g.id);
++                                        { label: "حذف المجموعة", icon: "🗑", danger: true, onClick: async () => {
++                                            if (await uiConfirm(`حذف المجموعة "${g.title}"؟ ستبقى المهام بدون مجموعة.`)) removeGroup(g.id);
+                                           } },
+                                       ]}
+                                     />
+@@ -6962,7 +7049,7 @@ function ProjectDetailOverlay({
+                           {canEditOwn && (
+                             <td className="px-1 py-1 text-center">
+                               <button
+-                                onClick={() => { if (window.confirm("حذف هذه المهمة؟")) removeTask(t.id); }}
++                                onClick={async () => { if (await uiConfirm("حذف هذه المهمة؟")) removeTask(t.id); }}
+                                 className="p-1 rounded hover:bg-red-50 text-red-500"
+                                 title="حذف المهمة"
+                               ><Trash2 className="w-3.5 h-3.5" /></button>
