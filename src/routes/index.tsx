@@ -6172,22 +6172,38 @@ function ProjectDetailOverlay({
       { id: sheetUid(), name: "رقم المستند", type: "text" },
       { id: sheetUid(), name: "فترة المهمة", type: "date" },
       { id: sheetUid(), name: "تاريخ الإنجاز", type: "date" },
-      { id: sheetUid(), name: "الحالة", type: "select", options: ["جديد", "قيد التنفيذ", "معلّق", "تم الانجاز"] },
-      { id: sheetUid(), name: "الأهمية", type: "select", options: ["عادي", "مهم", "عاجل"] },
+      { id: sheetUid(), name: "الحالة", type: "select", options: [
+        { label: "جديد", color: "#3b82f6" },
+        { label: "قيد التنفيذ", color: "#f59e0b" },
+        { label: "معلّق", color: "#ef4444" },
+        { label: "تم الانجاز", color: "#10b981" },
+      ] },
+      { id: sheetUid(), name: "الأهمية", type: "select", options: [
+        { label: "عادي", color: "#64748b" },
+        { label: "مهم", color: "#f59e0b" },
+        { label: "عاجل", color: "#ef4444" },
+      ] },
       { id: sheetUid(), name: "المنفّذ", type: "people" },
+      { id: sheetUid(), name: "المرفق", type: "file" },
     ],
-    rows: [{}, {}, {}],
+    rows: [{ __id: sheetUid() }, { __id: sheetUid() }, { __id: sheetUid() }],
+    groups: [],
   });
   const financeTemplate = (): FlexSheetData => ({
     columns: [
       { id: sheetUid(), name: "البند", type: "text" },
-      { id: sheetUid(), name: "النوع", type: "select", options: ["دخل", "مصروف"] },
+      { id: sheetUid(), name: "النوع", type: "select", options: [
+        { label: "دخل", color: "#10b981" },
+        { label: "مصروف", color: "#ef4444" },
+      ] },
       { id: sheetUid(), name: "المبلغ", type: "number" },
       { id: sheetUid(), name: "العملة", type: "text" },
       { id: sheetUid(), name: "التاريخ", type: "date" },
+      { id: sheetUid(), name: "المستند", type: "file" },
       { id: sheetUid(), name: "ملاحظة", type: "text" },
     ],
-    rows: [{}, {}, {}],
+    rows: [{ __id: sheetUid() }, { __id: sheetUid() }, { __id: sheetUid() }],
+    groups: [],
   });
   const fallback: DMeta = {
     contract: {
