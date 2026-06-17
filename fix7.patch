@@ -1,0 +1,90 @@
+diff --git a/src/routes/index.tsx b/src/routes/index.tsx
+index 91c181f..0e12ca2 100644
+--- a/src/routes/index.tsx
++++ b/src/routes/index.tsx
+@@ -6163,6 +6163,32 @@ function ProjectDetailOverlay({
+   onUpdateFlexSheet?: (next: FlexSheetData) => void;
+ }) {
+   const [showSheet, setShowSheet] = useState(false);
++  const sheetUid = () => Math.random().toString(36).slice(2, 9);
++  const tasksTemplate = (): FlexSheetData => ({
++    columns: [
++      { id: sheetUid(), name: "اسم المهمة", type: "text" },
++      { id: sheetUid(), name: "المنصة", type: "text" },
++      { id: sheetUid(), name: "المستفيد", type: "text" },
++      { id: sheetUid(), name: "رقم المستند", type: "text" },
++      { id: sheetUid(), name: "فترة المهمة", type: "date" },
++      { id: sheetUid(), name: "تاريخ الإنجاز", type: "date" },
++      { id: sheetUid(), name: "الحالة", type: "select", options: ["جديد", "قيد التنفيذ", "معلّق", "تم الانجاز"] },
++      { id: sheetUid(), name: "الأهمية", type: "select", options: ["عادي", "مهم", "عاجل"] },
++      { id: sheetUid(), name: "المنفّذ", type: "people" },
++    ],
++    rows: [{}, {}, {}],
++  });
++  const financeTemplate = (): FlexSheetData => ({
++    columns: [
++      { id: sheetUid(), name: "البند", type: "text" },
++      { id: sheetUid(), name: "النوع", type: "select", options: ["دخل", "مصروف"] },
++      { id: sheetUid(), name: "المبلغ", type: "number" },
++      { id: sheetUid(), name: "العملة", type: "text" },
++      { id: sheetUid(), name: "التاريخ", type: "date" },
++      { id: sheetUid(), name: "ملاحظة", type: "text" },
++    ],
++    rows: [{}, {}, {}],
++  });
+   const fallback: DMeta = {
+     contract: {
+       startDate: "",
+@@ -6460,24 +6486,6 @@ function ProjectDetailOverlay({
+           </div>
+         ) : (
+           <>
+-            {showSheet && onUpdateFlexSheet && (
+-              <div className="px-6 py-4 bg-white border-b border-slate-200">
+-                <div className="flex items-center justify-between mb-3">
+-                  <button
+-                    onClick={() => onUpdateFlexSheet(emptyFlexSheet())}
+-                    className="h-8 px-3 rounded-md border border-slate-200 text-xs text-slate-600 hover:bg-slate-50"
+-                  >
+-                    تفريغ الجدول
+-                  </button>
+-                  <h3 className="text-sm font-bold text-slate-700 text-right">📊 جدول حر — سمِّ الأعمدة والصفوف وغيّر أنواعها كما في Excel</h3>
+-                </div>
+-                <FlexSheet
+-                  data={flexSheet ?? emptyFlexSheet()}
+-                  onChange={(next) => onUpdateFlexSheet(next)}
+-                  editable={canEditAll}
+-                />
+-              </div>
+-            )}
+             {/* Contract bar */}
+             <div className="px-6 py-4 bg-white border-b border-slate-200">
+               <div className="flex items-center justify-between mb-3">
+@@ -6633,6 +6641,27 @@ function ProjectDetailOverlay({
+               </div>
+             </div>
+ 
++            {showSheet && onUpdateFlexSheet && (
++              <div className="px-6 py-5 border-b border-slate-200">
++                <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
++                  <div className="flex items-center gap-2 flex-wrap">
++                    <span className="text-xs text-slate-500">ابدأ بـ:</span>
++                    <button onClick={() => onUpdateFlexSheet(emptyFlexSheet())} className="h-8 px-3 rounded-md border border-slate-200 text-xs hover:bg-slate-50">جدول فارغ</button>
++                    <button onClick={() => onUpdateFlexSheet(tasksTemplate())} className="h-8 px-3 rounded-md border border-[color:var(--eyenak-teal)]/40 text-xs text-[color:var(--eyenak-teal)] hover:bg-teal-50">قالب المهام</button>
++                    <button onClick={() => onUpdateFlexSheet(financeTemplate())} className="h-8 px-3 rounded-md border border-amber-300 text-xs text-amber-600 hover:bg-amber-50">قالب المالية</button>
++                  </div>
++                  <h3 className="text-sm font-bold text-slate-700 text-right">📊 جدول حر (Excel)</h3>
++                </div>
++                {flexSheet && (flexSheet.columns?.length ?? 0) > 0 ? (
++                  <FlexSheet data={flexSheet} onChange={(next) => onUpdateFlexSheet(next)} editable={canEditAll} />
++                ) : (
++                  <div className="text-center text-sm text-slate-400 py-10 border border-dashed border-slate-200 rounded-lg">
++                    اختر نوع الجدول من الأعلى للبدء: <b>جدول فارغ</b>، أو <b>قالب المهام</b>، أو <b>قالب المالية</b>.
++                  </div>
++                )}
++              </div>
++            )}
++
+             {/* Tasks table */}
+             <div className="px-6 py-5">
+               <div className="flex items-center justify-between mb-3">
