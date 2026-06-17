@@ -13,6 +13,7 @@ import {
   listSubfolders, createSubfolder as svCreateSubfolder, deleteSubfolder as svDeleteSubfolder,
   listProjectFiles, upsertProjectFile as svUpsertFile, deleteProjectFile as svDeleteFile,
 } from "@/lib/data.functions";
+import FlexSheet, { emptyFlexSheet, type FlexSheetData } from "@/components/FlexSheet";
 import guideDashboardImg from "@/assets/guide-dashboard.png";
 import guideProjectsImg from "@/assets/guide-projects.png";
 import guideFinanceImg from "@/assets/guide-finance.png";
@@ -309,6 +310,7 @@ function Index() {
   // Quick-create extras: folder, task, templates
   const [customFolders, setCustomFolders] = useState<string[]>([]);
   const [archivedProjects, setArchivedProjects] = useState<string[]>([]);
+  const [flexSheets, setFlexSheets] = useState<Record<string, FlexSheetData>>({});
   const [newFolderOpen, setNewFolderOpen] = useState(false);
   const [newFolderName, setNewFolderName] = useState("");
   const [newTaskOpen, setNewTaskOpen] = useState(false);
@@ -1105,6 +1107,7 @@ function Index() {
         if (s.guideImages) setGuideImages(s.guideImages);
         if (s.archivedProjects) setArchivedProjects(s.archivedProjects);
         if (s.customFolders) setCustomFolders((arr) => Array.from(new Set([...arr, ...s.customFolders])));
+        if (s.flexSheets) setFlexSheets(s.flexSheets);
       } catch (e) {
         console.error("[hydrate-state]", e);
       } finally {
@@ -1120,6 +1123,7 @@ function Index() {
   useEffect(() => { persist("projectMeta", projectMeta); }, [projectMeta]);
   useEffect(() => { persist("archivedProjects", archivedProjects); }, [archivedProjects]);
   useEffect(() => { persist("customFolders", customFolders); }, [customFolders]);
+  useEffect(() => { persist("flexSheets", flexSheets); }, [flexSheets]);
   useEffect(() => { persist("customCols", customCols); }, [customCols]);
   useEffect(() => { persist("customCells", customCells); }, [customCells]);
   useEffect(() => { persist("taskChats", taskChats); }, [taskChats]);
@@ -4831,6 +4835,10 @@ function Index() {
           onSetCustomCell={(taskId, colId, val) =>
             setCustomCells((prev) => ({ ...prev, [`${taskId}::${colId}`]: val }))
           }
+          flexSheet={flexSheets[detailProject]}
+          onUpdateFlexSheet={(next) =>
+            setFlexSheets((prev) => ({ ...prev, [detailProject!]: next }))
+          }
           onClose={() => setDetailProject(null)}
           onOpenChat={() => {
             setChatProject(detailProject);
@@ -6101,6 +6109,8 @@ function ProjectDetailOverlay({
   onUpdateCustomCols,
   customCells,
   onSetCustomCell,
+  flexSheet,
+  onUpdateFlexSheet,
 }: {
   name: string;
   meta: DMeta | undefined;
@@ -6127,7 +6137,10 @@ function ProjectDetailOverlay({
   ) => void;
   customCells: Record<string, string>;
   onSetCustomCell: (taskId: string, colId: string, val: string) => void;
+  flexSheet?: FlexSheetData;
+  onUpdateFlexSheet?: (next: FlexSheetData) => void;
 }) {
+  const [showSheet, setShowSheet] = useState(false);
   const fallback: DMeta = {
     contract: {
       startDate: "",
@@ -6403,6 +6416,15 @@ function ProjectDetailOverlay({
                 <span>ملفات المشروع</span>
               </button>
             )}
+            {onUpdateFlexSheet && (
+              <button
+                onClick={() => setShowSheet((v) => !v)}
+                className={`h-8 px-3 rounded-md border text-xs flex items-center gap-1 ${showSheet ? "bg-[color:var(--eyenak-teal)] text-white border-[color:var(--eyenak-teal)]" : "border-slate-200 hover:bg-slate-50 text-slate-700"}`}
+              >
+                <span>📊</span>
+                <span>جدول حر (Excel)</span>
+              </button>
+            )}
           </div>
           <div className="flex items-center gap-2">
             <h2 className="text-lg font-bold text-slate-800">{name}</h2>
@@ -6416,6 +6438,24 @@ function ProjectDetailOverlay({
           </div>
         ) : (
           <>
+            {showSheet && onUpdateFlexSheet && (
+              <div className="px-6 py-4 bg-white border-b border-slate-200">
+                <div className="flex items-center justify-between mb-3">
+                  <button
+                    onClick={() => onUpdateFlexSheet(emptyFlexSheet())}
+                    className="h-8 px-3 rounded-md border border-slate-200 text-xs text-slate-600 hover:bg-slate-50"
+                  >
+                    تفريغ الجدول
+                  </button>
+                  <h3 className="text-sm font-bold text-slate-700 text-right">📊 جدول حر — سمِّ الأعمدة والصفوف وغيّر أنواعها كما في Excel</h3>
+                </div>
+                <FlexSheet
+                  data={flexSheet ?? emptyFlexSheet()}
+                  onChange={(next) => onUpdateFlexSheet(next)}
+                  editable={canEditAll}
+                />
+              </div>
+            )}
             {/* Contract bar */}
             <div className="px-6 py-4 bg-white border-b border-slate-200">
               <div className="flex items-center justify-between mb-3">
