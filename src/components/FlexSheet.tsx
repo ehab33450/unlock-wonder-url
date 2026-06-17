@@ -1,5 +1,5 @@
 import { useState, Fragment } from "react";
-import { Plus, Trash2, ChevronDown, ChevronLeft, GripVertical, Upload, X } from "lucide-react";
+import { Plus, Trash2, ChevronDown, ChevronLeft, GripVertical, Upload, X, MessageSquare, Send } from "lucide-react";
 
 /* =========================================================================
    FlexSheet — a fully flexible, Excel-like table with groups (sections).
@@ -89,7 +89,7 @@ export function emptyFlexSheet(): FlexSheetData {
       { id: uid(), name: "العمود 2", type: "text" },
       { id: uid(), name: "العمود 3", type: "text" },
     ],
-    rows: [{ __id: uid() }, { __id: uid() }, { __id: uid() }],
+    rows: [],
     groups: [],
   };
 }
@@ -98,10 +98,14 @@ export default function FlexSheet({
   data,
   onChange,
   editable = true,
+  users = [],
+  currentUser = "",
 }: {
   data: FlexSheetData;
   onChange: (next: FlexSheetData) => void;
   editable?: boolean;
+  users?: string[];
+  currentUser?: string;
 }) {
   const cols = data?.columns ?? [];
   const rows = data?.rows ?? [];
@@ -109,11 +113,13 @@ export default function FlexSheet({
   const [typeMenu, setTypeMenu] = useState<string | null>(null);
   const [optsEditor, setOptsEditor] = useState<string | null>(null);
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
+  const [peoplePicker, setPeoplePicker] = useState<string | null>(null);
+  const [chatRow, setChatRow] = useState<string | null>(null);
+  const [chatInput, setChatInput] = useState("");
 
   const apply = (patch: Partial<FlexSheetData>) =>
     onChange({ columns: cols, rows, groups, ...patch });
 
-  /* ---------- columns ---------- */
   const addColumn = () =>
     apply({ columns: [...cols, { id: uid(), name: `عمود ${cols.length + 1}`, type: "text" }] });
   const removeColumn = (id: string) =>
@@ -128,14 +134,12 @@ export default function FlexSheet({
   const setColOptions = (id: string, options: FlexOption[]) =>
     apply({ columns: cols.map((c) => (c.id === id ? { ...c, options } : c)) });
 
-  /* ---------- rows ---------- */
   const addRow = (groupId?: string) =>
     apply({ rows: [...rows, { __id: uid(), ...(groupId ? { __group: groupId } : {}) }] });
   const removeRow = (rid: string) => apply({ rows: rows.filter((r) => r.__id !== rid) });
   const setCell = (rid: string, colId: string, val: string | boolean) =>
     apply({ rows: rows.map((r) => (r.__id === rid ? { ...r, [colId]: val } : r)) });
 
-  /* ---------- groups ---------- */
   const addGroup = () =>
     apply({
       groups: [
@@ -157,12 +161,50 @@ export default function FlexSheet({
       rows: rows.map((r) => (r.__group === id ? { ...r, __group: undefined } : r)),
     });
 
-  const inputCls =
-    "w-full h-9 px-2 text-sm text-right bg-transparent focus:outline-none focus:bg-teal-50/40 rounded";
+  const assignedPeople = (row: FlexRow): string[] => {
+    const set = new Set<string>();
+    cols.filter((c) => c.type === "people").forEach((c) => {
+      String(row[c.id] ?? "").split(",").map((x) => x.trim()).filter(Boolean).forEach((p) => set.add(p));
+    });
+    return [...set];
+  };
+  const canChat = (row: FlexRow) => { const a = assignedPeople(row); return !currentUser || a.length === 0 || a.includes(currentUser); };
+  const getChat = (row: FlexRow): { a: string; t: string; ts: number }[] => { try { return JSON.parse(String(row.__chat ?? "[]")); } catch { return []; } };
+  const sendChat = (rid: string) => {
+    const text = chatInput.trim(); if (!text) return;
+    const row = rows.find((r) => r.__id === rid); if (!row) return;
+    const msgs = [...getChat(row), { a: currentUser || "أنا", t: text, ts: Date.now() }];
+    apply({ rows: rows.map((r) => (r.__id === rid ? { ...r, __chat: JSON.stringify(msgs) } : r)) });
+    setChatInput("");
+  };
+
+  const inputCls = "w-full h-9 px-2 text-sm text-right bg-transparent focus:outline-none focus:bg-teal-50/40 rounded";
 
   const renderCell = (col: FlexColumn, row: FlexRow) => {
     const rid = row.__id as string;
     const raw = row[col.id];
+    if (col.type === "people") {
+      const picked = String(raw ?? "").split(",").map((x) => x.trim()).filter(Boolean);
+      const key = `${rid}::${col.id}`;
+      return (
+        <div className="relative">
+          <button disabled={!editable} onClick={() => setPeoplePicker(peoplePicker === key ? null : key)} className="w-full min-h-9 px-2 py-1 text-xs flex flex-wrap gap-1 items-center justify-end">
+            {picked.length ? picked.map((pp) => (<span key={pp} className="px-2 py-0.5 rounded-full bg-teal-50 text-teal-700">{pp}</span>)) : <span className="text-slate-300">اختر…</span>}
+          </button>
+          {editable && peoplePicker === key && (
+            <div className="absolute z-30 top-full right-0 mt-1 w-48 max-h-52 overflow-y-auto bg-white border border-slate-200 rounded-md shadow-lg p-1">
+              {users.length === 0 && <div className="text-xs text-slate-400 p-2 text-center">لا يوجد مستخدمون</div>}
+              {users.map((u) => { const on = picked.includes(u); return (
+                <label key={u} className="flex items-center justify-end gap-2 text-sm px-2 py-1 hover:bg-slate-50 rounded cursor-pointer">
+                  <span>{u}</span>
+                  <input type="checkbox" checked={on} onChange={() => setCell(rid, col.id, (on ? picked.filter((x) => x !== u) : [...picked, u]).join(", "))} />
+                </label>); })}
+              <button onClick={() => setPeoplePicker(null)} className="mt-1 w-full h-7 rounded bg-teal-600 text-white text-xs">تم</button>
+            </div>
+          )}
+        </div>
+      );
+    }
     if (!editable) {
       if (col.type === "checkbox" || col.type === "vote") return <span className="px-2">{raw ? "✓" : ""}</span>;
       if (col.type === "select") {
@@ -208,28 +250,19 @@ export default function FlexSheet({
           <div className="flex items-center justify-center gap-1 h-9 px-1">
             <label className="cursor-pointer text-teal-600 hover:text-teal-700" title="رفع ملف">
               <Upload className="w-4 h-4" />
-              <input
-                type="file"
-                className="hidden"
-                onChange={async (e) => {
-                  const f = e.target.files?.[0];
-                  if (!f) return;
-                  const d = await fileToDataUrl(f);
-                  setCell(rid, col.id, `${f.name}|${d}`);
-                  e.target.value = "";
-                }}
-              />
+              <input type="file" className="hidden" onChange={async (e) => {
+                const f = e.target.files?.[0]; if (!f) return;
+                const d = await fileToDataUrl(f);
+                setCell(rid, col.id, `${f.name}|${d}`);
+                e.target.value = "";
+              }} />
             </label>
-            {du ? (
-              du.startsWith("data:image") ? (
-                <a href={du} target="_blank" rel="noreferrer"><img src={du} alt={nm} className="h-7 w-7 object-cover rounded border border-slate-200" /></a>
-              ) : (
-                <a href={du} download={nm} className="text-xs text-slate-600 underline max-w-[80px] truncate">{nm || "ملف"}</a>
-              )
-            ) : null}
-            {du && (
-              <button onClick={() => setCell(rid, col.id, "")} className="text-slate-300 hover:text-red-500" title="إزالة"><X className="w-3 h-3" /></button>
-            )}
+            {du ? (du.startsWith("data:image") ? (
+              <a href={du} target="_blank" rel="noreferrer"><img src={du} alt={nm} className="h-7 w-7 object-cover rounded border border-slate-200" /></a>
+            ) : (
+              <a href={du} download={nm} className="text-xs text-slate-600 underline max-w-[80px] truncate">{nm || "ملف"}</a>
+            )) : null}
+            {du && <button onClick={() => setCell(rid, col.id, "")} className="text-slate-300 hover:text-red-500" title="إزالة"><X className="w-3 h-3" /></button>}
           </div>
         );
       }
@@ -248,12 +281,9 @@ export default function FlexSheet({
       case "select": {
         const o = (col.options ?? []).find((x) => x.label === raw);
         return (
-          <select
-            value={(raw as string) ?? ""}
-            onChange={(e) => setCell(rid, col.id, e.target.value)}
+          <select value={(raw as string) ?? ""} onChange={(e) => setCell(rid, col.id, e.target.value)}
             className={inputCls + " appearance-none font-semibold rounded"}
-            style={raw ? { background: (o?.color ?? "#64748b") + "22", color: o?.color ?? "#334155" } : undefined}
-          >
+            style={raw ? { background: (o?.color ?? "#64748b") + "22", color: o?.color ?? "#334155" } : undefined}>
             <option value="">—</option>
             {(col.options ?? []).map((op) => (<option key={op.label} value={op.label}>{op.label}</option>))}
           </select>
@@ -266,6 +296,15 @@ export default function FlexSheet({
 
   const renderRow = (row: FlexRow) => (
     <tr key={row.__id as string} className="hover:bg-slate-50/60">
+      <td className="border-b border-l border-slate-200 text-center align-middle w-10">
+        {canChat(row) && (
+          <button onClick={() => { setChatRow(row.__id as string); setChatInput(""); }}
+            className="relative h-8 w-8 rounded text-slate-400 hover:text-teal-600 hover:bg-teal-50 flex items-center justify-center mx-auto" title="محادثة المهمة">
+            <MessageSquare className="w-4 h-4" />
+            {getChat(row).length > 0 && <span className="absolute -top-0.5 -right-0.5 bg-teal-500 text-white text-[9px] rounded-full w-3.5 h-3.5 flex items-center justify-center">{getChat(row).length}</span>}
+          </button>
+        )}
+      </td>
       <td className="border-b border-l border-slate-200 text-center align-middle">
         {editable ? (
           <button onClick={() => removeRow(row.__id as string)} className="h-8 w-8 rounded text-slate-300 hover:text-red-500 hover:bg-red-50 flex items-center justify-center mx-auto" title="حذف الصف">
@@ -280,11 +319,12 @@ export default function FlexSheet({
     </tr>
   );
 
-  const colSpanAll = cols.length + (editable ? 2 : 1);
+  const colSpanAll = cols.length + (editable ? 3 : 2);
   const ungrouped = rows.filter((r) => !r.__group || !groups.some((g) => g.id === r.__group));
 
   const headerRow = (
     <tr className="bg-slate-50">
+      <th className="w-10 border-b border-l border-slate-200" title="محادثة">💬</th>
       <th className="w-10 border-b border-l border-slate-200" />
       {cols.map((col) => (
         <th key={col.id} className="min-w-[150px] border-b border-l border-slate-200 p-1 align-top relative">
@@ -306,8 +346,7 @@ export default function FlexSheet({
             <div className="absolute z-20 top-full right-1 mt-1 w-44 bg-white border border-slate-200 rounded-md shadow-lg overflow-hidden max-h-72 overflow-y-auto">
               {FLEX_TYPE_OPTIONS.map((o) => (
                 <button key={o.type} onClick={() => { setColType(col.id, o.type); setTypeMenu(null); if (o.type === "select") setOptsEditor(col.id); }} className={`w-full flex items-center justify-end gap-2 px-3 py-2 text-sm hover:bg-slate-50 ${col.type === o.type ? "bg-teal-50 text-teal-700 font-semibold" : "text-slate-700"}`}>
-                  <span>{o.label}</span>
-                  <span>{o.icon}</span>
+                  <span>{o.label}</span><span>{o.icon}</span>
                 </button>
               ))}
               {col.type === "select" && (
@@ -320,7 +359,7 @@ export default function FlexSheet({
               <div className="text-xs text-slate-500 mb-2">خيارات القائمة (لكل خيار لون):</div>
               {(col.options ?? []).map((op, i) => (
                 <div key={i} className="flex items-center gap-1 mb-1">
-                  <input type="color" value={op.color} onChange={(e) => { const next = [...(col.options ?? [])]; next[i] = { ...op, color: e.target.value }; setColOptions(col.id, next); }} className="h-7 w-8 p-0 border-0 bg-transparent cursor-pointer" title="لون الخيار" />
+                  <input type="color" value={op.color} onChange={(e) => { const next = [...(col.options ?? [])]; next[i] = { ...op, color: e.target.value }; setColOptions(col.id, next); }} className="h-7 w-8 p-0 border-0 bg-transparent cursor-pointer" />
                   <input value={op.label} onChange={(e) => { const next = [...(col.options ?? [])]; next[i] = { ...op, label: e.target.value }; setColOptions(col.id, next); }} className="flex-1 h-8 px-2 text-sm text-right border border-slate-200 rounded focus:outline-none focus:border-teal-400" />
                   <button onClick={() => setColOptions(col.id, (col.options ?? []).filter((_, k) => k !== i))} className="text-slate-400 hover:text-red-500"><X className="w-3.5 h-3.5" /></button>
                 </div>
@@ -404,6 +443,36 @@ export default function FlexSheet({
           <Plus className="w-4 h-4" /> إضافة مهمة
         </button>
       )}
+
+      {chatRow && (() => {
+        const row = rows.find((r) => r.__id === chatRow);
+        if (!row) return null;
+        const msgs = getChat(row);
+        return (
+          <div className="fixed inset-0 z-[90] flex items-center justify-center bg-black/40 px-4" onClick={() => setChatRow(null)}>
+            <div dir="rtl" className="bg-white rounded-lg shadow-xl w-full max-w-md flex flex-col" style={{ maxHeight: "80vh" }} onClick={(e) => e.stopPropagation()}>
+              <div className="flex items-center justify-between p-3 border-b border-slate-200">
+                <button onClick={() => setChatRow(null)} className="text-slate-400 hover:text-slate-700"><X className="w-5 h-5" /></button>
+                <h3 className="text-sm font-bold text-slate-700">💬 محادثة المهمة</h3>
+              </div>
+              <div className="flex-1 overflow-y-auto p-3 space-y-2 min-h-[200px]">
+                {msgs.length === 0 && <div className="text-center text-xs text-slate-400 py-8">لا توجد رسائل بعد.</div>}
+                {msgs.map((m, i) => (
+                  <div key={i} className={`flex flex-col ${m.a === (currentUser || "أنا") ? "items-start" : "items-end"}`}>
+                    <div className={`max-w-[80%] px-3 py-1.5 rounded-2xl text-sm ${m.a === (currentUser || "أنا") ? "bg-teal-500 text-white" : "bg-slate-100 text-slate-700"}`}>{m.t}</div>
+                    <span className="text-[10px] text-slate-400 mt-0.5">{m.a} · {new Date(m.ts).toLocaleString("ar-EG", { dateStyle: "short", timeStyle: "short" })}</span>
+                  </div>
+                ))}
+              </div>
+              <div className="p-2 border-t border-slate-200 flex items-center gap-2">
+                <input value={chatInput} onChange={(e) => setChatInput(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") sendChat(chatRow); }} placeholder="اكتب رسالة…" className="flex-1 h-10 px-3 border border-slate-200 rounded-lg text-right text-sm focus:outline-none focus:border-teal-400" />
+                <button onClick={() => sendChat(chatRow)} className="h-10 w-10 rounded-lg bg-teal-600 text-white flex items-center justify-center"><Send className="w-4 h-4" /></button>
+              </div>
+              <div className="px-3 pb-2 text-[10px] text-slate-400 text-center">تظهر هذه المحادثة فقط للأشخاص المكلّفين بالمهمة.</div>
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 }
