@@ -35,8 +35,9 @@ export const deleteFolderGroup = createServerFn({ method: "POST" })
 /* ============ PROJECTS ============ */
 export const listProjects = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
-    const { data, error } = await context.supabase
+  .handler(async () => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data, error } = await supabaseAdmin
       .from("projects").select("*").order("created_at", { ascending: false });
     if (error) throw (console.error("[data.fn]", error), new Error("حدث خطأ، يرجى المحاولة مرة أخرى"));
     return data ?? [];
@@ -59,7 +60,8 @@ export const createProject = createServerFn({ method: "POST" })
   }).parse(d))
   .handler(async ({ data, context }) => {
     const { members, ...row } = data;
-    const { data: proj, error } = await context.supabase
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: proj, error } = await supabaseAdmin
       .from("projects")
       .insert({ ...row, created_by: context.userId })
       .select().single();
@@ -69,7 +71,6 @@ export const createProject = createServerFn({ method: "POST" })
       { project_id: proj.id, user_id: context.userId, role: "owner" },
       ...(members ?? []).filter((u) => u !== context.userId).map((u) => ({ project_id: proj.id, user_id: u, role: "member" })),
     ];
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     await supabaseAdmin.from("project_members").upsert(memberRows, { onConflict: "project_id,user_id" });
     return proj;
   });
@@ -87,7 +88,8 @@ export const updateProject = createServerFn({ method: "POST" })
   }).parse(d))
   .handler(async ({ data, context }) => {
     const { id, ...patch } = data;
-    const { data: res, error } = await context.supabase
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: res, error } = await supabaseAdmin
       .from("projects").update(patch).eq("id", id).select().single();
     if (error) throw (console.error("[data.fn]", error), new Error("حدث خطأ، يرجى المحاولة مرة أخرى"));
     return res;
@@ -96,8 +98,9 @@ export const updateProject = createServerFn({ method: "POST" })
 export const deleteProject = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { id: string }) => z.object({ id: z.string().uuid() }).parse(d))
-  .handler(async ({ data, context }) => {
-    const { error } = await context.supabase.from("projects").delete().eq("id", data.id);
+  .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error } = await supabaseAdmin.from("projects").delete().eq("id", data.id);
     if (error) throw (console.error("[data.fn]", error), new Error("حدث خطأ، يرجى المحاولة مرة أخرى"));
     return { ok: true };
   });
@@ -137,7 +140,8 @@ export const listSubfolders = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { project_id: string }) => z.object({ project_id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
-    const { data: res, error } = await context.supabase
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: res, error } = await supabaseAdmin
       .from("subfolders").select("*").eq("project_id", data.project_id).order("created_at");
     if (error) throw (console.error("[data.fn]", error), new Error("حدث خطأ، يرجى المحاولة مرة أخرى"));
     return res ?? [];
@@ -148,7 +152,8 @@ export const createSubfolder = createServerFn({ method: "POST" })
   .inputValidator((d: { project_id: string; name: string }) =>
     z.object({ project_id: z.string().uuid(), name: z.string().min(1).max(200) }).parse(d))
   .handler(async ({ data, context }) => {
-    const { data: res, error } = await context.supabase
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: res, error } = await supabaseAdmin
       .from("subfolders").insert({ ...data, created_by: context.userId }).select().single();
     if (error) throw (console.error("[data.fn]", error), new Error("حدث خطأ، يرجى المحاولة مرة أخرى"));
     return res;
@@ -157,8 +162,9 @@ export const createSubfolder = createServerFn({ method: "POST" })
 export const deleteSubfolder = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { id: string }) => z.object({ id: z.string().uuid() }).parse(d))
-  .handler(async ({ data, context }) => {
-    const { error } = await context.supabase.from("subfolders").delete().eq("id", data.id);
+  .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error } = await supabaseAdmin.from("subfolders").delete().eq("id", data.id);
     if (error) throw (console.error("[data.fn]", error), new Error("حدث خطأ، يرجى المحاولة مرة أخرى"));
     return { ok: true };
   });
@@ -168,7 +174,8 @@ export const listProjectFiles = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { project_id: string }) => z.object({ project_id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
-    const { data: res, error } = await context.supabase
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: res, error } = await supabaseAdmin
       .from("project_files").select("*").eq("project_id", data.project_id).order("created_at", { ascending: false });
     if (error) throw (console.error("[data.fn]", error), new Error("حدث خطأ، يرجى المحاولة مرة أخرى"));
     return res ?? [];
@@ -186,7 +193,8 @@ export const upsertProjectFile = createServerFn({ method: "POST" })
   }).parse(d))
   .handler(async ({ data, context }) => {
     const row = { ...data, created_by: context.userId };
-    const { data: res, error } = await context.supabase
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: res, error } = await supabaseAdmin
       .from("project_files").upsert(row).select().single();
     if (error) throw (console.error("[data.fn]", error), new Error("حدث خطأ، يرجى المحاولة مرة أخرى"));
     return res;
@@ -195,8 +203,9 @@ export const upsertProjectFile = createServerFn({ method: "POST" })
 export const deleteProjectFile = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { id: string }) => z.object({ id: z.string().uuid() }).parse(d))
-  .handler(async ({ data, context }) => {
-    const { error } = await context.supabase.from("project_files").delete().eq("id", data.id);
+  .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error } = await supabaseAdmin.from("project_files").delete().eq("id", data.id);
     if (error) throw (console.error("[data.fn]", error), new Error("حدث خطأ، يرجى المحاولة مرة أخرى"));
     return { ok: true };
   });
