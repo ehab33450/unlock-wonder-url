@@ -1,13 +1,32 @@
 import { useState } from "react";
 import { Plus, Trash2, ChevronDown, GripVertical } from "lucide-react";
 
+/* =========================================================================
+   FlexSheet — a fully flexible, Excel-like table.
+   - Free rows & columns
+   - Per-column type (text / number / date / time / select / checkbox)
+   - Add / delete / rename columns, change a column's type at any time
+   - Per-column dropdown options (for the "select" type)
+   - Controlled component: pass `data` and `onChange`
+   ========================================================================= */
+
 export type FlexColType =
   | "text"
   | "number"
   | "date"
   | "time"
+  | "daterange"
   | "select"
-  | "checkbox";
+  | "checkbox"
+  | "people"
+  | "tags"
+  | "link"
+  | "phone"
+  | "email"
+  | "location"
+  | "rating"
+  | "timer"
+  | "vote";
 
 export type FlexColumn = {
   id: string;
@@ -28,8 +47,18 @@ export const FLEX_TYPE_OPTIONS: { type: FlexColType; label: string; icon: string
   { type: "number", label: "رقم", icon: "🔢" },
   { type: "date", label: "تاريخ", icon: "📅" },
   { type: "time", label: "وقت", icon: "⏰" },
+  { type: "daterange", label: "مدة (من/إلى)", icon: "⏳" },
   { type: "select", label: "قائمة منسدلة", icon: "🔽" },
   { type: "checkbox", label: "مربع اختيار", icon: "☑️" },
+  { type: "people", label: "الأشخاص", icon: "👥" },
+  { type: "tags", label: "وسوم", icon: "🏷️" },
+  { type: "link", label: "رابط", icon: "🔗" },
+  { type: "phone", label: "رقم تواصل", icon: "📱" },
+  { type: "email", label: "بريد إلكتروني", icon: "✉️" },
+  { type: "location", label: "الموقع", icon: "📍" },
+  { type: "rating", label: "تقييم", icon: "⭐" },
+  { type: "timer", label: "متابعة وقت", icon: "⏱️" },
+  { type: "vote", label: "تصويت", icon: "✅" },
 ];
 
 const uid = () => Math.random().toString(36).slice(2, 9);
@@ -127,6 +156,7 @@ export default function FlexSheet({
           />
         );
       case "checkbox":
+      case "vote":
         return (
           <div className="flex items-center justify-center h-9">
             <input
@@ -135,6 +165,74 @@ export default function FlexSheet({
               onChange={(e) => setCell(rowIndex, col.id, e.target.checked)}
             />
           </div>
+        );
+      case "daterange": {
+        const [from, to] = String(raw ?? "").split("|");
+        const set = (f: string, t: string) => setCell(rowIndex, col.id, `${f}|${t}`);
+        return (
+          <div className="flex items-center gap-1">
+            <input type="date" value={from ?? ""} onChange={(e) => set(e.target.value, to ?? "")} className={inputCls} />
+            <span className="text-slate-400 text-xs">→</span>
+            <input type="date" value={to ?? ""} onChange={(e) => set(from ?? "", e.target.value)} className={inputCls} />
+          </div>
+        );
+      }
+      case "link":
+        return (
+          <input
+            type="url"
+            placeholder="https://"
+            value={(raw as string) ?? ""}
+            onChange={(e) => setCell(rowIndex, col.id, e.target.value)}
+            className={inputCls}
+          />
+        );
+      case "phone":
+        return (
+          <input
+            type="tel"
+            placeholder="+9665…"
+            value={(raw as string) ?? ""}
+            onChange={(e) => setCell(rowIndex, col.id, e.target.value)}
+            className={inputCls}
+          />
+        );
+      case "email":
+        return (
+          <input
+            type="email"
+            placeholder="name@mail.com"
+            value={(raw as string) ?? ""}
+            onChange={(e) => setCell(rowIndex, col.id, e.target.value)}
+            className={inputCls}
+          />
+        );
+      case "rating": {
+        const n = Number(raw ?? 0);
+        return (
+          <div className="flex items-center justify-center gap-0.5 h-9" dir="ltr">
+            {[1, 2, 3, 4, 5].map((star) => (
+              <button
+                key={star}
+                onClick={() => setCell(rowIndex, col.id, String(star === n ? 0 : star))}
+                className={`text-base leading-none ${star <= n ? "text-amber-400" : "text-slate-300"}`}
+              >
+                ★
+              </button>
+            ))}
+          </div>
+        );
+      }
+      case "timer":
+        return (
+          <input
+            type="number"
+            min={0}
+            placeholder="دقائق"
+            value={(raw as string) ?? ""}
+            onChange={(e) => setCell(rowIndex, col.id, e.target.value)}
+            className={inputCls}
+          />
         );
       case "select":
         return (

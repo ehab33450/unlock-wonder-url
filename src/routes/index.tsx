@@ -249,6 +249,28 @@ function Index() {
           if (p.group_id && groupNameById.has(p.group_id)) folderMap[p.name] = groupNameById.get(p.group_id)!;
         }
         if (Object.keys(folderMap).length) setProjectFolders((f) => ({ ...folderMap, ...f }));
+        // Ensure every project stored in the DB shows on the board, even if
+        // the local app_state copy was lost.
+        setProjectMeta((m) => {
+          const next = { ...m };
+          for (const p of projs as any[]) {
+            if (!next[p.name]) {
+              next[p.name] = {
+                contract: {
+                  startDate: p.start_date ?? "",
+                  endDate: p.end_date ?? "",
+                  value: "",
+                  payments: [],
+                  responsibleName: "",
+                  responsiblePhone: "",
+                  assignee: "",
+                },
+                tasks: [],
+              };
+            }
+          }
+          return next;
+        });
         // subfolders + files per project
         const newData: Record<string, ProjectData> = {};
         await Promise.all((projs as any[]).map(async (p) => {
@@ -1093,7 +1115,7 @@ function Index() {
         const s = (await _getState()) as Record<string, any>;
         if (cancelled) return;
         if (s.notes) setNotes(s.notes);
-        if (s.projectMeta) setProjectMeta(s.projectMeta);
+        if (s.projectMeta) setProjectMeta((m) => ({ ...m, ...s.projectMeta }));
         if (s.customCols) setCustomCols(s.customCols);
         if (s.customCells) setCustomCells(s.customCells);
         if (s.taskChats) setTaskChats(s.taskChats);
