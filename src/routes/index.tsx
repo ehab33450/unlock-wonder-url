@@ -6186,7 +6186,7 @@ function ProjectDetailOverlay({
       { id: sheetUid(), name: "المنفّذ", type: "people" },
       { id: sheetUid(), name: "المرفق", type: "file" },
     ],
-    rows: [{ __id: sheetUid() }, { __id: sheetUid() }, { __id: sheetUid() }],
+    rows: [],
     groups: [],
   });
   const financeTemplate = (): FlexSheetData => ({
@@ -6202,7 +6202,7 @@ function ProjectDetailOverlay({
       { id: sheetUid(), name: "المستند", type: "file" },
       { id: sheetUid(), name: "ملاحظة", type: "text" },
     ],
-    rows: [{ __id: sheetUid() }, { __id: sheetUid() }, { __id: sheetUid() }],
+    rows: [],
     groups: [],
   });
   const fallback: DMeta = {
@@ -6657,7 +6657,7 @@ function ProjectDetailOverlay({
               </div>
             </div>
 
-            {showSheet && onUpdateFlexSheet && (
+            {onUpdateFlexSheet && (
               <div className="px-6 py-5 border-b border-slate-200">
                 <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
                   <div className="flex items-center gap-2 flex-wrap">
@@ -6669,7 +6669,7 @@ function ProjectDetailOverlay({
                   <h3 className="text-sm font-bold text-slate-700 text-right">📊 جدول حر (Excel)</h3>
                 </div>
                 {flexSheet && (flexSheet.columns?.length ?? 0) > 0 ? (
-                  <FlexSheet data={flexSheet} onChange={(next) => onUpdateFlexSheet(next)} editable={canEditAll} />
+                  <FlexSheet data={flexSheet} onChange={(next) => onUpdateFlexSheet(next)} editable={canEditAll} users={employees} currentUser={currentUser} />
                 ) : (
                   <div className="text-center text-sm text-slate-400 py-10 border border-dashed border-slate-200 rounded-lg">
                     اختر نوع الجدول من الأعلى للبدء: <b>جدول فارغ</b>، أو <b>قالب المهام</b>، أو <b>قالب المالية</b>.
@@ -6678,7 +6678,8 @@ function ProjectDetailOverlay({
               </div>
             )}
 
-            {/* Tasks table */}
+            {/* Tasks table replaced by Excel sheet */}
+            {false && (
             <div className="px-6 py-5">
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
@@ -7170,6 +7171,7 @@ function ProjectDetailOverlay({
                 </table>
               </div>
             </div>
+            )}
           </>
         )}
 
