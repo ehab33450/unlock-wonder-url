@@ -1285,7 +1285,14 @@ function Index() {
     // persist to server
     (async () => {
       try {
-        const group_id = npFolder ? (groupIdByName.current.get(npFolder) ?? null) : null;
+        let group_id: string | null = null;
+        if (npFolder) {
+          if (!groupIdByName.current.has(npFolder)) {
+            const g = await _upsertGroup({ data: { name: npFolder } });
+            groupIdByName.current.set(npFolder, (g as any).id);
+          }
+          group_id = groupIdByName.current.get(npFolder) ?? null;
+        }
         const proj = await _createProject({ data: { name, group_id, description: npDesc, start_date: npStart || null, end_date: npEnd || null, members: npMembers } });
         projectIdByName.current.set(name, (proj as any).id);
       } catch (e) { console.error("[createProject]", e); }
@@ -2997,18 +3004,19 @@ function Index() {
                   </div>
                   <div>
                     <label className="block text-sm text-slate-600 mb-2 text-right">الموظف المُكلَّف</label>
-                    <input
-                      list="np-assignees"
+                    <select
                       value={npAssignee}
                       onChange={(e) => setNpAssignee(e.target.value)}
-                      placeholder="اسم الموظف"
-                      className="w-full h-11 border border-slate-300 rounded px-3 text-right focus:outline-none focus:border-[color:var(--eyenak-teal)]"
-                    />
-                    <datalist id="np-assignees">
+                      className="w-full h-11 border border-slate-300 rounded px-3 text-right focus:outline-none focus:border-[color:var(--eyenak-teal)] bg-white"
+                    >
+                      <option value="">— اختر الموظف —</option>
                       {employees.map((e) => (
-                        <option key={e.id} value={e.name} />
+                        <option key={e.id} value={e.name}>{e.name}</option>
                       ))}
-                    </datalist>
+                    </select>
+                    {employees.length === 0 && (
+                      <p className="text-xs text-slate-400 mt-1 text-right">لا يوجد مستخدمون — أضِفهم من لوحة المستخدمين أولاً.</p>
+                    )}
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-3 mb-4">
@@ -6660,12 +6668,14 @@ function ProjectDetailOverlay({
             {onUpdateFlexSheet && (
               <div className="px-6 py-5 border-b border-slate-200">
                 <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className="text-xs text-slate-500">ابدأ بـ:</span>
-                    <button onClick={() => onUpdateFlexSheet(emptyFlexSheet())} className="h-8 px-3 rounded-md border border-slate-200 text-xs hover:bg-slate-50">جدول فارغ</button>
-                    <button onClick={() => onUpdateFlexSheet(tasksTemplate())} className="h-8 px-3 rounded-md border border-[color:var(--eyenak-teal)]/40 text-xs text-[color:var(--eyenak-teal)] hover:bg-teal-50">قالب المهام</button>
-                    <button onClick={() => onUpdateFlexSheet(financeTemplate())} className="h-8 px-3 rounded-md border border-amber-300 text-xs text-amber-600 hover:bg-amber-50">قالب المالية</button>
-                  </div>
+                  {!(flexSheet && (flexSheet.columns?.length ?? 0) > 0) ? (
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="text-xs text-slate-500">ابدأ بـ:</span>
+                      <button onClick={() => onUpdateFlexSheet(emptyFlexSheet())} className="h-8 px-3 rounded-md border border-slate-200 text-xs hover:bg-slate-50">جدول فارغ</button>
+                      <button onClick={() => onUpdateFlexSheet(tasksTemplate())} className="h-8 px-3 rounded-md border border-[color:var(--eyenak-teal)]/40 text-xs text-[color:var(--eyenak-teal)] hover:bg-teal-50">قالب المهام</button>
+                      <button onClick={() => onUpdateFlexSheet(financeTemplate())} className="h-8 px-3 rounded-md border border-amber-300 text-xs text-amber-600 hover:bg-amber-50">قالب المالية</button>
+                    </div>
+                  ) : <span />}
                   <h3 className="text-sm font-bold text-slate-700 text-right">📊 جدول حر (Excel)</h3>
                 </div>
                 {flexSheet && (flexSheet.columns?.length ?? 0) > 0 ? (
