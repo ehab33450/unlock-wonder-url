@@ -1293,7 +1293,8 @@ function Index() {
           }
           group_id = groupIdByName.current.get(npFolder) ?? null;
         }
-        const proj = await _createProject({ data: { name, group_id, description: npDesc, start_date: npStart || null, end_date: npEnd || null, members: npMembers } });
+        const uuidMembers = npMembers.filter((m) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(m));
+        const proj = await _createProject({ data: { name, group_id, description: npDesc, start_date: npStart || null, end_date: npEnd || null, members: uuidMembers } });
         projectIdByName.current.set(name, (proj as any).id);
       } catch (e) { console.error("[createProject]", e); }
     })();
@@ -3307,12 +3308,17 @@ function Index() {
                       </div>
 
                       <button
-                        onClick={() => {
+                        onClick={async () => {
                           const name = newEmp.name.trim();
+                          const email = newEmp.email.trim();
                           let username = newEmp.username.trim();
                           let password = newEmp.password.trim();
                           if (!name) {
                             setAddEmpMsg({ type: "err", text: "الاسم الكامل مطلوب" });
+                            return;
+                          }
+                          if (!email) {
+                            setAddEmpMsg({ type: "err", text: "البريد الإلكتروني مطلوب لإنشاء حساب حقيقي يدخل به الموظف" });
                             return;
                           }
                           // توليد تلقائي إذا تُرك فارغاً
@@ -3322,21 +3328,19 @@ function Index() {
                             setAddEmpMsg({ type: "err", text: "اسم المستخدم موجود مسبقاً، اختر اسماً آخر" });
                             return;
                           }
-                          const created: Employee = {
-                            id: `u${Date.now()}`,
-                            name,
-                            email: newEmp.email.trim(),
-                            username,
-                            password,
-                            role: newEmp.role.trim() || "موظف",
-                            active: true,
-                            perms: { ...newEmpPerms },
-                          };
-                          setEmployees((arr) => [...arr, created]);
-                          setNewEmp({ name: "", email: "", username: "", password: "", role: "موظف" });
-                          setNewEmpPerms(defaultEmpPerms());
-                          setAddEmpMsg({ type: "ok", text: `تم إنشاء حساب ${name} — افتح رابط الدخول لمشاركته` });
-                          setLinkEmp(created);
+                          try {
+                            // إنشاء حساب حقيقي في الباك-إند (Supabase) بمعرّف UUID فعلي
+                            await createUserFn({ data: {
+                              email, password, display_name: name, username,
+                              role: "employee", perms: { ...newEmpPerms },
+                            } });
+                            await refreshAdminUsers();
+                            setNewEmp({ name: "", email: "", username: "", password: "", role: "موظف" });
+                            setNewEmpPerms(defaultEmpPerms());
+                            setAddEmpMsg({ type: "ok", text: `تم إنشاء حساب ${name} بنجاح — بيانات الدخول: ${email} / ${password}` });
+                          } catch (e: any) {
+                            setAddEmpMsg({ type: "err", text: e?.message || "تعذّر إنشاء الحساب، تحقق من البيانات" });
+                          }
                         }}
                         className="mt-4 w-full h-10 rounded bg-[color:var(--eyenak-teal)] text-white text-sm hover:opacity-90"
                       >
@@ -6679,7 +6683,7 @@ function ProjectDetailOverlay({
                   <h3 className="text-sm font-bold text-slate-700 text-right">📊 جدول حر (Excel)</h3>
                 </div>
                 {flexSheet && (flexSheet.columns?.length ?? 0) > 0 ? (
-                  <FlexSheet data={flexSheet} onChange={(next) => onUpdateFlexSheet(next)} editable={canEditAll} users={employees} currentUser={currentUser} />
+                  <FlexSheet data={flexSheet} onChange={(next) => onUpdateFlexSheet(next)} editable={canEditAll} users={employees} currentUser={currentUser} canManage={isAdmin || isAssignee} />
                 ) : (
                   <div className="text-center text-sm text-slate-400 py-10 border border-dashed border-slate-200 rounded-lg">
                     اختر نوع الجدول من الأعلى للبدء: <b>جدول فارغ</b>، أو <b>قالب المهام</b>، أو <b>قالب المالية</b>.

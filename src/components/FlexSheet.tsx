@@ -1,5 +1,5 @@
 import { useState, Fragment } from "react";
-import { Plus, Trash2, ChevronDown, ChevronLeft, GripVertical, Upload, X, MessageSquare, Send } from "lucide-react";
+import { Plus, Trash2, ChevronDown, ChevronLeft, GripVertical, Upload, X, MessageSquare, Send, Eye, EyeOff } from "lucide-react";
 
 /* =========================================================================
    FlexSheet — a fully flexible, Excel-like table with groups (sections).
@@ -100,12 +100,14 @@ export default function FlexSheet({
   editable = true,
   users = [],
   currentUser = "",
+  canManage = false,
 }: {
   data: FlexSheetData;
   onChange: (next: FlexSheetData) => void;
   editable?: boolean;
   users?: string[];
   currentUser?: string;
+  canManage?: boolean;
 }) {
   const cols = data?.columns ?? [];
   const rows = data?.rows ?? [];
@@ -168,7 +170,8 @@ export default function FlexSheet({
     });
     return [...set];
   };
-  const canChat = (row: FlexRow) => { const a = assignedPeople(row); return !currentUser || a.length === 0 || a.includes(currentUser); };
+  const canChat = (row: FlexRow) => { if (canManage) return true; const a = assignedPeople(row); return !currentUser || a.length === 0 || a.includes(currentUser); };
+  const toggleHidden = (rid: string) => apply({ rows: rows.map((r) => (r.__id === rid ? { ...r, __hidden: !r.__hidden } : r)) });
   const getChat = (row: FlexRow): { a: string; t: string; ts: number }[] => { try { return JSON.parse(String(row.__chat ?? "[]")); } catch { return []; } };
   const sendChat = (rid: string) => {
     const text = chatInput.trim(); if (!text) return;
@@ -295,7 +298,7 @@ export default function FlexSheet({
   };
 
   const renderRow = (row: FlexRow) => (
-    <tr key={row.__id as string} className="hover:bg-slate-50/60">
+    <tr key={row.__id as string} className={`hover:bg-slate-50/60 ${row.__hidden && canManage ? "opacity-50" : ""}`}>
       <td className="border-b border-l border-slate-200 text-center align-middle w-10">
         {canChat(row) && (
           <button onClick={() => { setChatRow(row.__id as string); setChatInput(""); }}
@@ -306,11 +309,18 @@ export default function FlexSheet({
         )}
       </td>
       <td className="border-b border-l border-slate-200 text-center align-middle">
-        {editable ? (
-          <button onClick={() => removeRow(row.__id as string)} className="h-8 w-8 rounded text-slate-300 hover:text-red-500 hover:bg-red-50 flex items-center justify-center mx-auto" title="حذف الصف">
-            <GripVertical className="w-3.5 h-3.5" />
-          </button>
-        ) : null}
+        <div className="flex items-center justify-center gap-0.5">
+          {canManage && (
+            <button onClick={() => toggleHidden(row.__id as string)} className="h-8 w-7 rounded text-slate-300 hover:text-amber-600 hover:bg-amber-50 flex items-center justify-center" title={row.__hidden ? "إظهار المهمة للأعضاء" : "إخفاء المهمة عن بقية الأعضاء"}>
+              {row.__hidden ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+            </button>
+          )}
+          {editable && (
+            <button onClick={() => removeRow(row.__id as string)} className="h-8 w-7 rounded text-slate-300 hover:text-red-500 hover:bg-red-50 flex items-center justify-center" title="حذف الصف">
+              <Trash2 className="w-3.5 h-3.5" />
+            </button>
+          )}
+        </div>
       </td>
       {cols.map((col) => (
         <td key={col.id} className="border-b border-l border-slate-200 align-middle">{renderCell(col, row)}</td>
@@ -320,7 +330,8 @@ export default function FlexSheet({
   );
 
   const colSpanAll = cols.length + (editable ? 3 : 2);
-  const ungrouped = rows.filter((r) => !r.__group || !groups.some((g) => g.id === r.__group));
+  const visibleRows = canManage ? rows : rows.filter((r) => !r.__hidden);
+  const ungrouped = visibleRows.filter((r) => !r.__group || !groups.some((g) => g.id === r.__group));
 
   const headerRow = (
     <tr className="bg-slate-50">
@@ -400,7 +411,7 @@ export default function FlexSheet({
           <tbody>
             {ungrouped.map((r) => renderRow(r))}
             {groups.map((g) => {
-              const gRows = rows.filter((r) => r.__group === g.id);
+              const gRows = visibleRows.filter((r) => r.__group === g.id);
               const isCollapsed = collapsed[g.id];
               return (
                 <Fragment key={g.id}>
