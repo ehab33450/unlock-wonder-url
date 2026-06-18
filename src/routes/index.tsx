@@ -4873,6 +4873,9 @@ function Index() {
           onUpdateFlexSheet={(next) =>
             setFlexSheets((prev) => ({ ...prev, [detailProject!]: next }))
           }
+          members={chatMembers[detailProject] ?? []}
+          onAddMember={(n) => addChatMember(detailProject!, n)}
+          onRemoveMember={(n) => removeChatMember(detailProject!, n)}
           onClose={() => setDetailProject(null)}
           onOpenChat={() => {
             setChatProject(detailProject);
@@ -6145,12 +6148,18 @@ function ProjectDetailOverlay({
   onSetCustomCell,
   flexSheet,
   onUpdateFlexSheet,
+  members,
+  onAddMember,
+  onRemoveMember,
 }: {
   name: string;
   meta: DMeta | undefined;
   isAdmin: boolean;
   currentUser: string;
   employeeCanEdit?: boolean;
+  members?: string[];
+  onAddMember?: (name: string) => void;
+  onRemoveMember?: (name: string) => void;
   onClose: () => void;
   onUpdate: (updater: (cur: DMeta) => DMeta) => void;
   onOpenChat?: () => void;
@@ -6231,7 +6240,7 @@ function ProjectDetailOverlay({
   };
   const data = meta ?? fallback;
   const isAssignee = data.contract.assignee === currentUser;
-  const canView = isAdmin || isAssignee || !data.contract.assignee;
+  const canView = isAdmin || isAssignee || (members ?? []).includes(currentUser) || !data.contract.assignee;
   const canEditAll = isAdmin;
   const canEditOwn = isAdmin || (isAssignee && !!employeeCanEdit);
   // Per-project tableId so column renames, hidden columns, etc.
@@ -6451,6 +6460,7 @@ function ProjectDetailOverlay({
   const [chatDraft, setChatDraft] = useState("");
   const [memberPickOpen, setMemberPickOpen] = useState(false);
   const [servicesOpen, setServicesOpen] = useState(false);
+  const [membersOpen, setMembersOpen] = useState(false);
   const activeChat = chatTaskId ? (taskChats[chatTaskId] ?? { allowed: [], msgs: [] }) : null;
   const canSeeChat = (taskId: string) => {
     if (isAdmin) return true;
@@ -6514,6 +6524,43 @@ function ProjectDetailOverlay({
           </div>
         ) : (
           <>
+            {/* Project members */}
+            <div className="px-6 py-3 bg-white border-b border-slate-200">
+              <div className="flex items-center justify-between mb-2">
+                {canEditAll && (
+                  <button
+                    onClick={() => setMembersOpen((v) => !v)}
+                    className="h-7 px-2.5 rounded-md border border-[color:var(--eyenak-teal)]/40 text-[11px] text-[color:var(--eyenak-teal)] hover:bg-teal-50 flex items-center gap-1"
+                  >
+                    <Plus className="w-3.5 h-3.5" /> إضافة عضو
+                  </button>
+                )}
+                <h3 className="text-sm font-bold text-slate-700 text-right flex items-center gap-1">
+                  <Users className="w-4 h-4 text-[color:var(--eyenak-teal)]" /> أعضاء المشروع ({(members ?? []).length})
+                </h3>
+              </div>
+              <div className="flex flex-wrap gap-1 justify-end" dir="rtl">
+                {(members ?? []).length === 0 && <span className="text-sm text-slate-400">لا يوجد أعضاء بعد</span>}
+                {(members ?? []).map((m) => (
+                  <span key={m} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[color:var(--eyenak-teal)]/10 text-[color:var(--eyenak-teal)] text-[11px] font-semibold border border-[color:var(--eyenak-teal)]/30">
+                    <span>{m}</span>
+                    {canEditAll && m !== "الأدمن" && onRemoveMember && (
+                      <button onClick={() => onRemoveMember(m)} className="text-[color:var(--eyenak-teal)]/70 hover:text-red-600" title="إزالة">×</button>
+                    )}
+                  </span>
+                ))}
+              </div>
+              {membersOpen && canEditAll && (
+                <div className="mt-2 flex flex-wrap gap-1 justify-end border-t border-slate-100 pt-2" dir="rtl">
+                  {employees.filter((e) => !(members ?? []).includes(e)).map((e) => (
+                    <button key={e} onClick={() => onAddMember?.(e)} className="text-[11px] px-2 py-1 rounded border border-slate-200 hover:bg-slate-100">+ {e}</button>
+                  ))}
+                  {employees.filter((e) => !(members ?? []).includes(e)).length === 0 && (
+                    <span className="text-xs text-slate-400">تمت إضافة جميع الموظفين.</span>
+                  )}
+                </div>
+              )}
+            </div>
             {/* Contract bar */}
             <div className="px-6 py-4 bg-white border-b border-slate-200">
               <div className="flex items-center justify-between mb-3">
