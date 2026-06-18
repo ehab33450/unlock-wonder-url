@@ -17,8 +17,9 @@ export const upsertFolderGroup = createServerFn({ method: "POST" })
   .inputValidator((d: { id?: string; name: string; sort_order?: number }) =>
     z.object({ id: z.string().uuid().optional(), name: z.string().min(1).max(120), sort_order: z.number().int().optional() }).parse(d))
   .handler(async ({ data, context }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const row = { ...data, created_by: context.userId };
-    const { data: res, error } = await context.supabase.from("folder_groups").upsert(row).select().single();
+    const { data: res, error } = await supabaseAdmin.from("folder_groups").upsert(row).select().single();
     if (error) throw (console.error("[data.fn]", error), new Error("حدث خطأ، يرجى المحاولة مرة أخرى"));
     return res;
   });
@@ -27,7 +28,8 @@ export const deleteFolderGroup = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { id: string }) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
-    const { error } = await context.supabase.from("folder_groups").delete().eq("id", data.id);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error } = await supabaseAdmin.from("folder_groups").delete().eq("id", data.id);
     if (error) throw (console.error("[data.fn]", error), new Error("حدث خطأ، يرجى المحاولة مرة أخرى"));
     return { ok: true };
   });
