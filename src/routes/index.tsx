@@ -555,7 +555,7 @@ function Index() {
     }
   };
   useEffect(() => {
-    if ((adminPanelOpen || newProjectOpen) && isAdmin && auth.session) {
+    if (isAdmin && auth.session) {
       refreshAdminUsers();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -6500,15 +6500,6 @@ function ProjectDetailOverlay({
               >
                 <Folder className="w-4 h-4 text-amber-500" />
                 <span>ملفات المشروع</span>
-              </button>
-            )}
-            {onUpdateFlexSheet && (
-              <button
-                onClick={() => setShowSheet((v) => !v)}
-                className={`h-8 px-3 rounded-md border text-xs flex items-center gap-1 ${showSheet ? "bg-[color:var(--eyenak-teal)] text-white border-[color:var(--eyenak-teal)]" : "border-slate-200 hover:bg-slate-50 text-slate-700"}`}
-              >
-                <span>📊</span>
-                <span>جدول حر (Excel)</span>
               </button>
             )}
           </div>
