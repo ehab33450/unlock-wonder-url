@@ -263,6 +263,8 @@ function Index() {
                   payments: [],
                   responsibleName: "",
                   responsiblePhone: "",
+                  responsibleEmail: "",
+                  responsibleWhatsapp: "",
                   assignee: "",
                 },
                 tasks: [],
@@ -615,6 +617,8 @@ function Index() {
     payments: Payment[];
     responsibleName: string;
     responsiblePhone: string;
+    responsibleEmail?: string;
+    responsibleWhatsapp?: string;
     assignee: string;
     services?: string[];
   };
@@ -651,6 +655,8 @@ function Index() {
   const [npValue, setNpValue] = useState("");
   const [npRespName, setNpRespName] = useState("");
   const [npRespPhone, setNpRespPhone] = useState("");
+  const [npRespEmail, setNpRespEmail] = useState("");
+  const [npRespWhatsapp, setNpRespWhatsapp] = useState("");
   const [npAssignee, setNpAssignee] = useState("");
   const [npPayments, setNpPayments] = useState<Payment[]>([]);
   const [npServices, setNpServices] = useState<string[]>([]);
@@ -1270,6 +1276,8 @@ function Index() {
             payments: npPayments,
             responsibleName: npRespName,
             responsiblePhone: npRespPhone,
+            responsibleEmail: npRespEmail,
+            responsibleWhatsapp: npRespWhatsapp,
             assignee: npAssignee || (npMembers[0] ?? ""),
             services: npServices,
           },
@@ -1569,6 +1577,8 @@ function Index() {
     setNpValue("");
     setNpRespName("");
     setNpRespPhone("");
+    setNpRespEmail("");
+    setNpRespWhatsapp("");
     setNpAssignee("");
     setNpPayments([]);
     setNpServices([]);
@@ -3035,6 +3045,28 @@ function Index() {
                       type="tel"
                       value={npRespPhone}
                       onChange={(e) => setNpRespPhone(e.target.value)}
+                      placeholder="+9665..."
+                      className="w-full h-11 border border-slate-300 rounded px-3 text-right focus:outline-none focus:border-[color:var(--eyenak-teal)]"
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-3 mb-4">
+                  <div>
+                    <label className="block text-sm text-slate-600 mb-2 text-right">البريد الإلكتروني للمسؤول</label>
+                    <input
+                      type="email"
+                      value={npRespEmail}
+                      onChange={(e) => setNpRespEmail(e.target.value)}
+                      placeholder="example@email.com"
+                      className="w-full h-11 border border-slate-300 rounded px-3 text-right focus:outline-none focus:border-[color:var(--eyenak-teal)]"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm text-slate-600 mb-2 text-right">رقم واتساب المسؤول</label>
+                    <input
+                      type="tel"
+                      value={npRespWhatsapp}
+                      onChange={(e) => setNpRespWhatsapp(e.target.value)}
                       placeholder="+9665..."
                       className="w-full h-11 border border-slate-300 rounded px-3 text-right focus:outline-none focus:border-[color:var(--eyenak-teal)]"
                     />
@@ -4897,6 +4929,8 @@ function Index() {
                     payments: [],
                     responsibleName: "",
                     responsiblePhone: "",
+                    responsibleEmail: "",
+                    responsibleWhatsapp: "",
                     assignee: "",
                   },
                   tasks: [],
@@ -6032,6 +6066,8 @@ type DContract = {
   payments: DPayment[];
   responsibleName: string;
   responsiblePhone: string;
+  responsibleEmail?: string;
+  responsibleWhatsapp?: string;
   assignee: string;
   services?: string[];
 };
@@ -6234,6 +6270,8 @@ function ProjectDetailOverlay({
       payments: [],
       responsibleName: "",
       responsiblePhone: "",
+      responsibleEmail: "",
+      responsibleWhatsapp: "",
       assignee: "",
     },
     tasks: [],
@@ -6614,6 +6652,33 @@ function ProjectDetailOverlay({
                     </a>
                   ) : (
                     <span className="text-sm text-slate-400">—</span>
+                  )}
+                </div>
+                {/* Email cell */}
+                <div className="bg-slate-50 rounded border border-slate-200 p-3">
+                  <div className="text-xs text-slate-500 mb-1">البريد الإلكتروني</div>
+                  {data.contract.responsibleEmail ? (
+                    <a href={`mailto:${data.contract.responsibleEmail}`} className="text-sm font-semibold text-[color:var(--eyenak-teal)] hover:underline block truncate" dir="ltr">{data.contract.responsibleEmail}</a>
+                  ) : !canEditAll && (<span className="text-sm text-slate-400">—</span>)}
+                  {canEditAll && (
+                    <input key={data.contract.responsibleEmail ?? ""} type="email" defaultValue={data.contract.responsibleEmail ?? ""} placeholder="أضف البريد..."
+                      onBlur={(e) => { const v=e.target.value.trim(); if(v!==(data.contract.responsibleEmail??"")) onUpdate((c)=>({...c,contract:{...c.contract,responsibleEmail:v}})); }}
+                      className="mt-1 w-full text-xs border border-slate-200 rounded px-2 py-1 focus:outline-none focus:border-[color:var(--eyenak-teal)]" />
+                  )}
+                </div>
+                {/* WhatsApp cell */}
+                <div className="bg-slate-50 rounded border border-slate-200 p-3">
+                  <div className="text-xs text-slate-500 mb-1">واتساب العميل</div>
+                  {data.contract.responsibleWhatsapp ? (
+                    <div className="flex items-center gap-2 justify-end">
+                      <a href={`https://wa.me/${data.contract.responsibleWhatsapp.replace(/\D/g,"")}`} target="_blank" rel="noreferrer" className="text-[10px] px-2 py-0.5 rounded bg-emerald-100 text-emerald-700 hover:bg-emerald-200 shrink-0">إرسال واتساب</a>
+                      <span className="text-sm font-semibold text-slate-800 truncate" dir="ltr">{data.contract.responsibleWhatsapp}</span>
+                    </div>
+                  ) : !canEditAll && (<span className="text-sm text-slate-400">—</span>)}
+                  {canEditAll && (
+                    <input key={data.contract.responsibleWhatsapp ?? ""} type="tel" defaultValue={data.contract.responsibleWhatsapp ?? ""} placeholder="+9665..."
+                      onBlur={(e) => { const v=e.target.value.trim(); if(v!==(data.contract.responsibleWhatsapp??"")) onUpdate((c)=>({...c,contract:{...c.contract,responsibleWhatsapp:v}})); }}
+                      className="mt-1 w-full text-xs border border-slate-200 rounded px-2 py-1 focus:outline-none focus:border-[color:var(--eyenak-teal)]" />
                   )}
                 </div>
                 <div className="bg-slate-50 rounded border border-slate-200 p-3">
