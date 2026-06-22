@@ -85,8 +85,16 @@ const fileToDataUrl = (f: File) =>
   });
 
 // Countdown bar: green -> amber -> red as the task period elapses.
-function FlexCountdown({ value }: { value: string }) {
+function FlexCountdown({ value, done }: { value: string; done?: boolean }) {
   const [from, to] = String(value ?? "").split("|");
+  if (done) {
+    return (
+      <div className="w-28 mx-auto">
+        <div className="h-2 rounded-full bg-emerald-500" />
+        <div className="text-[10px] text-emerald-600 font-bold text-center mt-0.5">مكتملة</div>
+      </div>
+    );
+  }
   if (!to) return <span className="text-xs text-slate-300">—</span>;
   const now = Date.now();
   const endMs = new Date(to + "T23:59:59").getTime();
@@ -197,11 +205,17 @@ export default function FlexSheet({
     const isStatus = !!col && col.type === "select" && (col.options ?? []).some((o) => o.label === "تم الانجاز");
     if (isStatus && val === "تم الانجاز") {
       const doneCol = cols.find((c) => c.type === "date" && c.name.includes("الإنجاز"));
+      const today = new Date().toISOString().slice(0, 10);
       next = next.map((r) => {
-        if (r.__id !== rid || r.__group !== "qplan") return r;
-        const doneVal = (doneCol && String(r[doneCol.id] ?? "")) || new Date().toISOString().slice(0, 10);
-        const qid = quarterForDate(doneVal, projectStart, projectEnd);
-        return qid && groups.some((g) => g.id === qid) ? { ...r, __group: qid } : r;
+        if (r.__id !== rid) return r;
+        const nr = { ...r };
+        if (doneCol && !nr[doneCol.id]) nr[doneCol.id] = today;
+        if (nr.__group === "qplan") {
+          const doneVal = (doneCol && String(nr[doneCol.id] ?? "")) || today;
+          const qid = quarterForDate(doneVal, projectStart, projectEnd);
+          if (qid && groups.some((g) => g.id === qid)) nr.__group = qid;
+        }
+        return nr;
       });
     }
     apply({ rows: next });
@@ -227,6 +241,10 @@ export default function FlexSheet({
       groups: groups.filter((g) => g.id !== id),
       rows: rows.map((r) => (r.__group === id ? { ...r, __group: undefined } : r)),
     });
+
+  // A row is "done" when any status (select) column with a "تم الانجاز" option holds it.
+  const rowDone = (row: FlexRow): boolean =>
+    cols.some((c) => c.type === "select" && (c.options ?? []).some((o) => o.label === "تم الانجاز") && row[c.id] === "تم الانجاز");
 
   const assignedPeople = (row: FlexRow): string[] => {
     const set = new Set<string>();
@@ -274,7 +292,8 @@ export default function FlexSheet({
       );
     }
     if (col.type === "countdown") {
-      if (!editable) return <FlexCountdown value={String(raw ?? "")} />;
+      const done = rowDone(row);
+      if (!editable) return <FlexCountdown value={String(raw ?? "")} done={done} />;
       const [from, to] = String(raw ?? "").split("|");
       const set = (f: string, t: string) => setCell(rid, col.id, `${f}|${t}`);
       return (
@@ -284,7 +303,7 @@ export default function FlexSheet({
             <span className="text-slate-400 text-xs">→</span>
             <input type="date" value={to ?? ""} onChange={(e) => set(from ?? "", e.target.value)} className={inputCls + " h-7"} />
           </div>
-          <FlexCountdown value={String(raw ?? "")} />
+          <FlexCountdown value={String(raw ?? "")} done={done} />
         </div>
       );
     }
