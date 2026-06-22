@@ -6009,8 +6009,14 @@ function Index() {
                 username: input.username,
                 password: input.password,
               } });
-            } catch (e) { console.error("[invite]", e); }
+            } catch (e) {
+              console.error("[invite]", e);
+              alert("تم إنشاء المستخدم، لكن تعذّر إرسال دعوة البريد. تحقق من إعداد Resend (تفعيل دومين، أو الإرسال لبريدك المسجّل فقط على الخطة المجانية).");
+            }
           }
+        }}
+        onInviteEmail={async ({ email, display_name }) => {
+          await sendInviteFn({ data: { email, display_name } });
         }}
         onUpdatePerms={async (userId, perms) => {
           await setPermsFn({ data: { user_id: userId, perms } });

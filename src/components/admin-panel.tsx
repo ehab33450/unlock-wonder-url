@@ -32,6 +32,7 @@ type Props = {
   }) => Promise<void>;
   onUpdatePerms?: (userId: string, perms: Record<string, boolean>) => Promise<void>;
   onToggleActive?: (userId: string, active: boolean) => Promise<void>;
+  onInviteEmail?: (input: { email: string; display_name: string }) => Promise<void>;
   loading?: boolean;
 };
 
@@ -51,12 +52,13 @@ type SectionId = typeof SIDEBAR[number]["id"];
 
 export function AdminPanel({
   open, onClose, employees, setEmployees, perms, defaultPerms,
-  onCreateUser, onUpdatePerms, onToggleActive, loading,
+  onCreateUser, onUpdatePerms, onToggleActive, onInviteEmail, loading,
 }: Props) {
   const [section, setSection] = useState<SectionId>("users");
   const [userTab, setUserTab] = useState<"users" | "invites" | "clients">("users");
   const [search, setSearch] = useState("");
   const [addOpen, setAddOpen] = useState(false);
+  const [inviteOpen, setInviteOpen] = useState(false);
   const [editEmp, setEditEmp] = useState<AdminEmployee | null>(null);
   const [permsEmp, setPermsEmp] = useState<AdminEmployee | null>(null);
   const [addRoleOpen, setAddRoleOpen] = useState(false);
@@ -122,6 +124,7 @@ export function AdminPanel({
               search={search} setSearch={setSearch}
               userTab={userTab} setUserTab={setUserTab}
               onAdd={() => setAddOpen(true)}
+              onInvite={() => setInviteOpen(true)}
               onEdit={(e: AdminEmployee) => setEditEmp(e)}
               onPerms={(e: AdminEmployee) => setPermsEmp(e)}
               total={employees.length}
@@ -161,6 +164,9 @@ export function AdminPanel({
         </main>
       </div>
 
+      {inviteOpen && (
+        <InviteModal onClose={() => setInviteOpen(false)} onInviteEmail={onInviteEmail} />
+      )}
       {addOpen && (
         <AddUserModal
           onClose={() => setAddOpen(false)}
@@ -244,7 +250,7 @@ export function AdminPanel({
 /* ============== Users Section ============== */
 function UsersSection({
   employees, setEmployees, search, setSearch, userTab, setUserTab,
-  onAdd, onEdit, onPerms, total, onToggleActive, loading,
+  onAdd, onInvite, onEdit, onPerms, total, onToggleActive, loading,
 }: any) {
   return (
     <div className="p-6">
@@ -256,7 +262,7 @@ function UsersSection({
           >
             <Plus className="w-4 h-4" /> إضافة مستخدم
           </button>
-          <button className="h-10 px-4 rounded-lg border border-slate-300 text-slate-700 text-sm flex items-center gap-2 hover:bg-slate-50">
+          <button onClick={onInvite} className="h-10 px-4 rounded-lg border border-slate-300 text-slate-700 text-sm flex items-center gap-2 hover:bg-slate-50">
             <Mail className="w-4 h-4" /> دعوة مستخدم
           </button>
         </div>
@@ -464,6 +470,79 @@ function SmtpSection() {
         <button className="h-10 px-5 rounded-lg bg-[color:var(--eyenak-teal)] text-white text-sm font-semibold">
           حفظ الإعدادات
         </button>
+      </div>
+    </div>
+  );
+}
+
+/* ============== Invite Modal (email + WhatsApp) ============== */
+const INVITE_SITE_URL = "https://unlock-wonder-url.vercel.app/auth";
+function InviteModal({ onClose, onInviteEmail }: {
+  onClose: () => void;
+  onInviteEmail?: (input: { email: string; display_name: string }) => Promise<void>;
+}) {
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
+
+  const sendEmail = async () => {
+    setMsg(null);
+    if (!email.trim()) { setMsg({ ok: false, text: "أدخل البريد الإلكتروني" }); return; }
+    if (!onInviteEmail) { setMsg({ ok: false, text: "خدمة البريد غير متاحة" }); return; }
+    setBusy(true);
+    try {
+      await onInviteEmail({ email: email.trim(), display_name: name.trim() || email.split("@")[0] });
+      setMsg({ ok: true, text: "تم إرسال الدعوة بالبريد بنجاح ✅" });
+    } catch (e: any) {
+      setMsg({ ok: false, text: e?.message || "تعذّر إرسال البريد. تحقق من إعداد Resend (تفعيل دومين أو الإرسال لبريدك المسجّل فقط)." });
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const sendWhatsapp = () => {
+    const digits = phone.replace(/\D/g, "");
+    if (!digits) { setMsg({ ok: false, text: "أدخل رقم واتساب" }); return; }
+    const text =
+      `مرحباً ${name.trim() || ""}،\n` +
+      `تمت دعوتك للانضمام إلى منصة يسير.\n` +
+      `سجّل الدخول من هنا: ${INVITE_SITE_URL}`;
+    window.open(`https://wa.me/${digits}?text=${encodeURIComponent(text)}`, "_blank");
+  };
+
+  return (
+    <div dir="rtl" className="fixed inset-0 z-[75] bg-slate-900/60 flex items-center justify-center p-4" onClick={onClose}>
+      <div onClick={(e) => e.stopPropagation()} className="bg-white rounded-xl shadow-2xl w-full max-w-md p-6">
+        <div className="flex items-center justify-between mb-5">
+          <h3 className="text-lg font-bold text-slate-800">دعوة مستخدم</h3>
+          <button onClick={onClose} className="p-1 rounded hover:bg-slate-100"><X className="w-5 h-5" /></button>
+        </div>
+        <div className="space-y-3 text-right">
+          <Field label="الاسم (اختياري)">
+            <input value={name} onChange={(e) => setName(e.target.value)} className="ad-input" />
+          </Field>
+          <Field label="البريد الإلكتروني">
+            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="name@mail.com" className="ad-input" />
+          </Field>
+          <Field label="رقم واتساب (بالمقدمة الدولية)">
+            <input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="9665XXXXXXXX" className="ad-input" />
+          </Field>
+          {msg && (
+            <div className={`text-xs rounded px-2 py-1.5 border ${msg.ok ? "bg-emerald-50 border-emerald-200 text-emerald-700" : "bg-red-50 border-red-200 text-red-600"}`}>
+              {msg.text}
+            </div>
+          )}
+          <div className="flex gap-2 pt-1">
+            <button onClick={sendEmail} disabled={busy} className="flex-1 h-10 rounded-lg bg-[color:var(--eyenak-teal)] text-white text-sm font-semibold flex items-center justify-center gap-2 hover:opacity-90 disabled:opacity-50">
+              <Mail className="w-4 h-4" /> {busy ? "..." : "إرسال بالبريد"}
+            </button>
+            <button onClick={sendWhatsapp} className="flex-1 h-10 rounded-lg bg-emerald-600 text-white text-sm font-semibold flex items-center justify-center gap-2 hover:opacity-90">
+              إرسال عبر واتساب
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   );
