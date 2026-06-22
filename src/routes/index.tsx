@@ -283,7 +283,7 @@ function Index() {
           const subById = new Map<string, { name: string; createdAt: string; files: FileItem[]; locked?: boolean }>();
           const subList: SubFolder[] = [];
           for (const s of subs as any[]) {
-            const sf: SubFolder = { name: s.name, createdAt: new Date(s.created_at).toLocaleDateString("en-GB",{day:"numeric",month:"short",year:"numeric"}), files: [] };
+            const sf: SubFolder = { name: s.name, createdAt: new Date(s.created_at).toLocaleDateString("en-GB",{day:"numeric",month:"short",year:"numeric"}), files: [], locked: DEFAULT_FOLDERS.includes(s.name) || undefined };
             subById.set(s.id, sf);
             subList.push(sf);
             subfolderIdByKey.current.set(`${p.name}::${s.name}`, s.id);
@@ -1303,7 +1303,15 @@ function Index() {
         }
         const uuidMembers = npMembers.filter((m) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(m));
         const proj = await _createProject({ data: { name, group_id, description: npDesc, start_date: npStart || null, end_date: npEnd || null, members: uuidMembers } });
-        projectIdByName.current.set(name, (proj as any).id);
+        const pid = (proj as any).id;
+        projectIdByName.current.set(name, pid);
+        // Persist the 5 default folders so they survive reloads and can permanently hold files.
+        for (const fn of DEFAULT_FOLDERS) {
+          try {
+            const sub = await _createSub({ data: { project_id: pid, name: fn } });
+            subfolderIdByKey.current.set(`${name}::${fn}`, (sub as any).id);
+          } catch (e) { console.error("[seedFolder]", fn, e); }
+        }
       } catch (e) { console.error("[createProject]", e); }
     })();
   };
