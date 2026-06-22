@@ -6243,7 +6243,7 @@ function ProjectDetailOverlay({
       { id: sheetUid(), name: "المنصة", type: "text" },
       { id: sheetUid(), name: "المستفيد", type: "text" },
       { id: sheetUid(), name: "رقم المستند", type: "text" },
-      { id: sheetUid(), name: "فترة المهمة", type: "date" },
+      { id: sheetUid(), name: "فترة المهمة", type: "countdown" },
       { id: sheetUid(), name: "تاريخ الإنجاز", type: "date" },
       { id: sheetUid(), name: "الحالة", type: "select", options: [
         { label: "جديد", color: "#3b82f6" },
@@ -6260,7 +6260,13 @@ function ProjectDetailOverlay({
       { id: sheetUid(), name: "المرفق", type: "file" },
     ],
     rows: [],
-    groups: [],
+    groups: [
+      { id: "qplan", name: "الخطة السنوية", color: "#6366f1" },
+      { id: "q1", name: "تقرير الربع الأول", color: "#10b981" },
+      { id: "q2", name: "تقرير الربع الثاني", color: "#06b6d4" },
+      { id: "q3", name: "تقرير الربع الثالث", color: "#f59e0b" },
+      { id: "q4", name: "تقرير الربع الرابع", color: "#ef4444" },
+    ],
   });
   const financeTemplate = (): FlexSheetData => ({
     columns: [
@@ -6800,7 +6806,7 @@ function ProjectDetailOverlay({
                   <h3 className="text-sm font-bold text-slate-700 text-right">📊 جدول حر (Excel)</h3>
                 </div>
                 {flexSheet && (flexSheet.columns?.length ?? 0) > 0 ? (
-                  <FlexSheet data={flexSheet} onChange={(next) => onUpdateFlexSheet(next)} editable={canEditAll} users={employees} currentUser={currentUser} canManage={isAdmin || isAssignee} />
+                  <FlexSheet data={flexSheet} onChange={(next) => onUpdateFlexSheet(next)} editable={canEditAll} users={employees} currentUser={currentUser} canManage={isAdmin || isAssignee} projectStart={data.contract.startDate} projectEnd={data.contract.endDate} />
                 ) : (
                   <div className="text-center text-sm text-slate-400 py-10 border border-dashed border-slate-200 rounded-lg">
                     اختر نوع الجدول من الأعلى للبدء: <b>جدول فارغ</b>، أو <b>قالب المهام</b>، أو <b>قالب المالية</b>.

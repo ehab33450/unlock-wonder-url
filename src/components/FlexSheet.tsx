@@ -17,6 +17,7 @@ export type FlexColType =
   | "date"
   | "time"
   | "daterange"
+  | "countdown"
   | "select"
   | "checkbox"
   | "file"
@@ -55,6 +56,7 @@ export const FLEX_TYPE_OPTIONS: { type: FlexColType; label: string; icon: string
   { type: "date", label: "تاريخ", icon: "📅" },
   { type: "time", label: "وقت", icon: "⏰" },
   { type: "daterange", label: "مدة (من/إلى)", icon: "⏳" },
+  { type: "countdown", label: "العد التنازلي", icon: "⌛" },
   { type: "select", label: "قائمة منسدلة", icon: "🔽" },
   { type: "file", label: "مستند / ملف", icon: "📎" },
   { type: "checkbox", label: "مربع اختيار", icon: "☑️" },
@@ -82,6 +84,52 @@ const fileToDataUrl = (f: File) =>
     r.readAsDataURL(f);
   });
 
+// Countdown bar: green -> amber -> red as the task period elapses.
+function FlexCountdown({ value }: { value: string }) {
+  const [from, to] = String(value ?? "").split("|");
+  if (!to) return <span className="text-xs text-slate-300">—</span>;
+  const now = Date.now();
+  const endMs = new Date(to + "T23:59:59").getTime();
+  const startMs = from ? new Date(from).getTime() : endMs - 7 * 86_400_000;
+  const total = Math.max(1, endMs - startMs);
+  const elapsed = Math.max(0, now - startMs);
+  const pct = Math.min(100, Math.round((elapsed / total) * 100));
+  const diff = endMs - now;
+  const overdue = diff <= 0;
+  let bar = "bg-emerald-500";
+  if (pct >= 80) bar = "bg-red-500";
+  else if (pct >= 60) bar = "bg-amber-500";
+  else if (pct >= 40) bar = "bg-yellow-400";
+  if (overdue) bar = "bg-red-600";
+  const absMs = Math.abs(diff);
+  const days = Math.floor(absMs / 86_400_000);
+  const hours = Math.floor((absMs % 86_400_000) / 3_600_000);
+  const detail = overdue ? `متأخر ${days} يوم و${hours} ساعة` : `باقي ${days} يوم و${hours} ساعة`;
+  const short = overdue ? `متأخر ${days}ي` : `باقي ${days}ي`;
+  return (
+    <div className="w-28 mx-auto" title={detail}>
+      <div className="h-2 rounded-full bg-slate-200 overflow-hidden">
+        <div className={`h-full ${bar} transition-all`} style={{ width: `${overdue ? 100 : pct}%` }} />
+      </div>
+      <div className={`text-[10px] font-bold text-center mt-0.5 ${overdue || pct >= 80 ? "text-red-600" : pct >= 60 ? "text-amber-600" : "text-emerald-700"}`}>
+        {short}
+      </div>
+    </div>
+  );
+}
+
+function quarterForDate(dateStr: string, start: string, end: string): string | null {
+  if (!dateStr || !start || !end) return null;
+  const s = new Date(start).getTime();
+  const e = new Date(end + "T23:59:59").getTime();
+  const d = new Date(dateStr).getTime();
+  if (isNaN(s) || isNaN(e) || isNaN(d) || e <= s) return null;
+  let q = Math.floor(((d - s) / (e - s)) * 4);
+  if (q < 0) q = 0;
+  if (q > 3) q = 3;
+  return ["q1", "q2", "q3", "q4"][q];
+}
+
 export function emptyFlexSheet(): FlexSheetData {
   return {
     columns: [
@@ -101,6 +149,8 @@ export default function FlexSheet({
   users = [],
   currentUser = "",
   canManage = false,
+  projectStart = "",
+  projectEnd = "",
 }: {
   data: FlexSheetData;
   onChange: (next: FlexSheetData) => void;
@@ -108,6 +158,8 @@ export default function FlexSheet({
   users?: string[];
   currentUser?: string;
   canManage?: boolean;
+  projectStart?: string;
+  projectEnd?: string;
 }) {
   const cols = data?.columns ?? [];
   const rows = data?.rows ?? [];
@@ -139,8 +191,21 @@ export default function FlexSheet({
   const addRow = (groupId?: string) =>
     apply({ rows: [...rows, { __id: uid(), ...(groupId ? { __group: groupId } : {}) }] });
   const removeRow = (rid: string) => apply({ rows: rows.filter((r) => r.__id !== rid) });
-  const setCell = (rid: string, colId: string, val: string | boolean) =>
-    apply({ rows: rows.map((r) => (r.__id === rid ? { ...r, [colId]: val } : r)) });
+  const setCell = (rid: string, colId: string, val: string | boolean) => {
+    let next = rows.map((r) => (r.__id === rid ? { ...r, [colId]: val } : r));
+    const col = cols.find((c) => c.id === colId);
+    const isStatus = !!col && col.type === "select" && (col.options ?? []).some((o) => o.label === "تم الانجاز");
+    if (isStatus && val === "تم الانجاز") {
+      const doneCol = cols.find((c) => c.type === "date" && c.name.includes("الإنجاز"));
+      next = next.map((r) => {
+        if (r.__id !== rid || r.__group !== "qplan") return r;
+        const doneVal = (doneCol && String(r[doneCol.id] ?? "")) || new Date().toISOString().slice(0, 10);
+        const qid = quarterForDate(doneVal, projectStart, projectEnd);
+        return qid && groups.some((g) => g.id === qid) ? { ...r, __group: qid } : r;
+      });
+    }
+    apply({ rows: next });
+  };
 
   const addGroup = () =>
     apply({
@@ -205,6 +270,21 @@ export default function FlexSheet({
               <button onClick={() => setPeoplePicker(null)} className="mt-1 w-full h-7 rounded bg-teal-600 text-white text-xs">تم</button>
             </div>
           )}
+        </div>
+      );
+    }
+    if (col.type === "countdown") {
+      if (!editable) return <FlexCountdown value={String(raw ?? "")} />;
+      const [from, to] = String(raw ?? "").split("|");
+      const set = (f: string, t: string) => setCell(rid, col.id, `${f}|${t}`);
+      return (
+        <div className="flex flex-col gap-1 px-1 py-1">
+          <div className="flex items-center gap-1">
+            <input type="date" value={from ?? ""} onChange={(e) => set(e.target.value, to ?? "")} className={inputCls + " h-7"} />
+            <span className="text-slate-400 text-xs">→</span>
+            <input type="date" value={to ?? ""} onChange={(e) => set(from ?? "", e.target.value)} className={inputCls + " h-7"} />
+          </div>
+          <FlexCountdown value={String(raw ?? "")} />
         </div>
       );
     }
