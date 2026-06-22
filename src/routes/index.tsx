@@ -6141,10 +6141,13 @@ function Countdown({ start, end, status }: { start: string; end: string; status:
   else if (pct >= 60) barColor = "bg-amber-500";
   else if (pct >= 40) barColor = "bg-yellow-400";
   if (overdue) barColor = "bg-red-600";
-  const days = Math.floor(Math.abs(diff) / 86_400_000);
+  const absMs = Math.abs(diff);
+  const days = Math.floor(absMs / 86_400_000);
+  const hours = Math.floor((absMs % 86_400_000) / 3_600_000);
   const label = overdue ? `متأخر ${days}ي` : `باقي ${days}ي`;
+  const detail = overdue ? `متأخر ${days} يوم و${hours} ساعة` : `باقي ${days} يوم و${hours} ساعة`;
   return (
-    <div className="w-28" title={label}>
+    <div className="w-28" title={detail}>
       <div className="h-2 rounded-full bg-slate-200 overflow-hidden">
         <div className={`h-full ${barColor} transition-all`} style={{ width: `${overdue ? 100 : pct}%` }} />
       </div>
@@ -6153,6 +6156,29 @@ function Countdown({ start, end, status }: { start: string; end: string; status:
       </div>
     </div>
   );
+}
+
+// Default quarter groups, auto-created per project (user can rename/delete freely).
+const QUARTER_GROUP_DEFS: DTaskGroup[] = [
+  { id: "qplan", title: "الخطة السنوية", color: "#6366f1", collapsed: false },
+  { id: "q1", title: "تقرير الربع الأول", color: "#10b981", collapsed: false },
+  { id: "q2", title: "تقرير الربع الثاني", color: "#06b6d4", collapsed: false },
+  { id: "q3", title: "تقرير الربع الثالث", color: "#f59e0b", collapsed: false },
+  { id: "q4", title: "تقرير الربع الرابع", color: "#ef4444", collapsed: false },
+];
+
+// Map a completion date to one of the 4 project quarters (q1..q4) by dividing
+// the project period (contract.startDate → endDate) into 4 equal intervals.
+function quarterIdForDate(dateStr: string, contract: DContract): string | null {
+  if (!dateStr || !contract || !contract.startDate || !contract.endDate) return null;
+  const s = new Date(contract.startDate).getTime();
+  const e = new Date(contract.endDate + "T23:59:59").getTime();
+  const d = new Date(dateStr).getTime();
+  if (isNaN(s) || isNaN(e) || isNaN(d) || e <= s) return null;
+  let q = Math.floor(((d - s) / (e - s)) * 4);
+  if (q < 0) q = 0;
+  if (q > 3) q = 3;
+  return ["q1", "q2", "q3", "q4"][q];
 }
 
 function ProjectDetailOverlay({
@@ -6275,6 +6301,17 @@ function ProjectDetailOverlay({
   // are scoped to THIS project and do not leak across other projects.
   const projectTableId = `project.tasks::${name}`;
 
+  // Auto-create the 5 quarter groups once, when a project has no groups yet.
+  // Fully editable afterwards (rename/recolor/delete).
+  useEffect(() => {
+    if ((data.groups ?? []).length === 0) {
+      onUpdate((cur) =>
+        (cur.groups ?? []).length ? cur : { ...cur, groups: QUARTER_GROUP_DEFS },
+      );
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [name]);
+
   const addTask = () => {
     onUpdate((cur) => ({
       ...cur,
@@ -6319,7 +6356,18 @@ function ProjectDetailOverlay({
   const updateTask = (id: string, patch: Partial<DTask>) => {
     onUpdate((cur) => ({
       ...cur,
-      tasks: cur.tasks.map((t) => (t.id === id ? { ...t, ...patch } : t)),
+      tasks: cur.tasks.map((t) => {
+        if (t.id !== id) return t;
+        const nt = { ...t, ...patch };
+        // Auto-move: a task in the annual plan ("qplan") that becomes "تم الانجاز"
+        // drops into the quarter group matching its completion date.
+        if (patch.status === "تم الانجاز" && t.groupId === "qplan") {
+          if (!nt.doneDate) nt.doneDate = new Date().toISOString().slice(0, 10);
+          const qid = quarterIdForDate(nt.doneDate, cur.contract);
+          if (qid && (cur.groups ?? []).some((g) => g.id === qid)) nt.groupId = qid;
+        }
+        return nt;
+      }),
     }));
   };
   const removeTask = (id: string) => {
