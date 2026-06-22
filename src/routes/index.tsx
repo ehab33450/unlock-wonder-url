@@ -4,7 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useNavigate } from "@tanstack/react-router";
 import { useAuth } from "@/contexts/auth-context";
 import { askAssistant } from "@/lib/ai-assistant.functions";
-import { adminListUsers, adminCreateUser, adminSetPermissions, adminSetActive } from "@/lib/auth.functions";
+import { adminListUsers, adminCreateUser, adminSetPermissions, adminSetActive, adminUpdateUser, adminDeleteUser } from "@/lib/auth.functions";
 import { getAppState, setAppState } from "@/lib/state.functions";
 import { sendUserInvite, sendMeetingInvite } from "@/lib/email.functions";
 import {
@@ -531,6 +531,8 @@ function Index() {
   const createUserFn = useServerFn(adminCreateUser);
   const setPermsFn = useServerFn(adminSetPermissions);
   const setActiveFn = useServerFn(adminSetActive);
+  const updateUserFn = useServerFn(adminUpdateUser);
+  const deleteUserFn = useServerFn(adminDeleteUser);
   const sendInviteFn = useServerFn(sendUserInvite);
   const sendMeetingFn = useServerFn(sendMeetingInvite);
   const [adminUsersLoading, setAdminUsersLoading] = useState(false);
@@ -6032,6 +6034,14 @@ function Index() {
         }}
         onToggleActive={async (userId, active) => {
           await setActiveFn({ data: { user_id: userId, active } });
+          await refreshAdminUsers();
+        }}
+        onUpdateUser={async (input) => {
+          await updateUserFn({ data: input });
+          await refreshAdminUsers();
+        }}
+        onDeleteUser={async (userId) => {
+          await deleteUserFn({ data: { user_id: userId } });
           await refreshAdminUsers();
         }}
       />

@@ -199,6 +199,96 @@ export const adminSetActive = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+// Admin-only: update a user's profile/login data (and optionally reset password)
+export const adminUpdateUser = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: {
+    user_id: string;
+    display_name?: string;
+    email?: string;
+    username?: string;
+    password?: string;
+    role?: "admin" | "employee" | "client";
+  }) =>
+    z.object({
+      user_id: z.string().uuid(),
+      display_name: z.string().min(1).max(120).optional(),
+      email: z.string().email().max(255).optional(),
+      username: z.string().min(1).max(60).regex(/^[a-zA-Z0-9._-]+$/).optional(),
+      password: z.string().min(6).max(72).optional(),
+      role: z.enum(["admin", "employee", "client"]).optional(),
+    }).parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: isAdminRow } = await supabaseAdmin
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", context.userId)
+      .eq("role", "admin")
+      .maybeSingle();
+    if (!isAdminRow) throw new Error(FORBIDDEN_ERR);
+
+    // Update auth credentials (email/password) when provided.
+    const authPatch: Record<string, unknown> = {};
+    if (data.email) authPatch.email = data.email;
+    if (data.password) authPatch.password = data.password;
+    if (Object.keys(authPatch).length) {
+      const upd = await supabaseAdmin.auth.admin.updateUserById(data.user_id, authPatch);
+      if (upd.error) {
+        console.error("[adminUpdateUser:auth]", upd.error);
+        const msg = upd.error.message ?? "";
+        if (/already|exists|registered/i.test(msg)) throw new Error("هذا البريد مستخدم مسبقاً");
+        throw new Error("تعذّر تحديث بيانات الدخول");
+      }
+    }
+
+    // Update profile fields.
+    const profilePatch: Record<string, unknown> = {};
+    if (data.display_name !== undefined) profilePatch.display_name = data.display_name;
+    if (data.email !== undefined) profilePatch.email = data.email;
+    if (data.username !== undefined) profilePatch.username = data.username;
+    if (Object.keys(profilePatch).length) {
+      await supabaseAdmin.from("profiles").update(profilePatch).eq("id", data.user_id);
+    }
+
+    // Replace the role (single role per user in this app).
+    if (data.role) {
+      await supabaseAdmin.from("user_roles").delete().eq("user_id", data.user_id);
+      await supabaseAdmin.from("user_roles").insert({ user_id: data.user_id, role: data.role });
+    }
+    return { ok: true };
+  });
+
+// Admin-only: permanently delete a user
+export const adminDeleteUser = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { user_id: string }) =>
+    z.object({ user_id: z.string().uuid() }).parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: isAdminRow } = await supabaseAdmin
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", context.userId)
+      .eq("role", "admin")
+      .maybeSingle();
+    if (!isAdminRow) throw new Error(FORBIDDEN_ERR);
+    if (data.user_id === context.userId) throw new Error("لا يمكنك حذف حسابك الحالي");
+
+    // Remove dependent rows first (in case FK cascade isn't configured), then auth user.
+    await supabaseAdmin.from("user_permissions").delete().eq("user_id", data.user_id);
+    await supabaseAdmin.from("user_roles").delete().eq("user_id", data.user_id);
+    await supabaseAdmin.from("profiles").delete().eq("id", data.user_id);
+    const del = await supabaseAdmin.auth.admin.deleteUser(data.user_id);
+    if (del.error) {
+      console.error("[adminDeleteUser]", del.error);
+      throw new Error("تعذّر حذف المستخدم");
+    }
+    return { ok: true };
+  });
+
 // First-time bootstrap: if there are zero admins, sign-up creates an admin.
 // Used by the public /auth page when admin chooses "إنشاء حساب الأدمن الأول".
 export const bootstrapFirstAdmin = createServerFn({ method: "POST" })

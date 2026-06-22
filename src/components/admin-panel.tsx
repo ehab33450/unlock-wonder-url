@@ -33,6 +33,11 @@ type Props = {
   onUpdatePerms?: (userId: string, perms: Record<string, boolean>) => Promise<void>;
   onToggleActive?: (userId: string, active: boolean) => Promise<void>;
   onInviteEmail?: (input: { email: string; display_name: string }) => Promise<void>;
+  onUpdateUser?: (input: {
+    user_id: string; display_name?: string; email?: string;
+    username?: string; password?: string; role?: "admin" | "employee" | "client";
+  }) => Promise<void>;
+  onDeleteUser?: (userId: string) => Promise<void>;
   loading?: boolean;
 };
 
@@ -52,7 +57,7 @@ type SectionId = typeof SIDEBAR[number]["id"];
 
 export function AdminPanel({
   open, onClose, employees, setEmployees, perms, defaultPerms,
-  onCreateUser, onUpdatePerms, onToggleActive, onInviteEmail, loading,
+  onCreateUser, onUpdatePerms, onToggleActive, onInviteEmail, onUpdateUser, onDeleteUser, loading,
 }: Props) {
   const [section, setSection] = useState<SectionId>("users");
   const [userTab, setUserTab] = useState<"users" | "invites" | "clients">("users");
@@ -197,12 +202,35 @@ export function AdminPanel({
         <EditUserModal
           emp={editEmp}
           onClose={() => setEditEmp(null)}
-          onSave={(u) => {
-            setEmployees((arr: AdminEmployee[]) => arr.map((x) => (x.id === u.id ? u : x)));
+          onSave={async (u) => {
+            if (onUpdateUser) {
+              const roleMap: Record<string, "admin" | "employee" | "client"> = {
+                Admin: "admin", admin: "admin",
+                Employee: "employee", موظف: "employee",
+                عميل: "client", client: "client",
+              };
+              try {
+                await onUpdateUser({
+                  user_id: u.id,
+                  display_name: u.name,
+                  email: u.email,
+                  role: roleMap[u.role] ?? "employee",
+                  password: u.password?.trim() ? u.password.trim() : undefined,
+                });
+              } catch (e: any) { alert(e?.message ?? "تعذّر حفظ التعديلات"); return; }
+            } else {
+              setEmployees((arr: AdminEmployee[]) => arr.map((x) => (x.id === u.id ? u : x)));
+            }
             setEditEmp(null);
           }}
-          onDelete={(id) => {
-            setEmployees((arr: AdminEmployee[]) => arr.filter((x) => x.id !== id));
+          onDelete={async (id) => {
+            if (!confirm("حذف هذا المستخدم نهائياً؟ لا يمكن التراجع.")) return;
+            if (onDeleteUser) {
+              try { await onDeleteUser(id); }
+              catch (e: any) { alert(e?.message ?? "تعذّر حذف المستخدم"); return; }
+            } else {
+              setEmployees((arr: AdminEmployee[]) => arr.filter((x) => x.id !== id));
+            }
             setEditEmp(null);
           }}
         />
@@ -651,7 +679,7 @@ function EditUserModal({ emp, onClose, onSave, onDelete }: {
           <Field label="البريد"><input className="ad-input" value={u.email} onChange={(e) => setU({ ...u, email: e.target.value })} /></Field>
           <Field label="الجوال"><input className="ad-input" value={u.phone || ""} onChange={(e) => setU({ ...u, phone: e.target.value })} /></Field>
           <Field label="المسمى الوظيفي"><input className="ad-input" value={u.jobTitle || ""} onChange={(e) => setU({ ...u, jobTitle: e.target.value })} /></Field>
-          <Field label="كلمة المرور"><input className="ad-input" value={u.password} onChange={(e) => setU({ ...u, password: e.target.value })} /></Field>
+          <Field label="كلمة المرور الجديدة"><input className="ad-input" placeholder="اتركها فارغة لعدم التغيير" value={u.password} onChange={(e) => setU({ ...u, password: e.target.value })} /></Field>
         </div>
         <div className="mt-5 flex items-center justify-between">
           <button onClick={() => onDelete(u.id)} className="px-4 h-10 rounded-lg border border-red-200 text-red-600 text-sm flex items-center gap-1.5 hover:bg-red-50">
