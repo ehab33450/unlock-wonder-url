@@ -391,7 +391,7 @@ function UsersSection({
                     <button onClick={() => onPerms(emp)} title="إدارة الصلاحيات" className="p-1 rounded hover:bg-emerald-50"><ShieldCheck className="w-4 h-4" /></button>
                     <button onClick={() => copy(`الاسم: ${emp.name}\nالبريد: ${emp.email}\nالصلاحية: ${emp.role}`, "تم نسخ بيانات المستخدم")} title="نسخ بيانات المستخدم" className="p-1 rounded hover:bg-emerald-50"><ClipboardList className="w-4 h-4" /></button>
                     <button onClick={() => onResetPassword?.(emp)} title="إعادة تعيين كلمة المرور" className="p-1 rounded hover:bg-emerald-50"><KeyRound className="w-4 h-4" /></button>
-                    <button onClick={() => copy(`بطاقة دخول — منصة يسير\nالاسم: ${emp.name}\nالبريد: ${emp.email}\nرابط الدخول: https://unlock-wonder-url.vercel.app/auth`, "تم نسخ بطاقة الدخول")} title="نسخ بطاقة الدخول" className="p-1 rounded hover:bg-emerald-50"><CreditCard className="w-4 h-4" /></button>
+                    <button onClick={() => copy(`بطاقة دخول — منصة يسير\nالاسم: ${emp.name}\nالبريد: ${emp.email}\nرابط الدخول: ${authUrl()}`, "تم نسخ بطاقة الدخول")} title="نسخ بطاقة الدخول" className="p-1 rounded hover:bg-emerald-50"><CreditCard className="w-4 h-4" /></button>
                   </div>
                 </td>
                 <td className="px-4 py-3">
@@ -523,7 +523,7 @@ function SmtpSection() {
 }
 
 /* ============== Invite Modal (email + WhatsApp) ============== */
-const INVITE_SITE_URL = "https://unlock-wonder-url.vercel.app/auth";
+const authUrl = () => (typeof window !== "undefined" ? window.location.origin : "") + "/auth";
 function InviteModal({ onClose, onInviteEmail }: {
   onClose: () => void;
   onInviteEmail?: (input: { email: string; display_name: string }) => Promise<void>;
@@ -555,7 +555,7 @@ function InviteModal({ onClose, onInviteEmail }: {
     const text =
       `مرحباً ${name.trim() || ""}،\n` +
       `تمت دعوتك للانضمام إلى منصة يسير.\n` +
-      `سجّل الدخول من هنا: ${INVITE_SITE_URL}`;
+      `سجّل الدخول من هنا: ${authUrl()}`;
     window.open(`https://wa.me/${digits}?text=${encodeURIComponent(text)}`, "_blank");
   };
 
