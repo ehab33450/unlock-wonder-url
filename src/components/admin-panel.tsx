@@ -132,6 +132,14 @@ export function AdminPanel({
               onInvite={() => setInviteOpen(true)}
               onEdit={(e: AdminEmployee) => setEditEmp(e)}
               onPerms={(e: AdminEmployee) => setPermsEmp(e)}
+              onResetPassword={async (emp: AdminEmployee) => {
+                const pw = prompt(`كلمة مرور جديدة للمستخدم «${emp.name}» (6 أحرف على الأقل):`);
+                if (pw === null) return;
+                if (pw.trim().length < 6) { alert("كلمة المرور قصيرة جداً (6 أحرف على الأقل)"); return; }
+                if (!onUpdateUser) { alert("التحديث غير متاح"); return; }
+                try { await onUpdateUser({ user_id: emp.id, password: pw.trim() }); alert("تم تحديث كلمة المرور ✅"); }
+                catch (e: any) { alert(e?.message ?? "تعذّر تحديث كلمة المرور"); }
+              }}
               total={employees.length}
               onToggleActive={onToggleActive}
               loading={loading}
@@ -278,10 +286,21 @@ export function AdminPanel({
 /* ============== Users Section ============== */
 function UsersSection({
   employees, setEmployees, search, setSearch, userTab, setUserTab,
-  onAdd, onInvite, onEdit, onPerms, total, onToggleActive, loading,
+  onAdd, onInvite, onEdit, onPerms, onResetPassword, total, onToggleActive, loading,
 }: any) {
+  const [toast, setToast] = useState<string>("");
+  const copy = async (text: string, label: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setToast(label);
+      setTimeout(() => setToast(""), 1800);
+    } catch { setToast("تعذّر النسخ"); setTimeout(() => setToast(""), 1800); }
+  };
   return (
     <div className="p-6">
+      {toast && (
+        <div className="fixed bottom-5 left-1/2 -translate-x-1/2 z-[80] bg-slate-900 text-white text-xs px-4 py-2 rounded-lg shadow-lg">{toast}</div>
+      )}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
           <button
@@ -370,9 +389,9 @@ function UsersSection({
                 <td className="px-4 py-3">
                   <div className="flex items-center gap-1.5 text-emerald-600">
                     <button onClick={() => onPerms(emp)} title="إدارة الصلاحيات" className="p-1 rounded hover:bg-emerald-50"><ShieldCheck className="w-4 h-4" /></button>
-                    <button title="نسخ" className="p-1 rounded hover:bg-emerald-50"><ClipboardList className="w-4 h-4" /></button>
-                    <button title="إعادة تعيين" className="p-1 rounded hover:bg-emerald-50"><KeyRound className="w-4 h-4" /></button>
-                    <button title="نسخ بطاقة" className="p-1 rounded hover:bg-emerald-50"><CreditCard className="w-4 h-4" /></button>
+                    <button onClick={() => copy(`الاسم: ${emp.name}\nالبريد: ${emp.email}\nالصلاحية: ${emp.role}`, "تم نسخ بيانات المستخدم")} title="نسخ بيانات المستخدم" className="p-1 rounded hover:bg-emerald-50"><ClipboardList className="w-4 h-4" /></button>
+                    <button onClick={() => onResetPassword?.(emp)} title="إعادة تعيين كلمة المرور" className="p-1 rounded hover:bg-emerald-50"><KeyRound className="w-4 h-4" /></button>
+                    <button onClick={() => copy(`بطاقة دخول — منصة يسير\nالاسم: ${emp.name}\nالبريد: ${emp.email}\nرابط الدخول: https://unlock-wonder-url.vercel.app/auth`, "تم نسخ بطاقة الدخول")} title="نسخ بطاقة الدخول" className="p-1 rounded hover:bg-emerald-50"><CreditCard className="w-4 h-4" /></button>
                   </div>
                 </td>
                 <td className="px-4 py-3">
