@@ -73,17 +73,19 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "لوحة التحكم" },
-      { name: "description", content: "منصة إدارة شاملة لإدارة المشاريع والمهام والملفات والتعاون." },
-      { property: "og:site_name", content: "لوحة التحكم" },
+      { title: "يسير | منصة إدارة المشاريع والمهام" },
+      { name: "description", content: "يسير — منصة عربية شاملة لإدارة المشاريع والمهام والملفات والاجتماعات والتعاون بين الفرق." },
+      { name: "keywords", content: "يسير, إدارة المشاريع, إدارة المهام, منصة يسير, نظام إدارة, تعاون الفرق" },
+      { property: "og:site_name", content: "يسير" },
       { property: "og:type", content: "website" },
+      { property: "og:url", content: "https://unlock-wonder-url.vercel.app" },
       { name: "twitter:card", content: "summary_large_image" },
       { property: "og:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/7e5ac763-046f-45e7-89cd-e54d2c537645" },
       { name: "twitter:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/7e5ac763-046f-45e7-89cd-e54d2c537645" },
-      { property: "og:title", content: "لوحة التحكم" },
-      { name: "twitter:title", content: "لوحة التحكم" },
-      { property: "og:description", content: "منصة إدارة شاملة لإدارة المشاريع والمهام والملفات والتعاون." },
-      { name: "twitter:description", content: "منصة إدارة شاملة لإدارة المشاريع والمهام والملفات والتعاون." },
+      { property: "og:title", content: "يسير | منصة إدارة المشاريع والمهام" },
+      { name: "twitter:title", content: "يسير | منصة إدارة المشاريع والمهام" },
+      { property: "og:description", content: "يسير — منصة عربية شاملة لإدارة المشاريع والمهام والملفات والاجتماعات والتعاون بين الفرق." },
+      { name: "twitter:description", content: "يسير — منصة عربية شاملة لإدارة المشاريع والمهام والملفات والاجتماعات والتعاون بين الفرق." },
     ],
     links: [
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
@@ -103,7 +105,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 
 function RootShell({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="ar" dir="rtl">
       <head>
         <HeadContent />
       </head>
