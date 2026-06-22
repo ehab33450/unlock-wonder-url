@@ -3040,11 +3040,11 @@ function Index() {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm text-slate-600 mb-2 text-right">رقم جوال المسؤول</label>
+                    <label className="block text-sm text-slate-600 mb-2 text-right">رقم واتساب المسؤول</label>
                     <input
                       type="tel"
-                      value={npRespPhone}
-                      onChange={(e) => setNpRespPhone(e.target.value)}
+                      value={npRespWhatsapp}
+                      onChange={(e) => setNpRespWhatsapp(e.target.value)}
                       placeholder="+9665..."
                       className="w-full h-11 border border-slate-300 rounded px-3 text-right focus:outline-none focus:border-[color:var(--eyenak-teal)]"
                     />
@@ -3058,16 +3058,6 @@ function Index() {
                       value={npRespEmail}
                       onChange={(e) => setNpRespEmail(e.target.value)}
                       placeholder="example@email.com"
-                      className="w-full h-11 border border-slate-300 rounded px-3 text-right focus:outline-none focus:border-[color:var(--eyenak-teal)]"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm text-slate-600 mb-2 text-right">رقم واتساب المسؤول</label>
-                    <input
-                      type="tel"
-                      value={npRespWhatsapp}
-                      onChange={(e) => setNpRespWhatsapp(e.target.value)}
-                      placeholder="+9665..."
                       className="w-full h-11 border border-slate-300 rounded px-3 text-right focus:outline-none focus:border-[color:var(--eyenak-teal)]"
                     />
                   </div>
@@ -6640,20 +6630,6 @@ function ProjectDetailOverlay({
                     onUpdate((c) => ({ ...c, contract: { ...c.contract, responsibleName: v } }))
                   }
                 />
-                <div className="bg-slate-50 rounded border border-slate-200 p-3">
-                  <div className="text-xs text-slate-500 mb-1">رقم الجوال</div>
-                  {data.contract.responsiblePhone ? (
-                    <a
-                      href={`tel:${data.contract.responsiblePhone}`}
-                      className="text-sm font-semibold text-[color:var(--eyenak-teal)] hover:underline"
-                      dir="ltr"
-                    >
-                      {data.contract.responsiblePhone}
-                    </a>
-                  ) : (
-                    <span className="text-sm text-slate-400">—</span>
-                  )}
-                </div>
                 {/* Email cell */}
                 <div className="bg-slate-50 rounded border border-slate-200 p-3">
                   <div className="text-xs text-slate-500 mb-1">البريد الإلكتروني</div>
