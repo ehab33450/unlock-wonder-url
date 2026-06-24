@@ -18,7 +18,7 @@ export const askAssistant = createServerFn({ method: "POST" })
           )
           .min(1)
           .max(40),
-        context: z.string().max(8000).optional(),
+        context: z.string().max(200000).optional(),
       })
       .parse(data),
   )

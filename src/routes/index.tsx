@@ -5834,22 +5834,38 @@ function Index() {
               setAiInput("");
               setAiLoading(true);
               try {
-                const projectsList = Object.entries(projectMeta).map(([name, m]) => {
+                const fmtD = (d?: string) => d || "—";
+                const projectsDetailed = Object.entries(projectMeta).map(([name, m]) => {
+                  const c = m.contract || ({} as any);
                   const tasks = m.tasks || [];
-                  const done = tasks.filter((t) => t.status === "تم الانجاز").length;
-                  const overdue = tasks.filter((t) => {
-                    if (!t.endDate || t.status === "تم الانجاز") return false;
-                    return new Date(t.endDate).getTime() < Date.now();
-                  }).length;
-                  return `• ${name}: مهام ${tasks.length} (منجزة ${done}، متأخرة ${overdue})، الموظف المُكلَّف: ${m.contract?.assignee || "—"}، قيمة العقد: ${m.contract?.value ?? "—"}`;
-                }).join("\n") || "لا توجد مشاريع بعد.";
-                const upcomingTasks = Object.entries(projectMeta)
-                  .flatMap(([pname, m]) => (m.tasks || []).map((t) => ({ ...t, pname })))
-                  .filter((t) => t.status !== "تم الانجاز" && t.endDate)
-                  .sort((a, b) => new Date(a.endDate).getTime() - new Date(b.endDate).getTime())
-                  .slice(0, 8)
-                  .map((t) => `• [${t.pname}] ${t.name} — ينتهي ${t.endDate} — ${t.status} — أهمية ${t.priority}`)
-                  .join("\n") || "لا مهام قادمة.";
+                  const taskLines = tasks.length
+                    ? tasks.map((t) => `   - ${t.name} | المنصة: ${t.platform || "—"} | المستفيد: ${t.beneficiary || "—"} | رقم المستند: ${t.documentNo || "—"} | يبدأ: ${fmtD(t.startDate)} | ينتهي: ${fmtD(t.endDate)} | أُنجز: ${fmtD(t.doneDate)} | الحالة: ${t.status} | الأهمية: ${t.priority} | الإنجاز: ${t.progress || 0}%`).join("\n")
+                    : "   - لا مهام";
+                  const payments = c.payments || [];
+                  const payLines = payments.length
+                    ? payments.map((p: any) => `   - مبلغ ${p.amount || "—"} | تاريخ ${fmtD(p.date)} | ${p.paid ? "مدفوعة" : "مستحقة"}`).join("\n")
+                    : "   - لا دفعات";
+                  const services = (c.services || []).join("، ") || "—";
+                  return [
+                    `■ مشروع: ${name}`,
+                    `  العقد: بداية ${fmtD(c.startDate)} | نهاية ${fmtD(c.endDate)} | القيمة ${c.value || "—"} | الخدمات: ${services}`,
+                    `  المسؤول: ${c.responsibleName || "—"} (${c.responsiblePhone || "—"}${c.responsibleEmail ? "، " + c.responsibleEmail : ""}) | الموظف المُكلَّف: ${c.assignee || "—"}`,
+                    `  الدفعات:`,
+                    payLines,
+                    `  المهام (${tasks.length}):`,
+                    taskLines,
+                  ].join("\n");
+                }).join("\n\n") || "لا توجد مشاريع بعد.";
+                const meetingLines = (meetings || [])
+                  .slice()
+                  .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+                  .map((mt) => `• ${mt.title} — ${fmtD(mt.date)} — المنظّم: ${mt.organizer || "—"} — المكان: ${mt.location || "—"} — الحضور: ${(mt.attendees || []).join("، ") || "—"}`)
+                  .join("\n") || "لا اجتماعات.";
+                const eventLines = Object.values(events || {}).flat()
+                  .slice()
+                  .sort((a, b) => new Date(a.start).getTime() - new Date(b.start).getTime())
+                  .map((ev) => `• ${ev.title} — يبدأ ${fmtD(ev.start)} — ينتهي ${fmtD(ev.end)} — المكان ${ev.location || "—"} — العملاء ${ev.clients || "—"}`)
+                  .join("\n") || "لا أحداث تقويم.";
                 const roleLine = isAdmin
                   ? `الدور: مدير عام. عدد الموظفين: ${employees.length}.`
                   : `الدور: موظف باسم ${currentUser}. الصلاحيات المفتوحة: ${
@@ -5861,13 +5877,18 @@ function Index() {
                 const ctx = [
                   `التاريخ اليوم: ${today}`,
                   roleLine,
-                  `عدد المذكرات: ${notes.length} — الحجوزات: ${bookings.length}.`,
+                  `عدد المشاريع: ${Object.keys(projectMeta).length} — المذكرات: ${notes.length} — الحجوزات: ${bookings.length} — الاجتماعات: ${meetings.length}.`,
                   "",
-                  "ملخص المشاريع:",
-                  projectsList,
+                  "تعليمات: استخدم البيانات أدناه فقط للإجابة. عند سؤال عن «أقرب موعد» لمشروع، انظر إلى مهام المشروع غير المنجزة وتواريخ انتهائها، ودفعاته المستحقة، وتاريخ نهاية العقد، والاجتماعات المرتبطة، واختر الأقرب زمنياً من تاريخ اليوم. اذكر التاريخ بوضوح.",
                   "",
-                  "أقرب المهام نهاية:",
-                  upcomingTasks,
+                  "===== تفاصيل المشاريع (عقود، دفعات، مهام) =====",
+                  projectsDetailed,
+                  "",
+                  "===== الاجتماعات/المواعيد =====",
+                  meetingLines,
+                  "",
+                  "===== أحداث التقويم =====",
+                  eventLines,
                 ].join("\n");
                 const res = await callAssistant({
                   data: {
