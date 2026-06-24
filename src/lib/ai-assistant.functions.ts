@@ -23,10 +23,6 @@ export const askAssistant = createServerFn({ method: "POST" })
       .parse(data),
   )
   .handler(async ({ data }) => {
-    const apiKey = process.env.LOVABLE_API_KEY;
-    if (!apiKey) {
-      return { ok: false as const, error: "LOVABLE_API_KEY غير مهيأ" };
-    }
     const sys = [
       "أنت مساعد ذكي داخل منصة إدارة المشاريع لمساعدة المستخدم في تنظيم المهام والملفات والتعاون بكفاءة.",
       "أجب دائماً بالعربية الفصحى المبسطة، بأسلوب موجز ومباشر، واستخدم النقاط والعناوين عند الحاجة لتنظيم الإجابة. لا تذكر اسم مزوّد النموذج.",
@@ -62,6 +58,46 @@ export const askAssistant = createServerFn({ method: "POST" })
       data.context ? `\n## سياق المستخدم الحالي\n${data.context}` : "",
     ].join("\n");
 
+    // Preferred path: call Google Gemini API directly using GEMINI_API_KEY.
+    const geminiKey = process.env.GEMINI_API_KEY;
+    if (geminiKey) {
+      try {
+        const model = process.env.GEMINI_MODEL || "gemini-2.5-flash";
+        const contents = data.messages.map((m) => ({
+          role: m.role === "assistant" ? "model" : "user",
+          parts: [{ text: m.content }],
+        }));
+        const res = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${geminiKey}`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              system_instruction: { parts: [{ text: sys }] },
+              contents,
+            }),
+          },
+        );
+        if (res.status === 429) return { ok: false as const, error: "تم تجاوز حد الاستخدام، حاول لاحقاً." };
+        if (!res.ok) {
+          const t = await res.text();
+          return { ok: false as const, error: `خطأ ${res.status}: ${t.slice(0, 200)}` };
+        }
+        const json = await res.json();
+        const reply = (json?.candidates?.[0]?.content?.parts ?? [])
+          .map((p: any) => p?.text ?? "")
+          .join("");
+        return { ok: true as const, reply };
+      } catch (e) {
+        return { ok: false as const, error: e instanceof Error ? e.message : "خطأ غير معروف" };
+      }
+    }
+
+    // Fallback path: Lovable AI gateway (kept for backward compatibility).
+    const apiKey = process.env.LOVABLE_API_KEY;
+    if (!apiKey) {
+      return { ok: false as const, error: "لم يتم ضبط GEMINI_API_KEY" };
+    }
     try {
       const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
         method: "POST",
