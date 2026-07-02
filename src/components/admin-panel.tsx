@@ -321,7 +321,7 @@ function UsersSection({
           {[
             { id: "users", label: "المستخدمين", count: total, icon: UsersIcon },
             { id: "invites", label: "الدعوات المعلقة", count: 0, icon: Mail },
-            { id: "clients", label: "العملاء", count: 2, icon: UsersIcon },
+            { id: "clients", label: "العملاء", count: employees.filter((e: AdminEmployee) => e.role === "عميل" || e.role === "client").length, icon: UsersIcon },
           ].map((tab) => {
             const Icon = tab.icon as any;
             const active = userTab === tab.id;
@@ -613,14 +613,34 @@ function AddUserModal({ onClose, onCreate, defaultPerms }: {
           <button onClick={onClose} className="p-1 rounded hover:bg-slate-100"><X className="w-5 h-5" /></button>
         </div>
         <div className="grid grid-cols-2 gap-4 text-right">
-          <Field label="الخاصية">
-            <select value={f.kind} onChange={(e) => setF({ ...f, kind: e.target.value })} className="ad-input">
-              <option>موظف</option>
+          <Field label="نوع المستخدم">
+            <select
+              value={f.kind}
+              onChange={(e) => {
+                const k = e.target.value;
+                setF({ ...f, kind: k, role: k === "عميل" ? "عميل" : (f.role === "عميل" ? "Employee" : f.role) });
+              }}
+              className="ad-input"
+            >
+              <option value="موظف">موظف</option>
+              <option value="عميل">عميل</option>
             </select>
           </Field>
           <Field label="الصلاحية">
-            <select value={f.role} onChange={(e) => setF({ ...f, role: e.target.value })} className="ad-input">
-              <option>Admin</option><option>Employee</option>
+            <select
+              value={f.role}
+              onChange={(e) => setF({ ...f, role: e.target.value })}
+              className="ad-input"
+              disabled={f.kind === "عميل"}
+            >
+              {f.kind === "عميل" ? (
+                <option value="عميل">عميل</option>
+              ) : (
+                <>
+                  <option value="Admin">مشرف (Admin)</option>
+                  <option value="Employee">موظف (Employee)</option>
+                </>
+              )}
             </select>
           </Field>
           <Field label="الإسم">
